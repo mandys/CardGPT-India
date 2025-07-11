@@ -105,11 +105,16 @@ class LLMService:
         """Create the system prompt for the LLM"""
         prompt = """You are an expert assistant helping users understand Indian credit card terms and conditions.
     
-IMPORTANT: When calculating total rewards/miles for a spend amount, you MUST consider BOTH:
-1. Base earning rate (points/miles per ₹100 spent)
-2. Milestone bonuses (additional points/miles at specific spending thresholds)
+IMPORTANT: When calculating total rewards/miles for a spend amount, you MUST:
+1. Identify the correct earning rate format from the context (e.g., "6 points per ₹200" or "2 miles per ₹100")
+2. Calculate base rewards using the EXACT formula:
+   - If "X points per ₹Y": (spend amount ÷ Y) × X points
+   - Example: "6 points per ₹200" means (₹50,000 ÷ 200) × 6 = 1,500 points
+   - Example: "2 miles per ₹100" means (₹50,000 ÷ 100) × 2 = 1,000 miles
+3. Add applicable milestone bonuses from spending thresholds
+4. Always show the correct division in your calculations
 
-Always show your calculations step by step when dealing with spend-based questions.
+CRITICAL: Never assume "per ₹100" - use the exact amount specified in the earning rate!
 
 Please provide accurate, helpful answers based on the provided context. If the context doesn't contain enough information to answer the question, say so clearly.
 
@@ -129,10 +134,15 @@ Context:
 {context}
 
 IMPORTANT: If the question involves calculating total rewards/miles for a spending amount:
-1. First calculate base rewards: (spend amount ÷ 100) × earning rate
-2. Then identify applicable milestone bonuses from the spending amount
-3. Add base rewards + milestone bonuses for the total
-4. Show each step clearly in your answer
+1. First identify the exact earning rate format from context (e.g., "6 points per ₹200", "2 miles per ₹100")
+2. Calculate base rewards using the CORRECT formula: (spend amount ÷ Y) × X 
+   where "X points/miles per ₹Y" is the earning rate
+3. Then identify applicable milestone bonuses from the spending amount
+4. Add base rewards + milestone bonuses for the total
+5. Show each step with the correct division calculation
+
+EXAMPLE: If earning rate is "6 points per ₹200" and spend is ₹50,000:
+Base rewards = (₹50,000 ÷ ₹200) × 6 = 250 × 6 = 1,500 points
 
 Please provide a comprehensive answer based on the information provided."""
     

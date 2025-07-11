@@ -253,3 +253,39 @@ GPT-3.5 combines information:
 ---
 
 This architecture prioritizes accuracy and semantic understanding over raw speed, which is why you see the multiple API calls and detailed processing steps!
+
+---
+
+## 🐛 Common Calculation Issues & Fixes
+
+### **Issue: Incorrect Division in Reward Calculations**
+
+**Problem Example:**
+```
+User Query: "If I spend ₹2 lakh on flights which card wins?"
+Wrong Answer: "Base rewards: (₹2,00,000 ÷ 100) × 6 points = 12,000 points"
+Correct Answer: "Base rewards: (₹2,00,000 ÷ 200) × 6 points = 6,000 points"
+```
+
+**Root Cause:**
+The LLM was defaulting to "per ₹100" calculations instead of reading the exact earning rate format from context.
+
+**The Fix:**
+Enhanced prompts with explicit examples:
+```
+CRITICAL: Never assume "per ₹100" - use the exact amount specified in the earning rate!
+
+Examples:
+- "6 points per ₹200" → (spend ÷ 200) × 6
+- "2 miles per ₹100" → (spend ÷ 100) × 2
+```
+
+**Why This Happened:**
+- Different cards have different earning structures
+- ICICI EPM: "6 points per ₹200"
+- Axis Atlas: "2 miles per ₹100"
+- The model needed explicit instruction to parse the earning rate correctly
+
+**Impact:**
+- Before fix: 2x inflated reward calculations
+- After fix: Accurate calculations matching card terms

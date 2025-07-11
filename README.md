@@ -274,6 +274,6 @@ python -m pytest tests/  # (if you add tests)
 
 ## Credits
 
-**Built by:** [@mahrajaMandyy](https://github.com/mahrajaMandyy)  
+**Built by:** [@maharajamandy](https://x.com/maharajamandy)  
 **Powered by:** OpenAI GPT-4/GPT-3.5  
 **Framework:** Streamlit + Python

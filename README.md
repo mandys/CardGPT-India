@@ -326,6 +326,19 @@ Please provide a comprehensive answer based on the information provided.
 - Reduce `top_k` from 5 to 3 documents
 - Implement query caching for repeated questions
 - Use `text-embedding-3-small` (already optimized)
+- **New**: Batch embedding generation (44 API calls → 1 API call)
+
+## 📚 **Technical Deep Dive**
+
+For a detailed explanation of what happens behind the scenes, including:
+- Why you see 44+ API calls during startup
+- How vector search actually works
+- What gets sent to OpenAI and why
+- Cost breakdown and optimization opportunities
+
+**Read: [Behind the Scenes Technical Guide](behind_the_scenes.md)** 🔍
+
+This document explains every log message, API call, and processing step in detail.
 
 ## Development
 

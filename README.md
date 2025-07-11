@@ -101,14 +101,37 @@ supavec-clone/
 - Handles user interactions and chat
 - Displays costs, sources, and results
 
-### 🚀 **Running the Modular Version**
+### 🚀 **Running the Application**
 
 ```bash
-# Use the new modular version (recommended)
+# Recommended: Use the new modular version
 streamlit run app.py
 
-# Or use the legacy standalone version
+# Alternative: Legacy standalone version (single file)
 streamlit run streamlit_standalone.py
+
+# For API integration: Legacy Node.js backend (optional)
+npm run dev  # Start Node.js API server
+streamlit run streamlit_app.py  # Frontend that connects to Node.js API
+```
+
+### 🔧 **Development**
+
+```bash
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Run modular Streamlit app (recommended)
+streamlit run app.py
+
+# For Node.js API development (optional)
+npm install
+npm run dev
+
+# Git workflow
+git status
+git add .
+git commit -m "Your changes"
 ```
 
 ## API Endpoints

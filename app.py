@@ -34,6 +34,8 @@ if "embedder" not in st.session_state:
     st.session_state.embedder = None
 if "llm" not in st.session_state:
     st.session_state.llm = None
+if "process_last_message" not in st.session_state:
+    st.session_state.process_last_message = False
 
 
 @st.cache_resource
@@ -133,6 +135,73 @@ def process_query(
         "llm_usage": llm_usage,
         "total_cost": total_cost
     }
+
+
+def process_and_display_query(prompt, query_mode, selected_cards, top_k, use_cheaper_model, retriever, embedder, llm):
+    """Process a query and display the results"""
+    try:
+        # Process the query
+        result = process_query(
+            question=prompt,
+            query_mode=query_mode,
+            selected_cards=selected_cards,
+            top_k=top_k,
+            use_cheaper_model=use_cheaper_model,
+            retriever=retriever,
+            embedder=embedder,
+            llm=llm
+        )
+        
+        # Display answer
+        st.markdown(result["answer"])
+        
+        # Display usage metrics
+        with st.expander("💰 Token Usage & Cost"):
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("🔍 Query Embedding", 
+                        f"{result['embedding_usage']['tokens']} tokens", 
+                        f"${result['embedding_usage']['cost']:.6f}")
+            with col2:
+                model_name = result['llm_usage'].get('model', 'unknown')
+                st.metric(f"🤖 {model_name}", 
+                        f"{result['llm_usage'].get('total_tokens', 0)} tokens", 
+                        f"${result['llm_usage'].get('cost', 0):.4f}")
+            
+            st.metric("💸 **Total Cost**", f"${result['total_cost']:.4f}", 
+                    help="This is the cost for this single query")
+            
+            if result['llm_usage'].get('total_tokens', 0) > 0:
+                st.write(f"📊 {result['llm_usage'].get('model', 'unknown')} Details: "
+                       f"{result['llm_usage']['input_tokens']} input + "
+                       f"{result['llm_usage']['output_tokens']} output tokens")
+        
+        # Display sources
+        if result["documents"]:
+            with st.expander("📚 Sources"):
+                for i, doc in enumerate(result["documents"]):
+                    st.write(f"**{i+1}. {doc['cardName']} - {doc['section']}** "
+                           f"(Similarity: {doc.get('similarity', 0):.3f})")
+                    st.write(doc['content'])
+                    st.divider()
+        
+        # Add assistant response to chat
+        assistant_message = {
+            "role": "assistant",
+            "content": result["answer"],
+            "sources": result["documents"],
+            "usage": {
+                "embedding": result["embedding_usage"],
+                "llm": result["llm_usage"],
+                "total_cost": result["total_cost"]
+            }
+        }
+        st.session_state.messages.append(assistant_message)
+        
+    except Exception as e:
+        error_msg = f"An error occurred: {str(e)}"
+        st.error(error_msg)
+        st.session_state.messages.append({"role": "assistant", "content": error_msg})
 
 
 def main():
@@ -241,69 +310,27 @@ def main():
         # Generate response
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                try:
-                    # Process the query
-                    result = process_query(
-                        question=prompt,
-                        query_mode=query_mode,
-                        selected_cards=selected_cards,
-                        top_k=top_k,
-                        use_cheaper_model=use_cheaper_model,
-                        retriever=retriever,
-                        embedder=embedder,
-                        llm=llm
-                    )
-                    
-                    # Display answer
-                    st.markdown(result["answer"])
-                    
-                    # Display usage metrics
-                    with st.expander("💰 Token Usage & Cost"):
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            st.metric("🔍 Query Embedding", 
-                                    f"{result['embedding_usage']['tokens']} tokens", 
-                                    f"${result['embedding_usage']['cost']:.6f}")
-                        with col2:
-                            model_name = result['llm_usage'].get('model', 'unknown')
-                            st.metric(f"🤖 {model_name}", 
-                                    f"{result['llm_usage'].get('total_tokens', 0)} tokens", 
-                                    f"${result['llm_usage'].get('cost', 0):.4f}")
-                        
-                        st.metric("💸 **Total Cost**", f"${result['total_cost']:.4f}", 
-                                help="This is the cost for this single query")
-                        
-                        if result['llm_usage'].get('total_tokens', 0) > 0:
-                            st.write(f"📊 {result['llm_usage'].get('model', 'unknown')} Details: "
-                                   f"{result['llm_usage']['input_tokens']} input + "
-                                   f"{result['llm_usage']['output_tokens']} output tokens")
-                    
-                    # Display sources
-                    if result["documents"]:
-                        with st.expander("📚 Sources"):
-                            for i, doc in enumerate(result["documents"]):
-                                st.write(f"**{i+1}. {doc['cardName']} - {doc['section']}** "
-                                       f"(Similarity: {doc.get('similarity', 0):.3f})")
-                                st.write(doc['content'])
-                                st.divider()
-                    
-                    # Add assistant response to chat
-                    assistant_message = {
-                        "role": "assistant",
-                        "content": result["answer"],
-                        "sources": result["documents"],
-                        "usage": {
-                            "embedding": result["embedding_usage"],
-                            "llm": result["llm_usage"],
-                            "total_cost": result["total_cost"]
-                        }
-                    }
-                    st.session_state.messages.append(assistant_message)
-                    
-                except Exception as e:
-                    error_msg = f"An error occurred: {str(e)}"
-                    st.error(error_msg)
-                    st.session_state.messages.append({"role": "assistant", "content": error_msg})
+                process_and_display_query(prompt, query_mode, selected_cards, top_k, use_cheaper_model, retriever, embedder, llm)
+    
+    # Check if there's a new user message that needs processing (from example buttons)
+    if (hasattr(st.session_state, 'process_last_message') and 
+        st.session_state.process_last_message and 
+        st.session_state.messages and 
+        st.session_state.messages[-1]["role"] == "user"):
+        
+        prompt = st.session_state.messages[-1]["content"]
+        
+        # Display user message
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        
+        # Generate response
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
+                process_and_display_query(prompt, query_mode, selected_cards, top_k, use_cheaper_model, retriever, embedder, llm)
+        
+        # Clear the flag
+        st.session_state.process_last_message = False
     
     # Example questions
     if not st.session_state.messages:
@@ -314,29 +341,35 @@ def main():
         with col1:
             st.subheader("General Questions")
             example_questions = [
-                "What are the interest rates for credit cards?",
-                "Compare cash withdrawal fees between cards",
-                "What surcharge fees apply to international transactions?",
-                "What are the minimum payment requirements?"
+                "What are the annual fees for credit cards?",
+                "Compare reward rates between cards",
+                "What are the airport lounge access benefits?",
+                "What are the eligibility requirements for credit cards?"
             ]
             
             for question in example_questions:
                 if st.button(question, key=f"general_{question}"):
+                    # Add to chat and trigger processing
                     st.session_state.messages.append({"role": "user", "content": question})
+                    # Set a flag to process the question
+                    st.session_state.process_last_message = True
                     st.rerun()
         
         with col2:
             st.subheader("Card-Specific Questions")
             card_questions = [
-                "For a yearly spend of 7.5L on Atlas, how many miles i earn?",
-                "What are the fuel surcharge waivers?",
-                "How does the reward points system work?",
-                "What are the overlimit charges?"
+                "What are the welcome benefits for Axis Atlas?",
+                "What are the rewards and fees for utility payments on ICICI EPM?",
+                "What are the rewards and fees for fuel purchases on Axis Atlas?",
+                "What travel benefits does Axis Atlas offer?"
             ]
             
             for question in card_questions:
                 if st.button(question, key=f"card_{question}"):
+                    # Add to chat and trigger processing
                     st.session_state.messages.append({"role": "user", "content": question})
+                    # Set a flag to process the question
+                    st.session_state.process_last_message = True
                     st.rerun()
     
     # Footer

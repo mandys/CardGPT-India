@@ -1,57 +1,39 @@
-# Supavec Clone - RAG API for Indian Credit Card Data
+# Supavec Clone - RAG Application for Indian Credit Card Data
 
-A modular Retrieval-Augmented Generation (RAG) application for querying Indian credit card terms and conditions using OpenAI and vector search.
+A modular Retrieval-Augmented Generation (RAG) application for querying Indian credit card terms and conditions using OpenAI and vector search. Built with Python and Streamlit.
 
 ## Features
 
 - **Vector Search**: Semantic search through credit card terms and conditions
-- **RAG Pipeline**: Intelligent question answering using OpenAI GPT-4
+- **RAG Pipeline**: Intelligent question answering using OpenAI GPT-4/GPT-3.5
 - **Multi-Card Support**: Query individual cards or compare multiple cards
 - **Extensible**: Easy to add new credit card data files
-- **RESTful API**: Clean HTTP endpoints for integration
-- **Streamlit Frontend**: Interactive chat interface with deployment support
+- **Cost Tracking**: Real-time token usage and cost optimization
+- **Streamlit UI**: Interactive chat interface with deployment support
 
 ## Quick Start
 
 ### Prerequisites
 
-- Node.js 18+
+- Python 3.8+
 - OpenAI API key
 
 ### Installation
 
 1. Clone and install dependencies:
 ```bash
-npm install
+pip install -r requirements.txt
 ```
 
 2. Set up environment variables:
 ```bash
-cp .env.example .env
-# Edit .env and add your OPENAI_API_KEY
+export OPENAI_API_KEY="your-api-key-here"
+# Or add to your .env file
 ```
 
-3. Start the development server:
+3. Run the application:
 ```bash
-npm run dev
-```
-
-The API will be available at `http://localhost:3000`
-
-### Streamlit Frontend
-
-1. Install Python dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-2. Run Streamlit frontend:
-```bash
-# With backend API (recommended)
-streamlit run streamlit_app.py
-
-# Standalone version (no backend needed)
-streamlit run streamlit_standalone.py
+streamlit run app.py
 ```
 
 The Streamlit app will be available at `http://localhost:8501`
@@ -70,7 +52,6 @@ supavec-clone/
 │   ├── llm.py           # OpenAI LLM service (GPT-4/3.5)
 │   └── retriever.py     # Vector search & document management
 ├── data/                 # Credit card JSON files
-├── streamlit_standalone.py  # Legacy monolithic version
 └── requirements.txt
 
 ```
@@ -104,15 +85,8 @@ supavec-clone/
 ### 🚀 **Running the Application**
 
 ```bash
-# Recommended: Use the new modular version
+# Run the modular Streamlit application
 streamlit run app.py
-
-# Alternative: Legacy standalone version (single file)
-streamlit run streamlit_standalone.py
-
-# For API integration: Legacy Node.js backend (optional)
-npm run dev  # Start Node.js API server
-streamlit run streamlit_app.py  # Frontend that connects to Node.js API
 ```
 
 ### 🔧 **Development**
@@ -121,12 +95,8 @@ streamlit run streamlit_app.py  # Frontend that connects to Node.js API
 # Install Python dependencies
 pip install -r requirements.txt
 
-# Run modular Streamlit app (recommended)
+# Run the application in development mode
 streamlit run app.py
-
-# For Node.js API development (optional)
-npm install
-npm run dev
 
 # Git workflow
 git status
@@ -134,54 +104,20 @@ git add .
 git commit -m "Your changes"
 ```
 
-## API Endpoints
+## Usage
 
-### Health Check
-```bash
-GET /api/health
-```
+### Query Modes
 
-### Get Available Cards
-```bash
-GET /api/cards
-```
+1. **General Query**: Ask questions about any credit card
+2. **Specific Card**: Focus on a particular card
+3. **Compare Cards**: Compare multiple cards side-by-side
 
-### Query All Cards
-```bash
-POST /api/query
-{
-  "question": "What are the interest rates?",
-  "topK": 5
-}
-```
+### Example Questions
 
-### Query Specific Card
-```bash
-POST /api/query/:cardName
-{
-  "question": "What are the cash withdrawal fees?",
-  "topK": 5
-}
-```
-
-### Compare Cards
-```bash
-POST /api/compare
-{
-  "question": "Compare interest rates",
-  "cards": ["Axis Atlas", "Icici Epm"]
-}
-```
-
-### Vector Search
-```bash
-POST /api/search
-{
-  "query": "interest rates",
-  "topK": 5,
-  "threshold": 0.3
-}
-```
+- "What are the interest rates for credit cards?"
+- "How many miles do I earn on ₹2 lakh flight spend with Axis Atlas?"
+- "Compare cash withdrawal fees between cards"
+- "What are the hotel booking rewards for ₹1 lakh spend?"
 
 ## Adding New Credit Card Data
 
@@ -197,19 +133,6 @@ POST /api/search
 
 3. Restart the application to load the new data
 
-## Example Usage
-
-```bash
-# Query about interest rates
-curl -X POST http://localhost:3000/api/query \
-  -H "Content-Type: application/json" \
-  -d '{"question": "What are the interest rates for credit cards?"}'
-
-# Compare cash withdrawal fees
-curl -X POST http://localhost:3000/api/compare \
-  -H "Content-Type: application/json" \
-  -d '{"question": "Compare cash withdrawal fees", "cards": ["Axis Atlas", "Icici Epm"]}'
-```
 
 ## Streamlit Deployment
 
@@ -218,7 +141,7 @@ curl -X POST http://localhost:3000/api/compare \
 1. Push your code to GitHub
 2. Go to [share.streamlit.io](https://share.streamlit.io)
 3. Connect your GitHub repo
-4. Choose `streamlit_standalone.py` as your main file
+4. Choose `app.py` as your main file
 5. Add your OpenAI API key to Streamlit secrets:
    ```toml
    OPENAI_API_KEY = "your-api-key-here"
@@ -231,12 +154,8 @@ curl -X POST http://localhost:3000/api/compare \
 # Install dependencies
 pip install -r requirements.txt
 
-# Run standalone version (recommended for development)
-streamlit run streamlit_standalone.py
-
-# Run with backend API
-npm run dev  # In one terminal
-streamlit run streamlit_app.py  # In another terminal
+# Run the application
+streamlit run app.py
 ```
 
 ## Architecture
@@ -245,7 +164,7 @@ streamlit run streamlit_app.py  # In another terminal
 - **Embedding Service**: Generates vector embeddings using OpenAI
 - **Vector Search**: Performs semantic search using cosine similarity
 - **RAG Pipeline**: Combines search results with GPT-4 for intelligent answers
-- **API Layer**: Express.js REST API with comprehensive endpoints
+- **Streamlit UI**: Interactive chat interface with cost tracking
 
 ## How It Works: RAG Pipeline Explained
 
@@ -344,14 +263,11 @@ This document explains every log message, API call, and processing step in detai
 
 ```bash
 # Install dependencies
-npm install
+pip install -r requirements.txt
 
 # Start development server
-npm run dev
+streamlit run app.py
 
-# Build for production
-npm run build
-
-# Start production server
-npm run start
+# Test the application
+python -m pytest tests/  # (if you add tests)
 ```

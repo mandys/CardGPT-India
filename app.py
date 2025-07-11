@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 # Configure Streamlit page
 st.set_page_config(
-    page_title="Credit Card RAG Assistant",
+    page_title="Credit Card Assistant",
     page_icon="💳",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -234,7 +234,7 @@ def main():
     available_cards, _ = load_and_process_data(retriever, embedder)
     
     # Main UI
-    st.title("💳 Credit Card RAG Assistant")
+    st.title("💳 Credit Card Assistant")
     st.markdown("Ask questions about Indian credit card terms and conditions")
     
     # Sidebar configuration
@@ -295,7 +295,7 @@ def main():
             st.rerun()
     
     # Main chat interface
-    st.header("💬 Chat Interface")
+    st.header("💬 Ask Your Questions")
     
     # Display chat messages
     for message in st.session_state.messages:
@@ -391,7 +391,7 @@ def main():
     # Footer
     st.divider()
     st.markdown("---")
-    st.markdown("🚀 **Supavec Clone** - Modular RAG-powered Credit Card Assistant | Built with Streamlit")
+    st.markdown("💳 **Credit Card Assistant** - Built by @mahrajaMandyy | Powered by OpenAI")
 
 
 if __name__ == "__main__":

@@ -1,15 +1,15 @@
-# Supavec Clone - RAG Application for Indian Credit Card Data
+# Credit Card Assistant
 
-A modular Retrieval-Augmented Generation (RAG) application for querying Indian credit card terms and conditions using OpenAI and vector search. Built with Python and Streamlit.
+A smart assistant for querying Indian credit card terms and conditions using AI. Get instant answers about rewards, fees, eligibility, and more. Built with Python and Streamlit.
 
 ## Features
 
 - **Vector Search**: Semantic search through credit card terms and conditions
-- **RAG Pipeline**: Intelligent question answering using OpenAI GPT-4/GPT-3.5
+- **AI-Powered Answers**: Intelligent responses using OpenAI GPT-4/GPT-3.5
 - **Multi-Card Support**: Query individual cards or compare multiple cards
 - **Extensible**: Easy to add new credit card data files
 - **Cost Tracking**: Real-time token usage and cost optimization
-- **Streamlit UI**: Interactive chat interface with deployment support
+- **User-Friendly Interface**: Clean, interactive chat interface
 
 ## Quick Start
 
@@ -271,3 +271,9 @@ streamlit run app.py
 # Test the application
 python -m pytest tests/  # (if you add tests)
 ```
+
+## Credits
+
+**Built by:** [@mahrajaMandyy](https://github.com/mahrajaMandyy)  
+**Powered by:** OpenAI GPT-4/GPT-3.5  
+**Framework:** Streamlit + Python

@@ -60,3 +60,7 @@ To add new credit card data:
 ## Maintenance Tasks
 
 - keep @CLAUDE.md @README.md @behind_the_scenes.md @claude-context.md updated at all times
+
+## Commit Guidelines
+
+- Do not mention Claude as a contributor in commit messages

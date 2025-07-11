@@ -114,14 +114,17 @@ IMPORTANT: When calculating total rewards/miles for a spend amount, you MUST:
 4. Add applicable milestone bonuses from spending thresholds
 5. ALWAYS show both the division AND multiplication calculations separately
 
-CATEGORY-SPECIFIC EARNING RATES:
-- DEFAULT to general spending unless category is explicitly mentioned
+EXCLUSIONS AND EARNING RATES:
+- FIRST: Check "accrual_exclusions" - if spending category is excluded, rewards = 0
+- Common exclusions: rent, fuel, government services, tax, utilities, insurance, wallet, jewellery
+- SECOND: DEFAULT to general spending unless category is explicitly mentioned
 - Only use accelerated rates when question specifically mentions travel categories
 - Hotels/Hotel bookings (when mentioned) = "Direct Hotels" category = accelerated travel rate
 - Airlines/Flights (when mentioned) = "Direct Airlines" category = accelerated travel rate  
 - General spending (default) = Use base rate (e.g., "2 miles per ₹100")
 - Check for monthly caps on accelerated earning only if travel category is mentioned
 - DO NOT assume travel spending unless explicitly stated
+- ALWAYS verify exclusions before calculating any rewards
 
 CRITICAL ARITHMETIC RULES:
 - Show intermediate results for each step
@@ -147,44 +150,55 @@ Context:
 {context}
 
 IMPORTANT: If the question involves calculating total rewards/miles for a spending amount:
-1. DEFAULT to general spending UNLESS specific category is mentioned
-2. Only use category-specific rates if the question explicitly mentions:
+1. FIRST check for EXCLUSIONS - if spending category is excluded, rewards = 0
+2. DEFAULT to general spending UNLESS specific category is mentioned
+3. Only use category-specific rates if the question explicitly mentions:
    - "hotels", "hotel bookings", "accommodation"
    - "flights", "airlines", "air travel"  
    - "travel", "vacation", "trip"
-3. Use the CORRECT earning rate based on what's explicitly mentioned:
+4. Use the CORRECT earning rate based on what's explicitly mentioned:
    - Hotels/Hotel bookings (when mentioned): Use accelerated travel rate (e.g., "5 miles per ₹100")
    - Airlines/Flights (when mentioned): Use accelerated travel rate (e.g., "5 miles per ₹100") 
    - General spending (default): Use base rate (e.g., "2 miles per ₹100")
-4. Calculate rewards using the CORRECT formula: (spend amount ÷ Y) × X 
+5. Calculate rewards using the CORRECT formula: (spend amount ÷ Y) × X 
    where "X points/miles per ₹Y" is the earning rate FOR THAT CATEGORY
-5. Then identify applicable milestone bonuses from the spending amount
-6. Add base rewards + milestone bonuses for the total
-7. Show each step with the correct division calculation
+6. Then identify applicable milestone bonuses from the spending amount
+7. Add base rewards + milestone bonuses for the total
+8. Show each step with the correct division calculation
+
+CRITICAL: ALWAYS CHECK EXCLUSIONS FIRST!
+- If context shows "accrual_exclusions" containing the spending category, rewards = 0
+- Common exclusions: rent, fuel, government services, tax, utilities, insurance
+- Example: "rent" in exclusions = 0 points/miles for rent spending
 
 CALCULATION EXAMPLES WITH STEP-BY-STEP ARITHMETIC:
 
 Example 1: General spending "6 points per ₹200" with ₹50,000 spend
-Step 1: ₹50,000 ÷ ₹200 = 250 transactions
-Step 2: 250 transactions × 6 points = 1,500 points
+Step 1: Check exclusions - general spending not excluded
+Step 2: ₹50,000 ÷ ₹200 = 250 transactions
+Step 3: 250 transactions × 6 points = 1,500 points
 
-Example 2: General spending "2 miles per ₹100" with ₹7,50,000 spend  
-Step 1: ₹7,50,000 ÷ ₹100 = 7,500 transactions
-Step 2: 7,500 transactions × 2 miles = 15,000 miles
+Example 2: Rent spending "6 points per ₹200" with ₹20,000 rent
+Step 1: Check exclusions - "rent" found in accrual_exclusions
+Step 2: Rent spending earns 0 points (excluded category)
+Total: 0 points
 
 Example 3: Hotel spending "5 miles per ₹100" with ₹1,00,000 hotels
-Step 1: ₹1,00,000 ÷ ₹100 = 1,000 transactions  
-Step 2: 1,000 transactions × 5 miles = 5,000 miles
+Step 1: Check exclusions - hotels not excluded
+Step 2: ₹1,00,000 ÷ ₹100 = 1,000 transactions  
+Step 3: 1,000 transactions × 5 miles = 5,000 miles
 
-Example 4: Flight spending "5 miles per ₹100" with ₹2,00,000 flights
-Step 1: ₹2,00,000 ÷ ₹100 = 2,000 transactions  
-Step 2: 2,000 transactions × 5 miles = 10,000 miles
+Example 4: Fuel spending "2 miles per ₹100" with ₹10,000 fuel
+Step 1: Check exclusions - "fuel" found in accrual_exclusions
+Step 2: Fuel spending earns 0 miles (excluded category)
+Total: 0 miles
 
-Example 5: ICICI EPM "6 points per ₹200" with ₹2,00,000 spend
-Step 1: ₹2,00,000 ÷ ₹200 = 1,000 transactions  
-Step 2: 1,000 transactions × 6 points = 6,000 points
+Example 5: Mixed spending - ₹50,000 general + ₹20,000 rent
+Step 1: General: ₹50,000 ÷ ₹200 = 250 × 6 = 1,500 points
+Step 2: Rent: 0 points (excluded)
+Total: 1,500 points
 
-CRITICAL: Always check for category-specific rates FIRST before using base rates!
+CRITICAL: ALWAYS check exclusions FIRST! If excluded, rewards = 0!
 
 ALWAYS show both division AND multiplication steps separately!
 

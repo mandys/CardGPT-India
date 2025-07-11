@@ -257,6 +257,7 @@ def main():
         # Model selection for cost optimization
         st.subheader("💰 Cost Optimization")
         use_cheaper_model = st.checkbox("Use GPT-3.5-turbo (10x cheaper)", 
+                                       value=True,  # Default to cheaper model
                                        help="GPT-3.5-turbo costs ~$0.01-0.03 per query vs GPT-4's $0.10-0.30")
         
         # Available cards display

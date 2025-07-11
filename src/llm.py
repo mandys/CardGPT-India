@@ -29,7 +29,7 @@ class LLMService:
         context_documents: List[Dict], 
         card_name: str = None, 
         use_gpt4: bool = True,
-        max_tokens: int = 1000,
+        max_tokens: int = 500,  # Reduced from 1000 to 500
         temperature: float = 0.1
     ) -> tuple[str, Dict[str, Any]]:
         """
@@ -104,6 +104,8 @@ class LLMService:
     def _create_system_prompt(self, card_name: str = None) -> str:
         """Create the system prompt for the LLM"""
         prompt = """You are an expert assistant helping users understand Indian credit card terms and conditions.
+
+RESPONSE STYLE: Be concise and direct. Avoid unnecessary explanations. Focus on key facts.
     
 IMPORTANT: When calculating total rewards/miles for a spend amount, you MUST:
 1. Identify the correct earning rate format from the context (e.g., "6 points per ₹200" or "2 miles per ₹100")
@@ -132,10 +134,8 @@ CRITICAL ARITHMETIC RULES:
 - Never round down in the middle of calculations
 - If category-specific rate exists, USE IT instead of base rate
 
-Please provide accurate, helpful answers based on the provided context. If the context doesn't contain enough information to answer the question, say so clearly.
-
-Format your response in a clear, easy-to-understand way. Use bullet points or numbered lists when appropriate.
-Include specific details like fees, interest rates, and conditions when relevant."""
+Provide concise, accurate answers based on the context. Use bullet points for clarity.
+If information is missing, state it briefly. Focus on key details: rates, fees, conditions."""
         
         if card_name:
             prompt += f"\nFocus on information about the {card_name} card."
@@ -171,38 +171,17 @@ CRITICAL: ALWAYS CHECK EXCLUSIONS FIRST!
 - Common exclusions: rent, fuel, government services, tax, utilities, insurance
 - Example: "rent" in exclusions = 0 points/miles for rent spending
 
-CALCULATION EXAMPLES WITH STEP-BY-STEP ARITHMETIC:
+CALCULATION EXAMPLES:
 
-Example 1: General spending "6 points per ₹200" with ₹50,000 spend
-Step 1: Check exclusions - general spending not excluded
-Step 2: ₹50,000 ÷ ₹200 = 250 transactions
-Step 3: 250 transactions × 6 points = 1,500 points
+• General: ₹50,000 → (₹50,000 ÷ ₹200) × 6 = 1,500 points
+• Rent: ₹20,000 → 0 points (excluded)
+• Hotels: ₹1,00,000 → (₹1,00,000 ÷ ₹100) × 5 = 5,000 miles  
+• Fuel: ₹10,000 → 0 miles (excluded)
+• Mixed: ₹50K general + ₹20K rent = 1,500 + 0 = 1,500 points
 
-Example 2: Rent spending "6 points per ₹200" with ₹20,000 rent
-Step 1: Check exclusions - "rent" found in accrual_exclusions
-Step 2: Rent spending earns 0 points (excluded category)
-Total: 0 points
+CRITICAL: Check exclusions first! If excluded, rewards = 0!
 
-Example 3: Hotel spending "5 miles per ₹100" with ₹1,00,000 hotels
-Step 1: Check exclusions - hotels not excluded
-Step 2: ₹1,00,000 ÷ ₹100 = 1,000 transactions  
-Step 3: 1,000 transactions × 5 miles = 5,000 miles
-
-Example 4: Fuel spending "2 miles per ₹100" with ₹10,000 fuel
-Step 1: Check exclusions - "fuel" found in accrual_exclusions
-Step 2: Fuel spending earns 0 miles (excluded category)
-Total: 0 miles
-
-Example 5: Mixed spending - ₹50,000 general + ₹20,000 rent
-Step 1: General: ₹50,000 ÷ ₹200 = 250 × 6 = 1,500 points
-Step 2: Rent: 0 points (excluded)
-Total: 1,500 points
-
-CRITICAL: ALWAYS check exclusions FIRST! If excluded, rewards = 0!
-
-ALWAYS show both division AND multiplication steps separately!
-
-Please provide a comprehensive answer based on the information provided."""
+Show calculation steps. Be concise but complete."""
     
     def _no_context_response(self) -> str:
         """Response when no relevant context is found"""

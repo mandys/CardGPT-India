@@ -10,27 +10,33 @@ A modular RAG (Retrieval-Augmented Generation) application for querying Indian c
 - **Token usage tracking** and cost optimization features
 
 ## Current Working Status
-✅ **Functional**: Both modular (`app.py`) and legacy (`streamlit_standalone.py`) versions work
+✅ **Functional**: Single modular Python application (`app.py`) with organized `src/` modules
 ✅ **Data Processing**: Handles both `common_terms` and `card` sections from JSON files
 ✅ **Cost Tracking**: Real-time token usage and pricing display
 ✅ **Model Selection**: GPT-4 vs GPT-3.5-turbo cost optimization
+✅ **Category-specific rates**: Enhanced prompts for travel vs general spending calculations
 
 ## Recent Bug Fixes
-- Fixed miles calculation issue: Now correctly combines base earning rate + milestone bonuses
-- Enhanced prompts to force step-by-step calculations
-- Added keyword boosting for spend-related queries to ensure retrieval of both reward and milestone data
+- Fixed category-specific earning rates (hotels/flights get 5 EM vs 2 EM base rate)
+- Enhanced prompts to handle travel vs general spending properly
+- Fixed conservative category detection to avoid assuming travel spending
+- Improved example questions with better templates
+- Cleaned up repository by removing obsolete Node.js files
 
 ## File Structure
 ```
-├── app.py (new modular version)
-├── streamlit_standalone.py (legacy working version)  
+├── app.py (modular Python application)
 ├── src/
-│   ├── embedder.py (OpenAI embeddings)
-│   ├── llm.py (GPT-4/3.5 responses)
-│   ├── retriever.py (vector search)
+│   ├── embedder.py (OpenAI embeddings with batch processing)
+│   ├── llm.py (GPT-4/3.5 responses with category-aware prompts)
+│   ├── retriever.py (vector search with keyword boosting)
+│   └── __init__.py (package initialization)
 ├── data/ (credit card JSON files)
-├── requirements.txt
-└── README.md (updated with modular docs)
+├── requirements.txt (Python dependencies)
+├── README.md (updated Python-only documentation)
+├── CLAUDE.md (development guidance)
+├── behind_the_scenes.md (technical deep dive)
+└── claude-context.md (project context)
 ```
 
 ## Key Features
@@ -38,9 +44,11 @@ A modular RAG (Retrieval-Augmented Generation) application for querying Indian c
 - **In-memory search**: Cosine similarity calculations
 - **Cost transparency**: Shows exact OpenAI API costs per query
 - **Multiple query modes**: General, specific card, compare cards
-- **Keyword boosting**: Better retrieval for calculation queries
+- **Category-aware calculations**: Proper handling of travel vs general spending rates
+- **Improved UI**: Better example questions and fixed interaction bugs
 
-## Next Steps (pending)
-- Initialize git repository
-- Commit with proper .gitignore
-- Test modular version thoroughly
+## Architecture Evolution
+- **Started as**: Supavec clone with Node.js backend + Streamlit frontend
+- **Evolved to**: Pure Python modular application with organized structure
+- **Current state**: Single `app.py` orchestrating three focused modules
+- **Benefits**: Easier maintenance, better organization, no duplicate code

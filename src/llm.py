@@ -107,14 +107,27 @@ class LLMService:
     
 IMPORTANT: When calculating total rewards/miles for a spend amount, you MUST:
 1. Identify the correct earning rate format from the context (e.g., "6 points per ₹200" or "2 miles per ₹100")
-2. Calculate base rewards using the EXACT formula:
-   - If "X points per ₹Y": (spend amount ÷ Y) × X points
-   - Example: "6 points per ₹200" means (₹50,000 ÷ 200) × 6 = 1,500 points
-   - Example: "2 miles per ₹100" means (₹50,000 ÷ 100) × 2 = 1,000 miles
-3. Add applicable milestone bonuses from spending thresholds
-4. Always show the correct division in your calculations
+2. Check for CATEGORY-SPECIFIC earning rates (travel, dining, etc.) vs base rates
+3. Calculate base rewards using TWO SEPARATE STEPS:
+   Step A: Calculate transactions = (spend amount ÷ Y)
+   Step B: Calculate rewards = transactions × X points/miles
+4. Add applicable milestone bonuses from spending thresholds
+5. ALWAYS show both the division AND multiplication calculations separately
 
-CRITICAL: Never assume "per ₹100" - use the exact amount specified in the earning rate!
+CATEGORY-SPECIFIC EARNING RATES:
+- DEFAULT to general spending unless category is explicitly mentioned
+- Only use accelerated rates when question specifically mentions travel categories
+- Hotels/Hotel bookings (when mentioned) = "Direct Hotels" category = accelerated travel rate
+- Airlines/Flights (when mentioned) = "Direct Airlines" category = accelerated travel rate  
+- General spending (default) = Use base rate (e.g., "2 miles per ₹100")
+- Check for monthly caps on accelerated earning only if travel category is mentioned
+- DO NOT assume travel spending unless explicitly stated
+
+CRITICAL ARITHMETIC RULES:
+- Show intermediate results for each step
+- Double-check your multiplication (e.g., 1,000 × 6 = 6,000, not 1,000)
+- Never round down in the middle of calculations
+- If category-specific rate exists, USE IT instead of base rate
 
 Please provide accurate, helpful answers based on the provided context. If the context doesn't contain enough information to answer the question, say so clearly.
 
@@ -134,15 +147,46 @@ Context:
 {context}
 
 IMPORTANT: If the question involves calculating total rewards/miles for a spending amount:
-1. First identify the exact earning rate format from context (e.g., "6 points per ₹200", "2 miles per ₹100")
-2. Calculate base rewards using the CORRECT formula: (spend amount ÷ Y) × X 
-   where "X points/miles per ₹Y" is the earning rate
-3. Then identify applicable milestone bonuses from the spending amount
-4. Add base rewards + milestone bonuses for the total
-5. Show each step with the correct division calculation
+1. DEFAULT to general spending UNLESS specific category is mentioned
+2. Only use category-specific rates if the question explicitly mentions:
+   - "hotels", "hotel bookings", "accommodation"
+   - "flights", "airlines", "air travel"  
+   - "travel", "vacation", "trip"
+3. Use the CORRECT earning rate based on what's explicitly mentioned:
+   - Hotels/Hotel bookings (when mentioned): Use accelerated travel rate (e.g., "5 miles per ₹100")
+   - Airlines/Flights (when mentioned): Use accelerated travel rate (e.g., "5 miles per ₹100") 
+   - General spending (default): Use base rate (e.g., "2 miles per ₹100")
+4. Calculate rewards using the CORRECT formula: (spend amount ÷ Y) × X 
+   where "X points/miles per ₹Y" is the earning rate FOR THAT CATEGORY
+5. Then identify applicable milestone bonuses from the spending amount
+6. Add base rewards + milestone bonuses for the total
+7. Show each step with the correct division calculation
 
-EXAMPLE: If earning rate is "6 points per ₹200" and spend is ₹50,000:
-Base rewards = (₹50,000 ÷ ₹200) × 6 = 250 × 6 = 1,500 points
+CALCULATION EXAMPLES WITH STEP-BY-STEP ARITHMETIC:
+
+Example 1: General spending "6 points per ₹200" with ₹50,000 spend
+Step 1: ₹50,000 ÷ ₹200 = 250 transactions
+Step 2: 250 transactions × 6 points = 1,500 points
+
+Example 2: General spending "2 miles per ₹100" with ₹7,50,000 spend  
+Step 1: ₹7,50,000 ÷ ₹100 = 7,500 transactions
+Step 2: 7,500 transactions × 2 miles = 15,000 miles
+
+Example 3: Hotel spending "5 miles per ₹100" with ₹1,00,000 hotels
+Step 1: ₹1,00,000 ÷ ₹100 = 1,000 transactions  
+Step 2: 1,000 transactions × 5 miles = 5,000 miles
+
+Example 4: Flight spending "5 miles per ₹100" with ₹2,00,000 flights
+Step 1: ₹2,00,000 ÷ ₹100 = 2,000 transactions  
+Step 2: 2,000 transactions × 5 miles = 10,000 miles
+
+Example 5: ICICI EPM "6 points per ₹200" with ₹2,00,000 spend
+Step 1: ₹2,00,000 ÷ ₹200 = 1,000 transactions  
+Step 2: 1,000 transactions × 6 points = 6,000 points
+
+CRITICAL: Always check for category-specific rates FIRST before using base rates!
+
+ALWAYS show both division AND multiplication steps separately!
 
 Please provide a comprehensive answer based on the information provided."""
     

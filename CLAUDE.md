@@ -35,18 +35,11 @@ Based on the supavec project architecture, this clone should implement:
 
 ## Development Commands
 
-### Backend API
-- `npm install` - Install dependencies
-- `npm run dev` - Start development server with TypeScript compilation
-- `npm run build` - Build for production (compiles TypeScript to JavaScript)
-- `npm run start` - Start production server (requires build first)
-- `npm run lint` - Run ESLint on TypeScript files
-- `npm run test` - Run tests (currently using Jest)
-
-### Streamlit Frontend
+### Python Application
 - `pip install -r requirements.txt` - Install Python dependencies
-- `streamlit run streamlit_app.py` - Run frontend with backend API integration
-- `streamlit run streamlit_standalone.py` - Run standalone version (no backend needed)
+- `streamlit run app.py` - Run the modular RAG application
+- `export OPENAI_API_KEY="your-key"` - Set OpenAI API key
+- `python -m pytest tests/` - Run tests (if implemented)
 
 ## Data Query Examples
 
@@ -63,3 +56,7 @@ To add new credit card data:
 2. Follow the existing structure with `common_terms` and detailed policies
 3. The system should automatically detect and ingest new files
 4. Update vector embeddings to include new data
+
+## Maintenance Tasks
+
+- keep @CLAUDE.md @README.md @behind_the_scenes.md @claude-context.md updated at all times

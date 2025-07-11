@@ -106,6 +106,8 @@ class LLMService:
         prompt = """You are an expert assistant helping users understand Indian credit card terms and conditions.
 
 RESPONSE STYLE: Be concise and direct. Avoid unnecessary explanations. Focus on key facts.
+
+COMPARISON QUESTIONS: When asked about "both cards" or comparing cards, ALWAYS discuss BOTH cards with their specific details.
     
 IMPORTANT: When calculating total rewards/miles for a spend amount, you MUST:
 1. Identify the correct earning rate format from the context (e.g., "6 points per ₹200" or "2 miles per ₹100")
@@ -113,7 +115,7 @@ IMPORTANT: When calculating total rewards/miles for a spend amount, you MUST:
 3. Calculate base rewards using TWO SEPARATE STEPS:
    Step A: Calculate transactions = (spend amount ÷ Y)
    Step B: Calculate rewards = transactions × X points/miles
-4. Add applicable milestone bonuses from spending thresholds
+4. Add applicable milestone bonuses from spending thresholds (CUMULATIVE - all milestones achieved)
 5. ALWAYS show both the division AND multiplication calculations separately
 
 EXCLUSIONS AND EARNING RATES:
@@ -146,6 +148,8 @@ If information is missing, state it briefly. Focus on key details: rates, fees, 
         """Create the user prompt with question and context"""
         return f"""Based on the following credit card information, please answer this question: "{question}"
 
+IMPORTANT: If the question asks about multiple cards or is a comparison, discuss ALL relevant cards mentioned in the context.
+
 Context:
 {context}
 
@@ -162,22 +166,30 @@ IMPORTANT: If the question involves calculating total rewards/miles for a spendi
    - General spending (default): Use base rate (e.g., "2 miles per ₹100")
 5. Calculate rewards using the CORRECT formula: (spend amount ÷ Y) × X 
    where "X points/miles per ₹Y" is the earning rate FOR THAT CATEGORY
-6. Then identify applicable milestone bonuses from the spending amount
-7. Add base rewards + milestone bonuses for the total
+6. Then identify ALL milestone bonuses achieved (cumulative - include all thresholds passed)
+7. Add base rewards + ALL milestone bonuses for the total
 8. Show each step with the correct division calculation
 
-CRITICAL: ALWAYS CHECK EXCLUSIONS FIRST!
-- If context shows "accrual_exclusions" containing the spending category, rewards = 0
-- Common exclusions: rent, fuel, government services, tax, utilities, insurance
-- Example: "rent" in exclusions = 0 points/miles for rent spending
+CRITICAL RULES:
+1. CHECK EXCLUSIONS FIRST! If excluded, rewards = 0
+2. MILESTONE BONUSES ARE CUMULATIVE! For ₹7.5L spend, include ₹3L + ₹7.5L milestones
+
+EXCLUSIONS:
+- ICICI EPM: government services, tax, rent, fuel, EMI conversions
+- Axis Atlas: government institution, rent, fuel, utilities, insurance, wallet, jewellery, telecom
+
+MILESTONE LOGIC:
+- For spend amount, include ALL milestone thresholds that were crossed
+- Example: ₹7.5L spend → ₹3L milestone (2,500) + ₹7.5L milestone (2,500) = 5,000 bonus miles
 
 CALCULATION EXAMPLES:
 
 • General: ₹50,000 → (₹50,000 ÷ ₹200) × 6 = 1,500 points
-• Rent: ₹20,000 → 0 points (excluded)
-• Hotels: ₹1,00,000 → (₹1,00,000 ÷ ₹100) × 5 = 5,000 miles  
-• Fuel: ₹10,000 → 0 miles (excluded)
-• Mixed: ₹50K general + ₹20K rent = 1,500 + 0 = 1,500 points
+• Government: ₹20,000 → 0 points/miles (excluded on both cards)
+• Rent: ₹20,000 → 0 points/miles (excluded on both cards)
+• Education (ICICI): ₹50,000 → 1,500 points (capped at 1,000 points)
+• Atlas ₹7.5L spend: Base 15,000 + Milestones (2,500+2,500) = 20,000 miles
+• Hotels: ₹1,00,000 → (₹1,00,000 ÷ ₹100) × 5 = 5,000 miles
 
 CRITICAL: Check exclusions first! If excluded, rewards = 0!
 

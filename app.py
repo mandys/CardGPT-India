@@ -104,6 +104,10 @@ def process_query(
     if any(keyword in question.lower() for keyword in ['spend', 'earn', 'miles', 'points', 'yearly', 'annual']):
         boost_keywords = ['reward', 'milestone']
     
+    # Check if question implies comparison (both cards, compare, etc.)
+    comparison_keywords = ['both cards', 'compare', 'better', 'which card', 'icici and atlas', 'atlas and icici']
+    is_comparison_question = any(keyword in question.lower() for keyword in comparison_keywords)
+    
     # Search for relevant documents
     relevant_docs = retriever.search_similar_documents(
         query_embedding=query_embedding,
@@ -112,9 +116,20 @@ def process_query(
         boost_keywords=boost_keywords
     )
     
-    # Filter for comparison mode
+    # Filter for comparison mode or auto-detected comparison questions
     if query_mode == "Compare Cards" and len(selected_cards) >= 2:
         relevant_docs = [doc for doc in relevant_docs if doc['cardName'] in selected_cards]
+    elif is_comparison_question and query_mode == "General Query":
+        # For general queries that are actually comparisons, ensure we get docs from both cards
+        card_names = set([doc['cardName'] for doc in relevant_docs])
+        if len(card_names) < 2:
+            # If we only got docs from one card, boost the search to include both
+            relevant_docs = retriever.search_similar_documents(
+                query_embedding=query_embedding,
+                top_k=top_k * 2,  # Double the search to ensure both cards
+                card_filter=None,
+                boost_keywords=boost_keywords
+            )
     
     # Generate answer
     card_context = selected_cards[0] if query_mode == "Specific Card" and selected_cards else None

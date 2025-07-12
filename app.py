@@ -107,10 +107,18 @@ def process_query(
         # For comparison, we'll search across all selected cards
         pass
     
-    # Apply keyword boosting for spend-related queries
+    # Apply keyword boosting for spend-related and milestone queries
     boost_keywords = []
     if any(keyword in question.lower() for keyword in ['spend', 'earn', 'miles', 'points', 'yearly', 'annual']):
         boost_keywords = ['reward', 'milestone']
+    
+    # Boost milestone-related searches
+    if any(keyword in question.lower() for keyword in ['milestone', 'milestones', 'milestone benefit', 'milestone benefits']):
+        boost_keywords.extend(['milestone', 'renewal_benefits', 'easemytrip'])
+    
+    # Boost renewal benefits searches  
+    if any(keyword in question.lower() for keyword in ['renewal', 'renewal benefit', 'renewal benefits', 'annual benefit']):
+        boost_keywords.extend(['renewal', 'milestone', 'welcome'])
     
     # Check if question implies comparison (both cards, compare, etc.)
     comparison_keywords = ['both cards', 'compare', 'better', 'which card', 'icici and atlas', 'atlas and icici']

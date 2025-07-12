@@ -184,11 +184,24 @@ class LLMService:
             return f"Error generating answer: {error_msg}", {"tokens": 0, "cost": 0, "model": model}
     
     def _build_context(self, documents: List[Dict]) -> str:
-        """Build concise context string from relevant documents"""
-        return "\n\n".join([
-            f"{doc['cardName']} {doc['section']}: {doc['content'][:400]}{'...' if len(doc['content']) > 400 else ''}"
-            for doc in documents
-        ])
+        """Build context string from relevant documents with smart truncation"""
+        context_parts = []
+        for doc in documents:
+            # Give full content for renewal benefits, welcome benefits, and important sections
+            important_sections = ['renewal_benefits', 'welcome_benefits', 'milestones', 'tier_structure']
+            
+            if any(section in doc['section'] for section in important_sections):
+                # Full content for important sections
+                content = doc['content']
+            else:
+                # Truncate other sections to 400 chars
+                content = doc['content'][:400]
+                if len(doc['content']) > 400:
+                    content += '...'
+            
+            context_parts.append(f"{doc['cardName']} {doc['section']}: {content}")
+        
+        return "\n\n".join(context_parts)
     
     def _create_system_prompt(self, card_name: str = None) -> str:
         """Create a concise system prompt for the LLM"""

@@ -22,6 +22,8 @@ A modular RAG (Retrieval-Augmented Generation) application for querying Indian c
 ✅ **Token Optimization**: Reduced token usage by 60% while maintaining accuracy
 
 ## Recent Major Improvements
+- **Added renewal benefits data** for both Axis Atlas and ICICI EPM cards (46 documents total)
+- **Fixed context truncation** for renewal benefits and other important sections
 - **Added Gemini support** with Flash/Pro models (20x cost reduction)
 - **Fixed calculation accuracy** with enhanced prompts and examples
 - **Smart model selection** auto-routes complex queries to better models  

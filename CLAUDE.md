@@ -14,8 +14,9 @@ The project contains credit card data in JSON format in the `/data` directory:
 
 Each JSON file contains structured data with:
 - `common_terms` - Standard credit card terms like interest rates, fees, and policies
+- `card` - Card-specific information including rewards, fees, milestones, renewal benefits
 - Detailed information about finance charges, surcharge fees, cash withdrawal policies
-- Reward points policies and card management rules
+- Reward points policies, renewal benefits, and card management rules
 
 ## Architecture
 
@@ -67,6 +68,7 @@ To add new credit card data:
 ## Maintenance Tasks
 
 - keep @CLAUDE.md @README.md @behind_the_scenes.md @claude-context.md updated at all times
+- Always do a git add/commit of code when updating core functionality documentation files
 
 ## Commit Guidelines
 

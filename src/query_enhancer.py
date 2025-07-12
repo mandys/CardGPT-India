@@ -34,7 +34,8 @@ class QueryEnhancer:
             ],
             'utility': [
                 'utility', 'utilities', 'electricity', 'electric bill',
-                'water bill', 'mobile bill', 'internet', 'broadband'
+                'water bill', 'mobile bill', 'internet', 'broadband',
+                'utility payment', 'utility payments'
             ],
             'grocery': [
                 'grocery', 'groceries', 'supermarket', 'vegetables',
@@ -114,7 +115,9 @@ class QueryEnhancer:
             # Make category explicit in the query with specific card guidance
             if category in ['hotel', 'flight']:
                 enhanced_query += f"\n\nIMPORTANT: This is specifically about {category} spending. Use the accelerated {category} earning rate, NOT the base rate."
-            elif category in ['fuel', 'utility', 'rent', 'government', 'insurance']:
+            elif category == 'utility':
+                enhanced_query += f"\n\nIMPORTANT: This is about utility spending. Axis Atlas EXCLUDES utilities (0 rewards). ICICI EPM earns rewards but CAPPED at 1,000 points per cycle."
+            elif category in ['fuel', 'rent', 'government', 'insurance']:
                 enhanced_query += f"\n\nIMPORTANT: This is about {category} spending. Check exclusions first - this category may be excluded from earning rewards."
             elif category == 'education':
                 enhanced_query += f"\n\nIMPORTANT: This is about education spending. ICICI EPM has a cap of 1,000 points per cycle for education. Axis Atlas has NO exclusions for education - use base rate (2 miles per ₹100)."

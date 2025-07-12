@@ -291,7 +291,7 @@ python -m pytest tests/  # (if you add tests)
 
 ## Credits
 
-**Built by:** [@maharajamandy](https://x.com/maharajamandy)  
+**Built by:** [@maharajamandy](https://x.com/maharajamandy) & [@jockaayush](https://x.com/jockaayush)  
 **Powered by:** OpenAI (GPT-4/3.5) + Google Gemini (Flash/Pro)  
 **Framework:** Streamlit + Python  
 **Cost Optimized:** Gemini Flash queries cost only $0.0003 each!

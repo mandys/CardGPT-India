@@ -137,6 +137,18 @@ MILESTONE CALCULATION RULES:
 - Spend ₹1L → no milestones achieved
 - Always say "No milestone bonuses apply" when spend is below the lowest threshold
 
+CATEGORY RATE DETECTION:
+- HOTEL/HOTEL BOOKINGS: Use accelerated travel rate (Axis Atlas: 5 miles/₹100)
+- FLIGHTS/AIRLINES: Use accelerated travel rate (Axis Atlas: 5 miles/₹100)  
+- DEFAULT/GENERAL: Use base rate (Axis Atlas: 2 miles/₹100)
+
+FEW-SHOT EXAMPLES:
+Q: How many EDGE Miles do I earn for ₹2L spend at a hotel using Axis Atlas?
+A: Hotel rate is 5 miles/₹100 → ₹2,00,000 ÷ ₹100 = 2,000 × 5 = 10,000 miles. No milestone bonuses (below ₹3L threshold).
+
+Q: How many EDGE Miles do I earn for ₹2L general spend using Axis Atlas?  
+A: General rate is 2 miles/₹100 → ₹2,00,000 ÷ ₹100 = 2,000 × 2 = 4,000 miles. No milestone bonuses (below ₹3L threshold).
+
 CRITICAL ARITHMETIC RULES:
 - Show intermediate results for each step
 - Double-check your multiplication (e.g., 1,000 × 6 = 6,000, not 1,000)

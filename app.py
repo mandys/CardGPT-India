@@ -12,6 +12,7 @@ from typing import List, Dict, Any
 from src.embedder import EmbeddingService
 from src.llm import LLMService
 from src.retriever import DocumentRetriever
+from src.query_enhancer import QueryEnhancer
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -51,8 +52,9 @@ def initialize_services():
     embedder = EmbeddingService(api_key)
     llm = LLMService(api_key)
     retriever = DocumentRetriever()
+    query_enhancer = QueryEnhancer()
     
-    return embedder, llm, retriever
+    return embedder, llm, retriever, query_enhancer
 
 
 @st.cache_data
@@ -84,11 +86,19 @@ def process_query(
     use_cheaper_model: bool,
     retriever: DocumentRetriever,
     embedder: EmbeddingService,
-    llm: LLMService
+    llm: LLMService,
+    query_enhancer: QueryEnhancer
 ) -> Dict[str, Any]:
     """Process a user query and return results"""
     
-    # Generate query embedding
+    # Enhance query with category detection
+    enhanced_question, metadata = query_enhancer.enhance_query(question)
+    
+    # Log category detection if found
+    if metadata['category_detected']:
+        logger.info(f"Category detected: {metadata['category_detected']} for question: {question[:50]}...")
+    
+    # Generate query embedding (use original question for embedding to maintain search accuracy)
     query_embedding, embedding_usage = embedder.generate_single_embedding(question)
     
     # Determine search filters
@@ -131,10 +141,10 @@ def process_query(
                 boost_keywords=boost_keywords
             )
     
-    # Generate answer
+    # Generate answer using enhanced question
     card_context = selected_cards[0] if query_mode == "Specific Card" and selected_cards else None
     answer, llm_usage = llm.generate_answer(
-        question=question,
+        question=enhanced_question,  # Use enhanced question for LLM
         context_documents=relevant_docs,
         card_name=card_context,
         use_gpt4=not use_cheaper_model
@@ -152,7 +162,7 @@ def process_query(
     }
 
 
-def process_and_display_query(prompt, query_mode, selected_cards, top_k, use_cheaper_model, retriever, embedder, llm):
+def process_and_display_query(prompt, query_mode, selected_cards, top_k, use_cheaper_model, retriever, embedder, llm, query_enhancer):
     """Process a query and display the results"""
     try:
         # Process the query
@@ -164,7 +174,8 @@ def process_and_display_query(prompt, query_mode, selected_cards, top_k, use_che
             use_cheaper_model=use_cheaper_model,
             retriever=retriever,
             embedder=embedder,
-            llm=llm
+            llm=llm,
+            query_enhancer=query_enhancer
         )
         
         # Display answer
@@ -223,12 +234,13 @@ def main():
     """Main application function"""
     
     # Initialize services
-    embedder, llm, retriever = initialize_services()
+    embedder, llm, retriever, query_enhancer = initialize_services()
     
     # Store in session state
     st.session_state.embedder = embedder
     st.session_state.llm = llm
     st.session_state.retriever = retriever
+    st.session_state.query_enhancer = query_enhancer
     
     # Load and process data
     available_cards, _ = load_and_process_data(retriever, embedder)
@@ -326,7 +338,7 @@ def main():
         # Generate response
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                process_and_display_query(prompt, query_mode, selected_cards, top_k, use_cheaper_model, retriever, embedder, llm)
+                process_and_display_query(prompt, query_mode, selected_cards, top_k, use_cheaper_model, retriever, embedder, llm, query_enhancer)
     
     # Check if there's a new user message that needs processing (from example buttons)
     if (hasattr(st.session_state, 'process_last_message') and 
@@ -343,7 +355,7 @@ def main():
         # Generate response
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                process_and_display_query(prompt, query_mode, selected_cards, top_k, use_cheaper_model, retriever, embedder, llm)
+                process_and_display_query(prompt, query_mode, selected_cards, top_k, use_cheaper_model, retriever, embedder, llm, query_enhancer)
         
         # Clear the flag
         st.session_state.process_last_message = False

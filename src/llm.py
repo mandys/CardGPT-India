@@ -4,8 +4,10 @@ Handles text generation using OpenAI's chat models (GPT-4, GPT-3.5-turbo)
 """
 
 import openai
+import google.generativeai as genai
 from typing import List, Dict, Any
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -13,14 +15,26 @@ logger = logging.getLogger(__name__)
 class LLMService:
     """Service for generating answers using OpenAI's chat models"""
     
-    def __init__(self, api_key: str):
-        """Initialize the LLM service with OpenAI API key"""
+    def __init__(self, api_key: str, gemini_api_key: str = None):
+        """Initialize the LLM service with API keys"""
         self.client = openai.OpenAI(api_key=api_key)
+        
+        # Initialize Gemini if API key provided
+        self.gemini_available = False
+        if gemini_api_key:
+            try:
+                genai.configure(api_key=gemini_api_key)
+                self.gemini_available = True
+                logger.info("Gemini API initialized successfully")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Gemini: {e}")
         
         # Model pricing (per 1K tokens)
         self.model_pricing = {
             "gpt-4": {"input": 0.03, "output": 0.06},
-            "gpt-3.5-turbo": {"input": 0.0015, "output": 0.002}
+            "gpt-3.5-turbo": {"input": 0.0015, "output": 0.002},
+            "gemini-1.5-flash": {"input": 0.000075, "output": 0.0003},  # Much cheaper!
+            "gemini-1.5-pro": {"input": 0.00125, "output": 0.005}
         }
     
     def generate_answer(
@@ -28,18 +42,18 @@ class LLMService:
         question: str, 
         context_documents: List[Dict], 
         card_name: str = None, 
-        use_gpt4: bool = True,
-        max_tokens: int = 500,  # Reduced from 1000 to 500
+        model_choice: str = "gpt-3.5-turbo",  # Changed from use_gpt4 bool
+        max_tokens: int = 500,
         temperature: float = 0.1
     ) -> tuple[str, Dict[str, Any]]:
         """
-        Generate an answer using OpenAI's chat models
+        Generate an answer using selected LLM
         
         Args:
             question: User's question
             context_documents: Relevant documents for context
             card_name: Specific card to focus on (optional)
-            use_gpt4: Whether to use GPT-4 (True) or GPT-3.5-turbo (False)
+            model_choice: Model to use (gpt-4, gpt-3.5-turbo, gemini-1.5-flash, gemini-1.5-pro)
             max_tokens: Maximum tokens in response
             temperature: Creativity parameter (0.0 to 1.0)
             
@@ -56,8 +70,14 @@ class LLMService:
         system_prompt = self._create_system_prompt(card_name)
         user_prompt = self._create_user_prompt(question, context)
         
-        # Select model and pricing
-        model = "gpt-4" if use_gpt4 else "gpt-3.5-turbo"
+        # Route to appropriate model
+        if model_choice.startswith("gemini"):
+            return self._generate_gemini_answer(system_prompt, user_prompt, model_choice, max_tokens, temperature)
+        else:
+            return self._generate_openai_answer(system_prompt, user_prompt, model_choice, max_tokens, temperature)
+    
+    def _generate_openai_answer(self, system_prompt: str, user_prompt: str, model: str, max_tokens: int, temperature: float):
+        """Generate answer using OpenAI models"""
         pricing = self.model_pricing[model]
         
         try:
@@ -87,6 +107,51 @@ class LLMService:
             
             answer = response.choices[0].message.content or "Sorry, I couldn't generate a response."
             logger.info(f"Generated answer using {model}: {input_tokens} input + {output_tokens} output tokens")
+            
+            return answer, usage_info
+            
+        except Exception as e:
+            logger.error(f"Error generating answer with {model}: {str(e)}")
+            return f"Error generating answer: {str(e)}", {"tokens": 0, "cost": 0, "model": model}
+    
+    def _generate_gemini_answer(self, system_prompt: str, user_prompt: str, model: str, max_tokens: int, temperature: float):
+        """Generate answer using Gemini models"""
+        if not self.gemini_available:
+            return "Gemini not available. Please check API key.", {"tokens": 0, "cost": 0, "model": model}
+        
+        pricing = self.model_pricing[model]
+        
+        try:
+            # Combine system and user prompts for Gemini
+            combined_prompt = f"{system_prompt}\n\n{user_prompt}"
+            
+            gemini_model = genai.GenerativeModel(
+                model_name=model.replace("-", ""),  # gemini-1.5-flash -> gemini15flash
+                generation_config=genai.types.GenerationConfig(
+                    max_output_tokens=max_tokens,
+                    temperature=temperature
+                )
+            )
+            
+            response = gemini_model.generate_content(combined_prompt)
+            
+            # Estimate token usage (Gemini doesn't provide exact counts)
+            input_tokens = len(combined_prompt.split()) * 1.3  # Rough estimation
+            output_tokens = len(response.text.split()) * 1.3 if response.text else 0
+            total_cost = (input_tokens * pricing["input"] / 1000) + (output_tokens * pricing["output"] / 1000)
+            
+            usage_info = {
+                "model": model,
+                "input_tokens": int(input_tokens),
+                "output_tokens": int(output_tokens),
+                "total_tokens": int(input_tokens + output_tokens),
+                "cost": total_cost,
+                "pricing": pricing,
+                "note": "Token counts estimated for Gemini"
+            }
+            
+            answer = response.text or "Sorry, I couldn't generate a response."
+            logger.info(f"Generated answer using {model}: ~{int(input_tokens)} input + ~{int(output_tokens)} output tokens")
             
             return answer, usage_info
             

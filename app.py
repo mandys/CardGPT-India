@@ -48,9 +48,12 @@ def initialize_services():
         st.error("OpenAI API key not found. Please set it in Streamlit secrets or environment variables.")
         st.stop()
     
+    # Get Gemini API key (optional)
+    gemini_key = st.secrets.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
+    
     # Initialize services
     embedder = EmbeddingService(api_key)
-    llm = LLMService(api_key)
+    llm = LLMService(api_key, gemini_key)
     retriever = DocumentRetriever()
     query_enhancer = QueryEnhancer()
     
@@ -83,7 +86,7 @@ def process_query(
     query_mode: str, 
     selected_cards: List[str], 
     top_k: int, 
-    use_cheaper_model: bool,
+    selected_model: str,
     retriever: DocumentRetriever,
     embedder: EmbeddingService,
     llm: LLMService,
@@ -148,11 +151,15 @@ def process_query(
          metadata.get('spend_amount') and float(metadata.get('spend_amount', '0').replace(',', '')) > 500000)
     )
     
-    # Use GPT-4 for complex calculations regardless of user setting
-    use_gpt4_for_query = (not use_cheaper_model) or is_complex_calculation
-    
-    if is_complex_calculation:
-        logger.info(f"Using GPT-4 for complex calculation: {question[:50]}...")
+    # Auto-upgrade to better models for complex calculations
+    model_to_use = selected_model
+    if is_complex_calculation and selected_model == "gpt-3.5-turbo":
+        # Auto-upgrade to Gemini Pro if available, otherwise GPT-4
+        if llm.gemini_available:
+            model_to_use = "gemini-1.5-pro"
+        else:
+            model_to_use = "gpt-4"
+        logger.info(f"Auto-upgraded to {model_to_use} for complex calculation: {question[:50]}...")
     
     # Generate answer using enhanced question
     card_context = selected_cards[0] if query_mode == "Specific Card" and selected_cards else None
@@ -160,7 +167,7 @@ def process_query(
         question=enhanced_question,  # Use enhanced question for LLM
         context_documents=relevant_docs,
         card_name=card_context,
-        use_gpt4=use_gpt4_for_query
+        model_choice=model_to_use
     )
     
     # Calculate total cost
@@ -175,7 +182,7 @@ def process_query(
     }
 
 
-def process_and_display_query(prompt, query_mode, selected_cards, top_k, use_cheaper_model, retriever, embedder, llm, query_enhancer):
+def process_and_display_query(prompt, query_mode, selected_cards, top_k, selected_model, retriever, embedder, llm, query_enhancer):
     """Process a query and display the results"""
     try:
         # Process the query
@@ -184,7 +191,7 @@ def process_and_display_query(prompt, query_mode, selected_cards, top_k, use_che
             query_mode=query_mode,
             selected_cards=selected_cards,
             top_k=top_k,
-            use_cheaper_model=use_cheaper_model,
+            selected_model=selected_model,
             retriever=retriever,
             embedder=embedder,
             llm=llm,
@@ -295,10 +302,32 @@ def main():
                          help="More results = higher cost but better accuracy for calculations")
         
         # Model selection for cost optimization
-        st.subheader("💰 Cost Optimization")
-        use_cheaper_model = st.checkbox("Use GPT-3.5-turbo (10x cheaper)", 
-                                       value=True,  # Default to cheaper model
-                                       help="GPT-3.5-turbo costs ~$0.01-0.03 per query vs GPT-4's $0.10-0.30")
+        st.subheader("🤖 Model Selection")
+        
+        # Check if Gemini is available
+        gemini_available = st.session_state.llm.gemini_available if hasattr(st.session_state, 'llm') else False
+        
+        model_options = ["gpt-3.5-turbo", "gpt-4"]
+        if gemini_available:
+            model_options.extend(["gemini-1.5-flash", "gemini-1.5-pro"])
+        
+        selected_model = st.selectbox(
+            "Choose AI model:",
+            model_options,
+            index=0,  # Default to GPT-3.5-turbo
+            help="GPT-3.5: $0.002, GPT-4: $0.06, Gemini Flash: $0.0003 (20x cheaper!), Gemini Pro: $0.005"
+        )
+        
+        # Show cost comparison
+        cost_info = {
+            "gpt-3.5-turbo": "$0.002 per query",
+            "gpt-4": "$0.06 per query", 
+            "gemini-1.5-flash": "$0.0003 per query (20x cheaper!)",
+            "gemini-1.5-pro": "$0.005 per query"
+        }
+        
+        if selected_model in cost_info:
+            st.info(f"💰 Expected cost: {cost_info[selected_model]}")
         
         # Available cards display
         st.header("📋 Available Cards")
@@ -351,7 +380,7 @@ def main():
         # Generate response
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                process_and_display_query(prompt, query_mode, selected_cards, top_k, use_cheaper_model, retriever, embedder, llm, query_enhancer)
+                process_and_display_query(prompt, query_mode, selected_cards, top_k, selected_model, retriever, embedder, llm, query_enhancer)
     
     # Check if there's a new user message that needs processing (from example buttons)
     if (hasattr(st.session_state, 'process_last_message') and 
@@ -368,7 +397,7 @@ def main():
         # Generate response
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                process_and_display_query(prompt, query_mode, selected_cards, top_k, use_cheaper_model, retriever, embedder, llm, query_enhancer)
+                process_and_display_query(prompt, query_mode, selected_cards, top_k, selected_model, retriever, embedder, llm, query_enhancer)
         
         # Clear the flag
         st.session_state.process_last_message = False

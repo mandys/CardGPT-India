@@ -192,6 +192,27 @@
         }
       }
     },
+    "renewal_benefits": {
+      "description": "EDGE Miles awarded upon renewal fee payment, varies by membership tier",
+      "fee_requirement": "₹5,000 + GST annual fee payment",
+      "credit_time": "Miles credited to EDGE Miles account after successful annual fee payment",
+      "tier_benefits": {
+        "Silver": {
+          "edge_miles": 0,
+          "description": "No renewal bonus"
+        },
+        "Gold": {
+          "edge_miles": 2500,
+          "description": "2,500 EDGE Miles upon renewal"
+        },
+        "Platinum": {
+          "edge_miles": 5000,
+          "description": "5,000 EDGE Miles upon renewal"
+        }
+      },
+      "tier_determination": "Tier is determined by spending within the anniversary year",
+      "notes": "Renewal benefits are in addition to the annual bonus mentioned in tier structure"
+    },
     "miles_transfer": {
       "conversion": {
         "default": "1 EDGE Mile = 2 Partner Points",

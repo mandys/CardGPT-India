@@ -4,19 +4,19 @@
 
 ### **Phase 1: Initial Document Processing (One-time Setup)**
 ```
-INFO:src.retriever:Loaded 44 documents from 2 files
+INFO:src.retriever:Loaded 46 documents from 2 files
 INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
 INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
-... (repeated 44 times)
-INFO:src.embedder:Generated 44/44 embeddings successfully
-INFO:src.retriever:Stored 44 documents with embeddings
+... (repeated 46 times)
+INFO:src.embedder:Generated 46/46 embeddings successfully
+INFO:src.retriever:Stored 46 documents with embeddings
 ```
 
 **What's happening:**
 1. **JSON Parsing**: Load `axis-atlas.json` and `icici-epm.json` files
 2. **Document Creation**: Each JSON section becomes a separate "document"
 3. **Individual Embedding Calls**: Each document sent separately to OpenAI embedding API
-4. **Vector Storage**: Store 44 vectors in memory for future searches
+4. **Vector Storage**: Store 46 vectors in memory for future searches
 
 ### **Phase 2: User Query Processing (Per Question)**
 ```
@@ -30,7 +30,7 @@ INFO:src.llm:Generated answer using gemini-1.5-flash: ~1200 input + ~150 output 
 
 **What's happening:**
 1. **Query Embedding**: Convert user question to vector (1 API call)
-2. **Local Vector Search**: Compare query vector against 44 stored vectors using cosine similarity
+2. **Local Vector Search**: Compare query vector against 46 stored vectors using cosine similarity
 3. **Context Retrieval**: Found 7 most similar documents 
 4. **Smart Model Selection**: Choose optimal model based on query complexity
 5. **Answer Generation**: Send enhanced question + 4 documents to selected model (1 API call)
@@ -74,11 +74,11 @@ Document 2: {
 }
 ```
 
-**Why 44 Documents from 2 Files?**
+**Why 46 Documents from 2 Files?**
 - Each major JSON section becomes a document
-- ICICI EPM: ~22 sections → 22 documents
-- Axis Atlas: ~22 sections → 22 documents
-- **Total: 44 documents**
+- ICICI EPM: ~23 sections → 23 documents
+- Axis Atlas: ~23 sections → 23 documents
+- **Total: 46 documents**
 
 ---
 
@@ -94,11 +94,11 @@ JSON Files → Document Chunking → Individual Embedding Calls → Vector Stora
 1. **Load JSON**: Read axis-atlas.json, icici-epm.json
 2. **Section Extraction**: Split each card into logical sections (rewards, fees, etc.)
 3. **Document Formatting**: Convert each section to readable text
-4. **Embedding Generation**: **44 separate API calls** to OpenAI embeddings
-5. **Vector Storage**: Store 44 vectors (1536 dimensions each) in memory
+4. **Embedding Generation**: **46 separate API calls** to OpenAI embeddings
+5. **Vector Storage**: Store 46 vectors (1536 dimensions each) in memory
 
 **🔴 Inefficiency #1: Individual Embedding Calls**
-- Current: 44 separate API calls
+- Current: 46 separate API calls
 - Could be: 1-2 batch API calls (OpenAI supports up to 2048 inputs per batch)
 
 ### **2. Query Phase (Per User Question)**
@@ -109,7 +109,7 @@ User Question → Query Embedding → Vector Search → Context Selection → LL
 
 **Detailed Flow:**
 1. **Query Embedding**: "does icici epm give points on utility spends" → vector (1 API call)
-2. **Similarity Search**: Compare query vector vs 44 stored vectors (local, fast)
+2. **Similarity Search**: Compare query vector vs 46 stored vectors (local, fast)
 3. **Ranking**: Calculate cosine similarity scores for all documents
 4. **Top-K Selection**: Pick 7 most similar documents (threshold: 0.0)
 5. **Context Building**: Combine 7 documents into context prompt
@@ -199,7 +199,7 @@ all_content = [doc.content for doc in documents]
 embeddings = openai.embeddings.create(model="text-embedding-3-small", input=all_content)
 ```
 
-**Impact:** 44 API calls → 1 API call (44x faster startup)
+**Impact:** 46 API calls → 1 API call (46x faster startup)
 
 ### **2. Persistent Vector Storage**
 **Current:** Re-generate embeddings every restart
@@ -236,7 +236,7 @@ AI model combines information:
 ## 🧮 Cost Analysis
 
 ### **One-Time Costs (Startup):**
-- 44 documents × ~200 tokens × $0.00002/1K = **$0.0002**
+- 46 documents × ~200 tokens × $0.00002/1K = **$0.0002**
 
 ### **Per Query Costs (Multi-Model):**
 - Query embedding: ~10 tokens × $0.00002/1K = **$0.0000002**

@@ -99,6 +99,49 @@
         "reference_sources": "[36-41]"
       }
     },
+    "renewal_benefits": {
+      "description": "Comprehensive renewal benefits for ICICI Bank Emeralde Private Metal Credit Card upon annual fee payment",
+      "fee_requirement": "₹12,499 annual fee (from 2nd year onwards)",
+      "credit_time": "Benefits credited within 45 days of fee realisation",
+      "bonus_reward_points": {
+        "points": "12,500 ICICI Bank Reward Points",
+        "description": "Annual bonus reward points upon card renewal",
+        "value": "₹12,500 (at ₹1 per point)",
+        "frequency": "Once every year upon renewal"
+      },
+      "taj_epicure_membership": {
+        "membership": "1-year Taj Epicure membership",
+        "description": "Complimentary annual renewal of Taj Epicure membership",
+        "benefits": "Exclusive benefits like complimentary night stay, discounts, and perks",
+        "eligibility": "Primary cardmembers only"
+      },
+      "milestone_benefits": {
+        "easemytrip_vouchers": {
+          "spend_4_lakh": {
+            "threshold": "₹4,00,000",
+            "benefit": "₹3,000 EaseMyTrip vouchers"
+          },
+          "spend_8_lakh": {
+            "threshold": "₹8,00,000", 
+            "benefit": "₹3,000 EaseMyTrip vouchers"
+          }
+        }
+      },
+      "movie_benefits": {
+        "bookmyshow_offer": {
+          "offer": "Buy 1 Get 1 free movie ticket",
+          "discount": "Up to ₹750 off on the second ticket",
+          "frequency": "Twice a month",
+          "description": "Movie benefits on BookMyShow platform"
+        }
+      },
+      "golf_privileges": {
+        "access": "Unlimited golf lessons or rounds",
+        "booking": "Through Golftripz platform",
+        "description": "Complimentary golf access at partner courses"
+      },
+      "notes": "All renewal benefits are subject to annual fee payment and card activation"
+    },
     "rewards": {
       "rate_general": "6 ICICI Bank Reward Points on every ₹200 spent at all eligible retail transactions",
       "value_per_point": "Up to ₹1",

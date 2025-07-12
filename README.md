@@ -212,7 +212,7 @@ User Question → Query Enhancement → Vector Search → Model Selection → AI
 - **Model**: `text-embedding-3-small`
 - **Cost**: $0.00002 per 1K tokens
 - **When**: App startup (cached until restart)
-- **Volume**: 44 documents × average 200 tokens = ~$0.0002
+- **Volume**: 46 documents × average 200 tokens = ~$0.0002
 
 #### **Answer Generation** (Per query) - Choose Your Model
 
@@ -267,7 +267,7 @@ Please provide a comprehensive answer based on the information provided.
 ## 📚 **Technical Deep Dive**
 
 For a detailed explanation of what happens behind the scenes, including:
-- Why you see 44+ API calls during startup
+- Why you see 46+ API calls during startup
 - How vector search actually works
 - What gets sent to OpenAI and why
 - Cost breakdown and optimization opportunities

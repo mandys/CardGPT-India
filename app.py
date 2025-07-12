@@ -63,20 +63,15 @@ def initialize_services():
 @st.cache_data
 def load_and_process_data(_retriever, _embedder):
     """Load documents and generate embeddings with caching"""
-    with st.spinner("Loading credit card data..."):
+    with st.spinner("Initializing AI assistant..."):
         # Load documents
         documents = _retriever.load_documents_from_json("data")
-        st.write(f"📄 Loaded {len(documents)} documents")
         
         # Generate embeddings
-        st.write("🔄 Generating embeddings (this may take 30-60 seconds)...")
         embeddings, usage = _embedder.generate_batch_embeddings(documents)
         
         # Store in retriever
         _retriever.store_documents_and_embeddings(documents, embeddings)
-        
-        st.success(f"✅ Ready! Generated embeddings for {usage['successful_embeddings']} documents")
-        st.write(f"💰 Embedding cost: ${usage['total_cost']:.4f}")
         
         return _retriever.get_available_cards(), usage
 
@@ -271,9 +266,8 @@ def main():
     
     # Sidebar configuration
     with st.sidebar:
-        st.header("🔧 Configuration")
-        st.success("✅ Standalone Mode Active")
-        st.info(f"Loaded documents from {len(available_cards)} cards")
+        st.header("🎯 Query Settings")
+        st.info(f"📊 {len(available_cards)} credit cards loaded")
         
         st.divider()
         
@@ -311,10 +305,15 @@ def main():
         if gemini_available:
             model_options.extend(["gemini-1.5-flash", "gemini-1.5-pro"])
         
+        # Set default to Gemini Flash if available, otherwise GPT-3.5
+        default_index = 0
+        if gemini_available and "gemini-1.5-flash" in model_options:
+            default_index = model_options.index("gemini-1.5-flash")
+        
         selected_model = st.selectbox(
             "Choose AI model:",
             model_options,
-            index=0,  # Default to GPT-3.5-turbo
+            index=default_index,
             help="GPT-3.5: $0.002, GPT-4: $0.06, Gemini Flash: $0.0003 (20x cheaper!), Gemini Pro: $0.005"
         )
         

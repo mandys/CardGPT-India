@@ -115,7 +115,7 @@ IMPORTANT: When calculating total rewards/miles for a spend amount, you MUST:
 3. Calculate base rewards using TWO SEPARATE STEPS:
    Step A: Calculate transactions = (spend amount ÷ Y)
    Step B: Calculate rewards = transactions × X points/miles
-4. Add applicable milestone bonuses from spending thresholds (CUMULATIVE - all milestones achieved)
+4. Check if spend meets milestone thresholds and add applicable bonuses (CUMULATIVE - all milestones achieved)
 5. ALWAYS show both the division AND multiplication calculations separately
 
 EXCLUSIONS AND EARNING RATES:
@@ -129,6 +129,13 @@ EXCLUSIONS AND EARNING RATES:
 - Check for monthly caps on accelerated earning only if travel category is mentioned
 - DO NOT assume travel spending unless explicitly stated
 - ALWAYS verify exclusions before calculating any rewards
+
+MILESTONE CALCULATION RULES:
+- NEVER apply milestone bonuses unless the spend meets or exceeds the exact threshold
+- Do not assume milestone bonuses apply just because they are present in the context
+- Spend ₹7.5L → milestone at ₹3L + milestone at ₹7.5L = both apply
+- Spend ₹1L → no milestones achieved
+- Always say "No milestone bonuses apply" when spend is below the lowest threshold
 
 CRITICAL ARITHMETIC RULES:
 - Show intermediate results for each step
@@ -166,7 +173,7 @@ IMPORTANT: If the question involves calculating total rewards/miles for a spendi
    - General spending (default): Use base rate (e.g., "2 miles per ₹100")
 5. Calculate rewards using the CORRECT formula: (spend amount ÷ Y) × X 
    where "X points/miles per ₹Y" is the earning rate FOR THAT CATEGORY
-6. Then identify ALL milestone bonuses achieved (cumulative - include all thresholds passed)
+6. Check if spend amount meets ANY milestone thresholds - if not, NO milestone bonuses apply
 7. Add base rewards + ALL milestone bonuses for the total
 8. Show each step with the correct division calculation
 
@@ -179,8 +186,9 @@ EXCLUSIONS:
 - Axis Atlas: government institution, rent, fuel, utilities, insurance, wallet, jewellery, telecom
 
 MILESTONE LOGIC:
-- For spend amount, include ALL milestone thresholds that were crossed
-- Example: ₹7.5L spend → ₹3L milestone (2,500) + ₹7.5L milestone (2,500) = 5,000 bonus miles
+- Only apply milestones if spend amount meets or exceeds the threshold
+- ₹1L spend → NO milestones achieved (below ₹3L threshold)
+- ₹7.5L spend → ₹3L milestone (2,500) + ₹7.5L milestone (2,500) = 5,000 bonus miles
 
 CALCULATION EXAMPLES:
 
@@ -189,7 +197,7 @@ CALCULATION EXAMPLES:
 • Rent: ₹20,000 → 0 points/miles (excluded on both cards)
 • Education (ICICI): ₹50,000 → 1,500 points (capped at 1,000 points)
 • Atlas ₹7.5L spend: Base 15,000 + Milestones (2,500+2,500) = 20,000 miles
-• Hotels: ₹1,00,000 → (₹1,00,000 ÷ ₹100) × 5 = 5,000 miles
+• Hotels: ₹1,00,000 → (₹1,00,000 ÷ ₹100) × 5 = 5,000 miles (no milestone bonuses - below ₹3L threshold)
 
 CRITICAL: Check exclusions first! If excluded, rewards = 0!
 

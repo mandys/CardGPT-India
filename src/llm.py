@@ -24,6 +24,12 @@ class LLMService:
         if gemini_api_key:
             try:
                 genai.configure(api_key=gemini_api_key)
+                
+                # Test with a simple model list to verify API works
+                models = genai.list_models()
+                available_models = [m.name for m in models if 'generateContent' in m.supported_generation_methods]
+                logger.info(f"Available Gemini models: {available_models[:3]}...")  # Log first few
+                
                 self.gemini_available = True
                 logger.info("Gemini API initialized successfully")
             except Exception as e:
@@ -125,8 +131,16 @@ class LLMService:
             # Combine system and user prompts for Gemini
             combined_prompt = f"{system_prompt}\n\n{user_prompt}"
             
+            # Map our model names to actual Gemini model names
+            model_mapping = {
+                "gemini-1.5-flash": "models/gemini-1.5-flash",
+                "gemini-1.5-pro": "models/gemini-1.5-pro"
+            }
+            
+            actual_model_name = model_mapping.get(model, model)
+            
             gemini_model = genai.GenerativeModel(
-                model_name=model.replace("-", ""),  # gemini-1.5-flash -> gemini15flash
+                model_name=actual_model_name,
                 generation_config=genai.types.GenerationConfig(
                     max_output_tokens=max_tokens,
                     temperature=temperature
@@ -156,8 +170,19 @@ class LLMService:
             return answer, usage_info
             
         except Exception as e:
-            logger.error(f"Error generating answer with {model}: {str(e)}")
-            return f"Error generating answer: {str(e)}", {"tokens": 0, "cost": 0, "model": model}
+            error_msg = str(e)
+            logger.error(f"Error generating answer with {model}: {error_msg}")
+            
+            # If it's a model not found error, try to list available models
+            if "not found" in error_msg.lower():
+                try:
+                    models = genai.list_models()
+                    available = [m.name for m in models if 'generateContent' in m.supported_generation_methods][:5]
+                    error_msg += f"\n\nAvailable models: {', '.join(available)}"
+                except:
+                    pass
+            
+            return f"Error generating answer: {error_msg}", {"tokens": 0, "cost": 0, "model": model}
     
     def _build_context(self, documents: List[Dict]) -> str:
         """Build concise context string from relevant documents"""

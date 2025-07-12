@@ -107,6 +107,9 @@ class QueryEnhancer:
         # Enhance the query with explicit category information
         enhanced_query = query
         
+        # Detect spend distribution queries
+        is_distribution_query = any(word in query.lower() for word in ['split', 'distribution', 'monthly', 'breakdown', 'categories'])
+        
         if category and spend_amount:
             # Make category explicit in the query with specific card guidance
             if category in ['hotel', 'flight']:
@@ -115,6 +118,10 @@ class QueryEnhancer:
                 enhanced_query += f"\n\nIMPORTANT: This is about {category} spending. Check exclusions first - this category may be excluded from earning rewards."
             elif category == 'education':
                 enhanced_query += f"\n\nIMPORTANT: This is about education spending. ICICI EPM has a cap of 1,000 points per cycle for education. Axis Atlas has NO exclusions for education - use base rate (2 miles per ₹100)."
+        elif is_distribution_query:
+            enhanced_query += f"\n\nIMPORTANT: This is a spend distribution query. For each category, calculate separately using the appropriate rate (base rate for most categories, accelerated for hotels/flights, zero for excluded categories). Do NOT add base + category rates."
+        elif spend_amount and not category:
+            enhanced_query += f"\n\nNote: No specific category mentioned, so use BASE RATE for calculation."
         
         return enhanced_query, metadata
     

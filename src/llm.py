@@ -7,7 +7,6 @@ import openai
 import google.generativeai as genai
 from typing import List, Dict, Any
 import logging
-import os
 
 logger = logging.getLogger(__name__)
 

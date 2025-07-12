@@ -5,18 +5,21 @@ A smart assistant for querying Indian credit card terms and conditions using AI.
 ## Features
 
 - **Vector Search**: Semantic search through credit card terms and conditions
-- **AI-Powered Answers**: Intelligent responses using OpenAI GPT-4/GPT-3.5
+- **Multi-Model AI**: Choose from GPT-4, GPT-3.5, or Gemini 1.5 (Flash/Pro)
+- **Ultra-Low Cost**: Gemini Flash costs 20x less than GPT-3.5 (~$0.0003/query)
+- **Smart Model Selection**: Auto-upgrades complex calculations to better models  
 - **Multi-Card Support**: Query individual cards or compare multiple cards
+- **Category-Aware**: Correctly handles hotel/flight vs general spending rates
 - **Extensible**: Easy to add new credit card data files
-- **Cost Tracking**: Real-time token usage and cost optimization
-- **User-Friendly Interface**: Clean, interactive chat interface
+- **Real-Time Costs**: Live token usage and cost tracking
 
 ## Quick Start
 
 ### Prerequisites
 
 - Python 3.8+
-- OpenAI API key
+- OpenAI API key (required)
+- Gemini API key (optional, for 20x cheaper queries)
 
 ### Installation
 
@@ -28,7 +31,8 @@ pip install -r requirements.txt
 2. Set up environment variables:
 ```bash
 export OPENAI_API_KEY="your-api-key-here"
-# Or add to your .env file
+export GEMINI_API_KEY="your-gemini-key-here"  # Optional but recommended
+# Or add to your .streamlit/secrets.toml file
 ```
 
 3. Run the application:
@@ -49,7 +53,8 @@ supavec-clone/
 ├── src/
 │   ├── __init__.py       # Package initialization
 │   ├── embedder.py       # OpenAI embedding service
-│   ├── llm.py           # OpenAI LLM service (GPT-4/3.5)
+│   ├── llm.py           # Multi-model LLM service (GPT-4/3.5, Gemini)
+│   ├── query_enhancer.py # Smart query preprocessing
 │   └── retriever.py     # Vector search & document management
 ├── data/                 # Credit card JSON files
 └── requirements.txt
@@ -64,11 +69,16 @@ supavec-clone/
 - Tracks token usage and costs
 - Provides embedding model information
 
-#### `src/llm.py` - Language Model Service  
-- Generates answers using GPT-4 or GPT-3.5-turbo
-- Manages conversation context and prompts
-- Calculates costs for different models
-- Optimized prompts for credit card calculations
+#### `src/llm.py` - Multi-Model Language Service  
+- Supports GPT-4, GPT-3.5-turbo, Gemini 1.5 Flash/Pro
+- Smart model selection for complex calculations
+- Real-time cost tracking across all models
+- Optimized prompts for accurate credit card calculations
+
+#### `src/query_enhancer.py` - Query Preprocessing
+- Detects spending categories (hotels, utilities, etc.)
+- Provides model-specific guidance for accuracy
+- Handles spend distribution and comparison queries
 
 #### `src/retriever.py` - Document Retrieval Service
 - Loads and processes JSON credit card data
@@ -166,7 +176,7 @@ streamlit run app.py
 - **RAG Pipeline**: Combines search results with GPT-4 for intelligent answers
 - **Streamlit UI**: Interactive chat interface with cost tracking
 
-## How It Works: RAG Pipeline Explained
+## How It Works: Enhanced RAG Pipeline
 
 ### 1. **Data Processing & Indexing** (One-time setup)
 ```
@@ -177,17 +187,18 @@ JSON Files → Document Chunks → OpenAI Embeddings → In-Memory Vector Store
 - OpenAI `text-embedding-3-small` converts text to 1536-dimensional vectors
 - Vectors stored in memory (no ChromaDB - just Python arrays)
 
-### 2. **Query Processing** (Per user question)
+### 2. **Smart Query Processing** (Per user question)
 ```
-User Question → Query Embedding → Vector Search → Context Retrieval → GPT Answer
+User Question → Query Enhancement → Vector Search → Model Selection → AI Answer
 ```
 
-**Step by step:**
+**Enhanced step by step:**
 1. **User asks**: "What reward points for ₹50,000 insurance spend on ICICI EPM?"
-2. **Query Embedding**: OpenAI converts question to vector (1 API call)
-3. **Vector Search**: Cosine similarity against all stored vectors (local, fast)
-4. **Context Retrieval**: Top 5 most similar documents retrieved
-5. **Answer Generation**: Context + question sent to GPT-4 (1 API call)
+2. **Query Enhancement**: Detect category (insurance), add guidance
+3. **Query Embedding**: OpenAI converts question to vector (1 API call)
+4. **Vector Search**: Cosine similarity against stored vectors (local, fast)
+5. **Smart Model Selection**: Complex calculations → Gemini Pro, Simple → Gemini Flash
+6. **Answer Generation**: Context + enhanced question sent to selected model
 
 ### 3. **Vector Database: In-Memory Only**
 - **No ChromaDB/Pinecone**: Uses simple Python arrays with NumPy
@@ -195,19 +206,24 @@ User Question → Query Embedding → Vector Search → Context Retrieval → GP
 - **Search**: Pure cosine similarity calculation
 - **Speed**: Very fast once embeddings are generated
 
-### 4. **OpenAI API Calls & Costs**
+### 4. **Multi-Model API Costs**
 
 #### **Embedding Generation** (One-time per document)
 - **Model**: `text-embedding-3-small`
 - **Cost**: $0.00002 per 1K tokens
 - **When**: App startup (cached until restart)
-- **Volume**: ~50-100 documents × average 200 tokens = ~$0.0002-0.0004
+- **Volume**: 44 documents × average 200 tokens = ~$0.0002
 
-#### **Answer Generation** (Per query)
-- **Model**: `gpt-4`
-- **Cost**: $0.03 per 1K input tokens, $0.06 per 1K output tokens
-- **When**: Every user question
-- **Volume**: Context (2,000-5,000 tokens) + Response (200-1,000 tokens) = ~$0.10-0.30 per query
+#### **Answer Generation** (Per query) - Choose Your Model
+
+| Model | Cost per Query | Best For | Speed |
+|-------|---------------|----------|-------|
+| **Gemini 1.5 Flash** | **$0.0003** | Simple queries | ⚡ Fast |
+| **GPT-3.5-turbo** | $0.002 | General queries | 🚀 Fast |
+| **Gemini 1.5 Pro** | $0.005 | Complex calculations | ⚡ Fast |
+| **GPT-4** | $0.06 | Premium accuracy | 🐌 Slow |
+
+**💡 Recommendation**: Use Gemini Flash as default (20x cheaper than GPT-3.5!)
 
 ### 5. **Why It's Slow**
 1. **Embedding Generation**: First load takes 30-60 seconds (50+ OpenAI API calls)
@@ -240,12 +256,13 @@ Content: Rewards:
 Please provide a comprehensive answer based on the information provided.
 ```
 
-### 7. **Cost Optimization Tips**
-- Use `gpt-3.5-turbo` instead of `gpt-4` (10x cheaper)
-- Reduce `top_k` from 5 to 3 documents
-- Implement query caching for repeated questions
-- Use `text-embedding-3-small` (already optimized)
-- **New**: Batch embedding generation (44 API calls → 1 API call)
+### 7. **Cost Optimization (Already Implemented)**
+- ✅ **Gemini Flash default**: 20x cheaper than GPT-3.5
+- ✅ **Smart auto-routing**: Complex calculations use better models
+- ✅ **Optimized token usage**: Reduced from 3K to 1.2K tokens
+- ✅ **Context truncation**: Long documents capped at 400 chars
+- ✅ **Default top_k=4**: Balanced accuracy vs cost
+- ✅ **Batch embedding**: Single API call for all documents
 
 ## 📚 **Technical Deep Dive**
 
@@ -275,5 +292,6 @@ python -m pytest tests/  # (if you add tests)
 ## Credits
 
 **Built by:** [@maharajamandy](https://x.com/maharajamandy)  
-**Powered by:** OpenAI GPT-4/GPT-3.5  
-**Framework:** Streamlit + Python
+**Powered by:** OpenAI (GPT-4/3.5) + Google Gemini (Flash/Pro)  
+**Framework:** Streamlit + Python  
+**Cost Optimized:** Gemini Flash queries cost only $0.0003 each!

@@ -105,20 +105,27 @@ class LLMService:
         """Create a concise system prompt for the LLM"""
         prompt = """You are a credit card expert. Be concise and accurate.
 
+CRITICAL: For each ₹ spent, apply ONLY ONE earning rate (base OR category, never both).
+
 CALCULATION RULES:
 1. Check exclusions first (government, rent, fuel, utilities may be excluded)
 2. Use exact earning rates: "X points per ₹Y" → (spend ÷ Y) × X  
-3. Category rates: Hotels/flights use accelerated rates vs base rates
+3. Category rates: Hotels/flights use accelerated rates, everything else uses base rate
 4. Milestones: Only apply if spend meets threshold (cumulative)
 
 RATES:
-- Axis Atlas: 2 miles/₹100 (base), 5 miles/₹100 (hotels/flights)
+- Axis Atlas: 2 miles/₹100 (base), 5 miles/₹100 (hotels/flights only)
 - ICICI EPM: 6 points/₹200 (all categories, with caps)
 
 EXCLUSIONS: 
 - Both: Government, rent, fuel
 - Axis only: Utilities, insurance, wallet, jewellery
 - Education: ICICI (capped 1K points), Axis (no exclusion)
+
+EXAMPLE:
+₹7.5L general spend on Atlas → (750000 ÷ 100) × 2 = 15,000 miles
+Milestones: ₹3L (2,500) + ₹7.5L (2,500) = +5,000 miles  
+✅ Total: 20,000 miles
 
 Show calculations step-by-step. For comparisons, discuss both cards."""
         
@@ -135,12 +142,12 @@ Context:
 {context}
 
 For calculations:
-1. Check exclusions first 
-2. Use exact earning rates from context
-3. Apply milestones only if spend meets thresholds
-4. Show calculation steps
+1. Check exclusions first (excluded = 0 rewards)
+2. Use ONE rate per spend: base OR category (never add both)
+3. Apply milestones only if total spend ≥ threshold
+4. Show step-by-step: (amount ÷ Y) × X = result
 
-Be concise and accurate."""
+Be precise with math. Double-check arithmetic."""
     
     def _no_context_response(self) -> str:
         """Response when no relevant context is found"""

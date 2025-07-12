@@ -141,13 +141,26 @@ def process_query(
                 boost_keywords=boost_keywords
             )
     
+    # Smart model selection for complex calculations
+    is_complex_calculation = (
+        metadata.get('is_calculation_query', False) and 
+        (any(word in question.lower() for word in ['yearly', 'annual', '7.5l', '750000', 'split', 'distribution']) or
+         metadata.get('spend_amount') and float(metadata.get('spend_amount', '0').replace(',', '')) > 500000)
+    )
+    
+    # Use GPT-4 for complex calculations regardless of user setting
+    use_gpt4_for_query = (not use_cheaper_model) or is_complex_calculation
+    
+    if is_complex_calculation:
+        logger.info(f"Using GPT-4 for complex calculation: {question[:50]}...")
+    
     # Generate answer using enhanced question
     card_context = selected_cards[0] if query_mode == "Specific Card" and selected_cards else None
     answer, llm_usage = llm.generate_answer(
         question=enhanced_question,  # Use enhanced question for LLM
         context_documents=relevant_docs,
         card_name=card_context,
-        use_gpt4=not use_cheaper_model
+        use_gpt4=use_gpt4_for_query
     )
     
     # Calculate total cost

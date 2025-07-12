@@ -452,7 +452,7 @@ def main():
     # Footer
     st.divider()
     st.markdown("---")
-    st.markdown("💳 **Credit Card Assistant** - Built by @maharajamandy | Powered by OpenAI")
+    st.markdown("💳 **Credit Card Assistant** - Built by [@maharajamandy](https://x.com/maharajamandy) & [@jockaayush](https://x.com/jockaayush) | Powered by OpenAI + Google Gemini")
 
 
 if __name__ == "__main__":

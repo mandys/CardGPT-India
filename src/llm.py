@@ -196,6 +196,7 @@ CRITICAL RULES:
 EXCLUSIONS:
 - ICICI EPM: government services, tax, rent, fuel, EMI conversions
 - Axis Atlas: government institution, rent, fuel, utilities, insurance, wallet, jewellery, telecom
+- EDUCATION: ICICI EPM earns rewards (capped at 1,000 points), Axis Atlas earns rewards (NO exclusion)
 
 MILESTONE LOGIC:
 - Only apply milestones if spend amount meets or exceeds the threshold
@@ -207,7 +208,8 @@ CALCULATION EXAMPLES:
 • General: ₹50,000 → (₹50,000 ÷ ₹200) × 6 = 1,500 points
 • Government: ₹20,000 → 0 points/miles (excluded on both cards)
 • Rent: ₹20,000 → 0 points/miles (excluded on both cards)
-• Education (ICICI): ₹50,000 → 1,500 points (capped at 1,000 points)
+• Education ICICI: ₹50,000 → (₹50,000 ÷ ₹200) × 6 = 1,500 points (capped at 1,000 points)
+• Education Axis: ₹50,000 → (₹50,000 ÷ ₹100) × 2 = 1,000 miles (no cap)
 • Atlas ₹7.5L spend: Base 15,000 + Milestones (2,500+2,500) = 20,000 miles
 • Hotels: ₹1,00,000 → (₹1,00,000 ÷ ₹100) × 5 = 5,000 miles (no milestone bonuses - below ₹3L threshold)
 

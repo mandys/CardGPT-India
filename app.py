@@ -278,7 +278,7 @@ def main():
         
         # Advanced settings
         st.header("⚙️ Advanced Settings")
-        top_k = st.slider("Number of results (top_k)", 1, 10, 7, 
+        top_k = st.slider("Number of results (top_k)", 1, 10, 4, 
                          help="More results = higher cost but better accuracy for calculations")
         
         # Model selection for cost optimization

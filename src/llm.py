@@ -95,68 +95,32 @@ class LLMService:
             return f"Error generating answer: {str(e)}", {"tokens": 0, "cost": 0, "model": model}
     
     def _build_context(self, documents: List[Dict]) -> str:
-        """Build context string from relevant documents"""
-        return "\n\n---\n\n".join([
-            f"Card: {doc['cardName']}\nSection: {doc['section']}\nContent: {doc['content']}"
+        """Build concise context string from relevant documents"""
+        return "\n\n".join([
+            f"{doc['cardName']} {doc['section']}: {doc['content'][:400]}{'...' if len(doc['content']) > 400 else ''}"
             for doc in documents
         ])
     
     def _create_system_prompt(self, card_name: str = None) -> str:
-        """Create the system prompt for the LLM"""
-        prompt = """You are an expert assistant helping users understand Indian credit card terms and conditions.
+        """Create a concise system prompt for the LLM"""
+        prompt = """You are a credit card expert. Be concise and accurate.
 
-RESPONSE STYLE: Be concise and direct. Avoid unnecessary explanations. Focus on key facts.
+CALCULATION RULES:
+1. Check exclusions first (government, rent, fuel, utilities may be excluded)
+2. Use exact earning rates: "X points per ₹Y" → (spend ÷ Y) × X  
+3. Category rates: Hotels/flights use accelerated rates vs base rates
+4. Milestones: Only apply if spend meets threshold (cumulative)
 
-COMPARISON QUESTIONS: When asked about "both cards" or comparing cards, ALWAYS discuss BOTH cards with their specific details.
-    
-IMPORTANT: When calculating total rewards/miles for a spend amount, you MUST:
-1. Identify the correct earning rate format from the context (e.g., "6 points per ₹200" or "2 miles per ₹100")
-2. Check for CATEGORY-SPECIFIC earning rates (travel, dining, etc.) vs base rates
-3. Calculate base rewards using TWO SEPARATE STEPS:
-   Step A: Calculate transactions = (spend amount ÷ Y)
-   Step B: Calculate rewards = transactions × X points/miles
-4. Check if spend meets milestone thresholds and add applicable bonuses (CUMULATIVE - all milestones achieved)
-5. ALWAYS show both the division AND multiplication calculations separately
+RATES:
+- Axis Atlas: 2 miles/₹100 (base), 5 miles/₹100 (hotels/flights)
+- ICICI EPM: 6 points/₹200 (all categories, with caps)
 
-EXCLUSIONS AND EARNING RATES:
-- FIRST: Check "accrual_exclusions" - if spending category is excluded, rewards = 0
-- Common exclusions: rent, fuel, government services, tax, utilities, insurance, wallet, jewellery
-- SECOND: DEFAULT to general spending unless category is explicitly mentioned
-- Only use accelerated rates when question specifically mentions travel categories
-- Hotels/Hotel bookings (when mentioned) = "Direct Hotels" category = accelerated travel rate
-- Airlines/Flights (when mentioned) = "Direct Airlines" category = accelerated travel rate  
-- General spending (default) = Use base rate (e.g., "2 miles per ₹100")
-- Check for monthly caps on accelerated earning only if travel category is mentioned
-- DO NOT assume travel spending unless explicitly stated
-- ALWAYS verify exclusions before calculating any rewards
+EXCLUSIONS: 
+- Both: Government, rent, fuel
+- Axis only: Utilities, insurance, wallet, jewellery
+- Education: ICICI (capped 1K points), Axis (no exclusion)
 
-MILESTONE CALCULATION RULES:
-- NEVER apply milestone bonuses unless the spend meets or exceeds the exact threshold
-- Do not assume milestone bonuses apply just because they are present in the context
-- Spend ₹7.5L → milestone at ₹3L + milestone at ₹7.5L = both apply
-- Spend ₹1L → no milestones achieved
-- Always say "No milestone bonuses apply" when spend is below the lowest threshold
-
-CATEGORY RATE DETECTION:
-- HOTEL/HOTEL BOOKINGS: Use accelerated travel rate (Axis Atlas: 5 miles/₹100)
-- FLIGHTS/AIRLINES: Use accelerated travel rate (Axis Atlas: 5 miles/₹100)  
-- DEFAULT/GENERAL: Use base rate (Axis Atlas: 2 miles/₹100)
-
-FEW-SHOT EXAMPLES:
-Q: How many EDGE Miles do I earn for ₹2L spend at a hotel using Axis Atlas?
-A: Hotel rate is 5 miles/₹100 → ₹2,00,000 ÷ ₹100 = 2,000 × 5 = 10,000 miles. No milestone bonuses (below ₹3L threshold).
-
-Q: How many EDGE Miles do I earn for ₹2L general spend using Axis Atlas?  
-A: General rate is 2 miles/₹100 → ₹2,00,000 ÷ ₹100 = 2,000 × 2 = 4,000 miles. No milestone bonuses (below ₹3L threshold).
-
-CRITICAL ARITHMETIC RULES:
-- Show intermediate results for each step
-- Double-check your multiplication (e.g., 1,000 × 6 = 6,000, not 1,000)
-- Never round down in the middle of calculations
-- If category-specific rate exists, USE IT instead of base rate
-
-Provide concise, accurate answers based on the context. Use bullet points for clarity.
-If information is missing, state it briefly. Focus on key details: rates, fees, conditions."""
+Show calculations step-by-step. For comparisons, discuss both cards."""
         
         if card_name:
             prompt += f"\nFocus on information about the {card_name} card."
@@ -164,58 +128,19 @@ If information is missing, state it briefly. Focus on key details: rates, fees, 
         return prompt
     
     def _create_user_prompt(self, question: str, context: str) -> str:
-        """Create the user prompt with question and context"""
-        return f"""Based on the following credit card information, please answer this question: "{question}"
-
-IMPORTANT: If the question asks about multiple cards or is a comparison, discuss ALL relevant cards mentioned in the context.
+        """Create a concise user prompt with question and context"""
+        return f"""Answer this question: "{question}"
 
 Context:
 {context}
 
-IMPORTANT: If the question involves calculating total rewards/miles for a spending amount:
-1. FIRST check for EXCLUSIONS - if spending category is excluded, rewards = 0
-2. DEFAULT to general spending UNLESS specific category is mentioned
-3. Only use category-specific rates if the question explicitly mentions:
-   - "hotels", "hotel bookings", "accommodation"
-   - "flights", "airlines", "air travel"  
-   - "travel", "vacation", "trip"
-4. Use the CORRECT earning rate based on what's explicitly mentioned:
-   - Hotels/Hotel bookings (when mentioned): Use accelerated travel rate (e.g., "5 miles per ₹100")
-   - Airlines/Flights (when mentioned): Use accelerated travel rate (e.g., "5 miles per ₹100") 
-   - General spending (default): Use base rate (e.g., "2 miles per ₹100")
-5. Calculate rewards using the CORRECT formula: (spend amount ÷ Y) × X 
-   where "X points/miles per ₹Y" is the earning rate FOR THAT CATEGORY
-6. Check if spend amount meets ANY milestone thresholds - if not, NO milestone bonuses apply
-7. Add base rewards + ALL milestone bonuses for the total
-8. Show each step with the correct division calculation
+For calculations:
+1. Check exclusions first 
+2. Use exact earning rates from context
+3. Apply milestones only if spend meets thresholds
+4. Show calculation steps
 
-CRITICAL RULES:
-1. CHECK EXCLUSIONS FIRST! If excluded, rewards = 0
-2. MILESTONE BONUSES ARE CUMULATIVE! For ₹7.5L spend, include ₹3L + ₹7.5L milestones
-
-EXCLUSIONS:
-- ICICI EPM: government services, tax, rent, fuel, EMI conversions
-- Axis Atlas: government institution, rent, fuel, utilities, insurance, wallet, jewellery, telecom
-- EDUCATION: ICICI EPM earns rewards (capped at 1,000 points), Axis Atlas earns rewards (NO exclusion)
-
-MILESTONE LOGIC:
-- Only apply milestones if spend amount meets or exceeds the threshold
-- ₹1L spend → NO milestones achieved (below ₹3L threshold)
-- ₹7.5L spend → ₹3L milestone (2,500) + ₹7.5L milestone (2,500) = 5,000 bonus miles
-
-CALCULATION EXAMPLES:
-
-• General: ₹50,000 → (₹50,000 ÷ ₹200) × 6 = 1,500 points
-• Government: ₹20,000 → 0 points/miles (excluded on both cards)
-• Rent: ₹20,000 → 0 points/miles (excluded on both cards)
-• Education ICICI: ₹50,000 → (₹50,000 ÷ ₹200) × 6 = 1,500 points (capped at 1,000 points)
-• Education Axis: ₹50,000 → (₹50,000 ÷ ₹100) × 2 = 1,000 miles (no cap)
-• Atlas ₹7.5L spend: Base 15,000 + Milestones (2,500+2,500) = 20,000 miles
-• Hotels: ₹1,00,000 → (₹1,00,000 ÷ ₹100) × 5 = 5,000 miles (no milestone bonuses - below ₹3L threshold)
-
-CRITICAL: Check exclusions first! If excluded, rewards = 0!
-
-Show calculation steps. Be concise but complete."""
+Be concise and accurate."""
     
     def _no_context_response(self) -> str:
         """Response when no relevant context is found"""

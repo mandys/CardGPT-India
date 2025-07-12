@@ -209,8 +209,9 @@ RATES:
 
 EXCLUSIONS: 
 - Both: Government, rent, fuel
-- Axis only: Utilities, insurance, wallet, jewellery
-- Education: ICICI (capped 1K points), Axis (no exclusion)
+- Axis only: Utilities (excluded), insurance, wallet, jewellery
+- ICICI only: None of the above
+- CAPPED CATEGORIES (ICICI): Utilities (1K points), Education (1K points), Insurance (5K points)
 
 EXAMPLE:
 ₹7.5L general spend on Atlas → (750000 ÷ 100) × 2 = 15,000 miles

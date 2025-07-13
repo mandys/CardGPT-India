@@ -1,0 +1,36 @@
+================================================================================
+🧪 CREDIT CARD RAG ASSISTANT TEST REPORT
+================================================================================
+Generated: 2025-07-13 17:16:28
+Model Used: gemini-1.5-flash
+Total Tests: 27
+✅ Passing: 22
+⚠️  Partial: 5
+❌ Failing: 0
+💥 Errors: 0
+📊 Overall Score: 91.0%
+🔴 Critical Tests: 2/5 passing
+💰 Total Cost: $0.0034
+🔢 Total Tokens: 32,290
+
+📊 Category Breakdown:
+   Milestone Calculation: 1/2 (50%)
+   Hotel Cap Logic: 1/2 (50%)
+   Utility Spending: 2/2 (100%)
+   Exclusions: 1/2 (50%)
+   Insurance Spending: 1/2 (50%)
+   Education Spending: 2/2 (100%)
+   General Comparison: 1/1 (100%)
+   Hotel Spending: 1/1 (100%)
+   Surcharge Calculation: 2/2 (100%)
+   Hotel Spending Detailed: 1/1 (100%)
+   Government Exclusions: 1/1 (100%)
+   Tier Benefits: 1/1 (100%)
+   Dining Spending: 1/1 (100%)
+   Insurance Comparison: 1/1 (100%)
+   Grocery Limits: 1/1 (100%)
+   Flight Spending Large: 1/1 (100%)
+   Lounge Access: 1/1 (100%)
+   Complex Spend Distribution: 1/1 (100%)
+   Excluded Categories Combined: 1/1 (100%)
+   Annual Milestone Validation: 0/1 (0%)

@@ -69,6 +69,7 @@ To add new credit card data:
 
 - keep @CLAUDE.md @README.md @behind_the_scenes.md @claude-context.md updated at all times
 - Always do a git add/commit of code when updating core functionality documentation files
+- Ensure all memory files are consistently updated with new project features and changes
 
 ## Commit Guidelines
 

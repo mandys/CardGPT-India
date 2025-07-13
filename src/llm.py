@@ -216,15 +216,17 @@ CALCULATION RULES:
 3. Category rates: Hotels/flights use accelerated rates, everything else uses base rate
 4. **CHECK CAPS**: Always check monthly/annual caps for accelerated rates
 5. **MILESTONES ARE ANNUAL**: Earned once per year based on total yearly spend (NOT monthly)
+6. **NEVER ASSUME MILESTONES**: Only add milestones if the question mentions total yearly spend ≥ threshold
 
 RATES & CAPS:
 - Axis Atlas: 2 miles/₹100 (base), 5 miles/₹100 (hotels/flights CAPPED at ₹2L/month, above cap = base rate)
 - ICICI EPM: 6 points/₹200 (all categories, with caps per cycle)
 
 EXCLUSIONS: 
-- Both: Government, rent, fuel
-- Axis only: Utilities (excluded), insurance, wallet, jewellery
-- ICICI only: None of the above
+- Both cards: Government, rent, fuel
+- Axis Atlas only: Utilities, insurance, wallet, jewellery
+- ICICI EPM only: None of the above
+- DINING IS NOT EXCLUDED from either card
 
 ICICI EPM EARNING CAPS (earns rewards but capped per cycle):
 - Utilities: Earns 6 points/₹200, MAX 1,000 points per cycle
@@ -246,6 +248,9 @@ Annual milestones: ₹3L (2,500) + ₹7.5L (2,500) = +5,000 miles
 ₹3L yearly spend on Atlas → Base: (300000 ÷ 100) × 2 = 6,000 miles  
 Annual milestone: ₹3L (2,500) = +2,500 miles
 ✅ Total: 8,500 miles
+
+₹2L flight spend on Atlas → (200000 ÷ 100) × 5 = 10,000 miles (within cap)
+✅ Total: 10,000 miles (NO milestones unless yearly spend mentioned)
 
 ₹1L hotel spend on Atlas → (100000 ÷ 100) × 5 = 5,000 miles (under ₹2L cap)
 ✅ Total: 5,000 miles

@@ -204,53 +204,38 @@ class LLMService:
         return "\n\n".join(context_parts)
     
     def _create_system_prompt(self, card_name: str = None) -> str:
-        """Create a concise system prompt for the LLM"""
-        prompt = """You are a credit card expert. Be concise and accurate.
+        """Create a comprehensive system prompt for the LLM"""
+        prompt = """You are an expert assistant helping users understand Indian credit card terms and conditions.
 
-CRITICAL: For each ₹ spent, apply ONLY ONE earning rate (base OR category, never both).
+Please provide accurate, helpful answers based on the provided context. If the context doesn't contain enough information to answer the question, say so clearly.
 
-CALCULATION RULES:
-1. Check exclusions first (government, rent, fuel, utilities may be excluded)
-2. Use exact earning rates: "X points per ₹Y" → (spend ÷ Y) × X  
-3. Category rates: Hotels/flights use accelerated rates, everything else uses base rate
-4. **CHECK CAPS**: Always check monthly/annual caps for accelerated rates
-5. Milestones: Only apply if spend meets threshold (cumulative)
+For calculation questions:
 
-RATES & CAPS:
-- Axis Atlas: 2 miles/₹100 (base), 5 miles/₹100 (hotels/flights CAPPED at ₹2L/month, above cap = base rate)
-- ICICI EPM: 6 points/₹200 (all categories, with caps per cycle)
+CRITICAL CALCULATION RULES:
+1. Check exclusions first - excluded categories earn 0 rewards
+2. Apply correct earning rates exactly: (spend amount ÷ spend per unit) × points/miles per unit
+3. Apply caps ONLY to the accelerated portion, not total spend
+4. Milestones are CUMULATIVE - ₹7.5L spend gets BOTH ₹3L + ₹7.5L milestones
 
-EXCLUSIONS: 
-- Both: Government, rent, fuel
-- Axis only: Utilities (excluded), insurance, wallet, jewellery
-- ICICI only: None of the above
+AXIS ATLAS RATES:
+- Base rate: 2 EDGE Miles per ₹100 spent
+- Hotels/Flights: 5 EDGE Miles per ₹100 (accelerated rate)
+- Hotel/Flight cap: ₹2,00,000 per month gets 5x rate, excess gets 2x base rate
 
-EARNING CAPS (ICICI - maximum points per cycle):
-- Utilities: MAX 1,000 points (regardless of spend amount)
-- Education: MAX 1,000 points (regardless of spend amount)  
-- Insurance: MAX 5,000 points (regardless of spend amount)
+AXIS ATLAS MILESTONES (CUMULATIVE):
+- ₹3,00,000 annual spend = 2,500 EDGE Miles
+- ₹7,50,000 annual spend = 2,500 EDGE Miles (additional, total 5,000)
+- ₹15,00,000 annual spend = 5,000 EDGE Miles (additional, total 10,000)
 
-SURCHARGES (calculate if spend exceeds threshold):
-- Axis Atlas utilities: 1% on amount above ₹25K/month  
-- ICICI EPM utilities: 1% on amount above ₹50K/month
+ICICI EPM RATES:
+- All categories: 6 Reward Points per ₹200 spent
+- Various capping limits apply per statement cycle
 
-EXAMPLES:
-₹7.5L general spend on Atlas → (750000 ÷ 100) × 2 = 15,000 miles
-Milestones: ₹3L (2,500) + ₹7.5L (2,500) = +5,000 miles  
-✅ Total: 20,000 miles
+EXCLUSIONS:
+- Axis Atlas: Fuel, rent, government payments, utilities, insurance completely excluded
+- ICICI EPM: Fuel, rent, government payments excluded; utilities/insurance capped
 
-₹1L hotel spend on Atlas → (100000 ÷ 100) × 5 = 5,000 miles (under ₹2L cap)
-✅ Total: 5,000 miles
-
-₹3L hotel spend on Atlas → First ₹2L: (200000 ÷ 100) × 5 = 10,000 miles
-Above cap ₹1L: (100000 ÷ 100) × 2 = 2,000 miles + ₹3L milestone: 2,500 miles
-✅ Total: 14,500 miles
-
-₹55K utility spend on ICICI EPM → Calculate: (55000 ÷ 200) × 6 = 1,650 points
-But capped at 1,000 points per cycle → ✅ Actual: 1,000 points
-Surcharge: ₹55K > ₹50K threshold → 1% × (55000 - 50000) = ₹50 surcharge
-
-Show calculations step-by-step. For comparisons, discuss both cards."""
+Format your response clearly with step-by-step calculations when relevant."""
         
         if card_name:
             prompt += f"\nFocus on information about the {card_name} card."
@@ -259,23 +244,17 @@ Show calculations step-by-step. For comparisons, discuss both cards."""
     
     def _create_user_prompt(self, question: str, context: str) -> str:
         """Create a concise user prompt with question and context"""
-        return f"""Answer this question: "{question}"
+        return f"""Answer: "{question}"
 
 Context:
 {context}
 
-For calculations:
-1. Check exclusions first (excluded = 0 rewards)
-2. **CHECK CAPS**: For ICICI EPM, check EARNING CAPS (max points per cycle)
-3. **CHECK SPEND CAPS**: For Axis Atlas, split spending above caps to different rates
-4. **CHECK SURCHARGES**: Calculate 1% on amount above threshold for both cards
-5. Use ONE rate per spend: base OR category (never add both)
-6. Apply milestones only if total spend ≥ threshold
-7. Show step-by-step: (amount ÷ Y) × X = result, then apply caps, then calculate surcharges
+Calculate step-by-step:
+1. Apply earning rate: (spend ÷ Y) × X
+2. Check if caps apply 
+3. Add milestones only if spend meets threshold
 
-CRITICAL: For Axis Atlas hotels/flights, 5x rate applies to spend UP TO ₹2L/month. Only split calculation if spend EXCEEDS ₹2L. If spend ≤ ₹2L, use 5x rate for entire amount.
-
-Be precise with math. Double-check arithmetic."""
+Be precise with arithmetic."""
     
     def _no_context_response(self) -> str:
         """Response when no relevant context is found"""

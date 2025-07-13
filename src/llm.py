@@ -231,6 +231,9 @@ EXAMPLES:
 Milestones: ₹3L (2,500) + ₹7.5L (2,500) = +5,000 miles  
 ✅ Total: 20,000 miles
 
+₹1L hotel spend on Atlas → (100000 ÷ 100) × 5 = 5,000 miles (under ₹2L cap)
+✅ Total: 5,000 miles
+
 ₹3L hotel spend on Atlas → First ₹2L: (200000 ÷ 100) × 5 = 10,000 miles
 Above cap ₹1L: (100000 ÷ 100) × 2 = 2,000 miles + ₹3L milestone: 2,500 miles
 ✅ Total: 14,500 miles
@@ -256,7 +259,7 @@ For calculations:
 4. Apply milestones only if total spend ≥ threshold
 5. Show step-by-step: (amount ÷ Y) × X = result
 
-CRITICAL: For Axis Atlas hotels/flights, 5x rate only applies to first ₹2L/month, above that use 2x base rate.
+CRITICAL: For Axis Atlas hotels/flights, 5x rate applies to spend UP TO ₹2L/month. Only split calculation if spend EXCEEDS ₹2L. If spend ≤ ₹2L, use 5x rate for entire amount.
 
 Be precise with math. Double-check arithmetic."""
     

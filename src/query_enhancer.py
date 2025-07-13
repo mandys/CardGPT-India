@@ -119,7 +119,7 @@ class QueryEnhancer:
         if category and spend_amount:
             # Make category explicit in the query with specific card guidance
             if category in ['hotel', 'flight']:
-                enhanced_query += f"\n\nIMPORTANT: This is specifically about {category} spending. Use the accelerated {category} earning rate (5x), BUT CHECK CAPS: Axis Atlas 5x rate is CAPPED at ₹2L per month - above ₹2L use base 2x rate. Split calculations accordingly."
+                enhanced_query += f"\n\nIMPORTANT: This is specifically about {category} spending. Use the accelerated {category} earning rate (5x) for Axis Atlas. CHECK CAPS: 5x rate applies to spend UP TO ₹2L per month. Only split calculation if spend EXCEEDS ₹2L (above ₹2L use base 2x rate)."
             elif category == 'utility':
                 enhanced_query += f"\n\nIMPORTANT: This is about utility spending. Check BOTH rewards AND surcharges: Axis Atlas EXCLUDES utilities (0 rewards) + 1% surcharge above ₹25K/month. ICICI EPM earns rewards (CAPPED at 1,000 points per cycle) + 1% surcharge above ₹50K/month."
             elif category in ['fuel', 'rent', 'government', 'insurance']:

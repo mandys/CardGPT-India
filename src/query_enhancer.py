@@ -121,7 +121,7 @@ class QueryEnhancer:
             if category in ['hotel', 'flight']:
                 enhanced_query += f"\n\nIMPORTANT: This is specifically about {category} spending. Use the accelerated {category} earning rate (5x) for Axis Atlas. CHECK CAPS: 5x rate applies to spend UP TO ₹2L per month. Only split calculation if spend EXCEEDS ₹2L (above ₹2L use base 2x rate)."
             elif category == 'utility':
-                enhanced_query += f"\n\nIMPORTANT: This is about utility spending. Check BOTH rewards AND surcharges: Axis Atlas EXCLUDES utilities (0 rewards) + 1% surcharge above ₹25K/month. ICICI EPM earns 6 points per ₹200 but CAPPED at MAX 1,000 points per cycle (regardless of spend amount) + 1% surcharge above ₹50K/month."
+                enhanced_query += f"\n\nIMPORTANT: This is about utility spending. Check BOTH rewards AND surcharges: Axis Atlas EXCLUDES utilities (0 rewards) + 1% surcharge on amount above ₹25K/month. ICICI EPM earns 6 points per ₹200 but CAPPED at MAX 1,000 points per cycle + 1% surcharge on amount above ₹50K/month. Calculate surcharge: 1% × (spend - threshold) if spend exceeds threshold."
             elif category in ['fuel', 'rent', 'government', 'insurance']:
                 enhanced_query += f"\n\nIMPORTANT: This is about {category} spending. Check exclusions first - this category may be excluded from earning rewards."
             elif category == 'education':
@@ -131,7 +131,7 @@ class QueryEnhancer:
             enhanced_query += f"\n\nIMPORTANT: This is about milestone benefits. Check both the dedicated 'milestones' section AND the 'renewal_benefits' section which contains milestone-related vouchers and benefits. ICICI EPM has EaseMyTrip vouchers at ₹4L and ₹8L spend milestones."
         elif category == 'utility' and any(keyword in query.lower() for keyword in ['surcharge', 'fee', 'charge', 'cost']):
             # Handle utility fee/surcharge queries separately
-            enhanced_query += f"\n\nIMPORTANT: This is about utility fees/surcharges. Check the 'surcharge_fees' section for both cards: Axis Atlas has 1% surcharge above ₹25K/month, ICICI EPM has 1% surcharge above ₹50K/month."
+            enhanced_query += f"\n\nIMPORTANT: This is about utility fees/surcharges. Calculate surcharges on amount ABOVE threshold: Axis Atlas 1% on amount above ₹25K/month, ICICI EPM 1% on amount above ₹50K/month. Show surcharge calculation: 1% × (spend - threshold)."
         elif is_distribution_query:
             enhanced_query += f"\n\nIMPORTANT: This is a spend distribution query. For each category, calculate separately using the appropriate rate (base rate for most categories, accelerated for hotels/flights, zero for excluded categories). Do NOT add base + category rates."
         elif spend_amount and not category:

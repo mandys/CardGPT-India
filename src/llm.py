@@ -230,6 +230,10 @@ EARNING CAPS (ICICI - maximum points per cycle):
 - Education: MAX 1,000 points (regardless of spend amount)  
 - Insurance: MAX 5,000 points (regardless of spend amount)
 
+SURCHARGES (calculate if spend exceeds threshold):
+- Axis Atlas utilities: 1% on amount above ₹25K/month  
+- ICICI EPM utilities: 1% on amount above ₹50K/month
+
 EXAMPLES:
 ₹7.5L general spend on Atlas → (750000 ÷ 100) × 2 = 15,000 miles
 Milestones: ₹3L (2,500) + ₹7.5L (2,500) = +5,000 miles  
@@ -244,6 +248,7 @@ Above cap ₹1L: (100000 ÷ 100) × 2 = 2,000 miles + ₹3L milestone: 2,500 mil
 
 ₹55K utility spend on ICICI EPM → Calculate: (55000 ÷ 200) × 6 = 1,650 points
 But capped at 1,000 points per cycle → ✅ Actual: 1,000 points
+Surcharge: ₹55K > ₹50K threshold → 1% × (55000 - 50000) = ₹50 surcharge
 
 Show calculations step-by-step. For comparisons, discuss both cards."""
         
@@ -263,9 +268,10 @@ For calculations:
 1. Check exclusions first (excluded = 0 rewards)
 2. **CHECK CAPS**: For ICICI EPM, check EARNING CAPS (max points per cycle)
 3. **CHECK SPEND CAPS**: For Axis Atlas, split spending above caps to different rates
-4. Use ONE rate per spend: base OR category (never add both)
-5. Apply milestones only if total spend ≥ threshold
-6. Show step-by-step: (amount ÷ Y) × X = result, then apply caps
+4. **CHECK SURCHARGES**: Calculate 1% on amount above threshold for both cards
+5. Use ONE rate per spend: base OR category (never add both)
+6. Apply milestones only if total spend ≥ threshold
+7. Show step-by-step: (amount ÷ Y) × X = result, then apply caps, then calculate surcharges
 
 CRITICAL: For Axis Atlas hotels/flights, 5x rate applies to spend UP TO ₹2L/month. Only split calculation if spend EXCEEDS ₹2L. If spend ≤ ₹2L, use 5x rate for entire amount.
 

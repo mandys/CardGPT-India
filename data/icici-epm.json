@@ -109,12 +109,6 @@
         "value": "₹12,500 (at ₹1 per point)",
         "frequency": "Once every year upon renewal"
       },
-      "taj_epicure_membership": {
-        "membership": "1-year Taj Epicure membership",
-        "description": "Complimentary annual renewal of Taj Epicure membership",
-        "benefits": "Exclusive benefits like complimentary night stay, discounts, and perks",
-        "eligibility": "Primary cardmembers only"
-      },
       "milestone_benefits": {
         "easemytrip_vouchers": {
           "spend_4_lakh": {

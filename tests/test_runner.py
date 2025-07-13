@@ -232,6 +232,22 @@ class CreditCardTestRunner:
                 "expected_keywords": ["15,000", "2,500", "20,000", "milestone", "yearly"],
                 "expected_calculation": "15,000 base + 5,000 milestones = 20,000",
                 "critical": True
+            },
+            
+            # Regression Tests (User Reported Issues)
+            {
+                "category": "Hotel Milestone Missing",
+                "query": "how many points will i earn for spending 3L on hotel",
+                "expected_keywords": ["10,000", "2,000", "2,500", "14,500", "milestone"],
+                "expected_calculation": "10,000 + 2,000 + 2,500 = 14,500",
+                "critical": True
+            },
+            {
+                "category": "Complex Multi-Category Calculation",
+                "query": "what points will i get for a spend of 10L in a month on axis atlas, where 2L is on flights, 2L on hotels, and rest are general spends",
+                "expected_keywords": ["10,000", "4,000", "12,000", "5,000", "31,000", "milestone"],
+                "expected_calculation": "flights(10K accelerated) + hotels(4K base, cap used) + general(12K) + milestones(5K) = 31K",
+                "critical": True
             }
         ]
     

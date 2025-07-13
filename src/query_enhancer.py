@@ -121,7 +121,7 @@ class QueryEnhancer:
             if category in ['hotel', 'flight']:
                 enhanced_query += f"\n\nIMPORTANT: This is specifically about {category} spending. Use the accelerated {category} earning rate (5x), BUT CHECK CAPS: Axis Atlas 5x rate is CAPPED at ₹2L per month - above ₹2L use base 2x rate. Split calculations accordingly."
             elif category == 'utility':
-                enhanced_query += f"\n\nIMPORTANT: This is about utility spending. Axis Atlas EXCLUDES utilities (0 rewards). ICICI EPM earns rewards but CAPPED at 1,000 points per cycle."
+                enhanced_query += f"\n\nIMPORTANT: This is about utility spending. Check BOTH rewards AND surcharges: Axis Atlas EXCLUDES utilities (0 rewards) + 1% surcharge above ₹25K/month. ICICI EPM earns rewards (CAPPED at 1,000 points per cycle) + 1% surcharge above ₹50K/month."
             elif category in ['fuel', 'rent', 'government', 'insurance']:
                 enhanced_query += f"\n\nIMPORTANT: This is about {category} spending. Check exclusions first - this category may be excluded from earning rewards."
             elif category == 'education':
@@ -129,6 +129,9 @@ class QueryEnhancer:
         elif category == 'milestone':
             # Handle milestone queries separately (they often don't have spend amounts)
             enhanced_query += f"\n\nIMPORTANT: This is about milestone benefits. Check both the dedicated 'milestones' section AND the 'renewal_benefits' section which contains milestone-related vouchers and benefits. ICICI EPM has EaseMyTrip vouchers at ₹4L and ₹8L spend milestones."
+        elif category == 'utility' and any(keyword in query.lower() for keyword in ['surcharge', 'fee', 'charge', 'cost']):
+            # Handle utility fee/surcharge queries separately
+            enhanced_query += f"\n\nIMPORTANT: This is about utility fees/surcharges. Check the 'surcharge_fees' section for both cards: Axis Atlas has 1% surcharge above ₹25K/month, ICICI EPM has 1% surcharge above ₹50K/month."
         elif is_distribution_query:
             enhanced_query += f"\n\nIMPORTANT: This is a spend distribution query. For each category, calculate separately using the appropriate rate (base rate for most categories, accelerated for hotels/flights, zero for excluded categories). Do NOT add base + category rates."
         elif spend_amount and not category:

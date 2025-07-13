@@ -120,6 +120,15 @@ def process_query(
     if any(keyword in question.lower() for keyword in ['renewal', 'renewal benefit', 'renewal benefits', 'annual benefit']):
         boost_keywords.extend(['renewal', 'milestone', 'welcome'])
     
+    # Boost surcharge and fee related searches
+    if any(keyword in question.lower() for keyword in ['surcharge', 'fee', 'fees', 'charge', 'charges', 'cost']):
+        boost_keywords.extend(['surcharge', 'fees', 'other_fees', 'charges'])
+    
+    # Boost utility + fee combination searches
+    if any(utility_word in question.lower() for utility_word in ['utility', 'utilities']) and \
+       any(fee_word in question.lower() for fee_word in ['surcharge', 'fee', 'charge', 'cost']):
+        boost_keywords.extend(['surcharge_fees', 'utility', 'utilities'])
+    
     # Check if question implies comparison (both cards, compare, etc.)
     comparison_keywords = ['both cards', 'compare', 'better', 'which card', 'icici and atlas', 'atlas and icici']
     is_comparison_question = any(keyword in question.lower() for keyword in comparison_keywords)
@@ -300,7 +309,7 @@ def main():
         
         # Advanced settings
         st.header("⚙️ Advanced Settings")
-        top_k = st.slider("Number of results (top_k)", 1, 10, 4, 
+        top_k = st.slider("Number of results (top_k)", 1, 10, 5, 
                          help="More results = higher cost but better accuracy for calculations")
         
         # Model selection for cost optimization

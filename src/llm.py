@@ -213,11 +213,12 @@ CALCULATION RULES:
 1. Check exclusions first (government, rent, fuel, utilities may be excluded)
 2. Use exact earning rates: "X points per ₹Y" → (spend ÷ Y) × X  
 3. Category rates: Hotels/flights use accelerated rates, everything else uses base rate
-4. Milestones: Only apply if spend meets threshold (cumulative)
+4. **CHECK CAPS**: Always check monthly/annual caps for accelerated rates
+5. Milestones: Only apply if spend meets threshold (cumulative)
 
-RATES:
-- Axis Atlas: 2 miles/₹100 (base), 5 miles/₹100 (hotels/flights only)
-- ICICI EPM: 6 points/₹200 (all categories, with caps)
+RATES & CAPS:
+- Axis Atlas: 2 miles/₹100 (base), 5 miles/₹100 (hotels/flights CAPPED at ₹2L/month, above cap = base rate)
+- ICICI EPM: 6 points/₹200 (all categories, with caps per cycle)
 
 EXCLUSIONS: 
 - Both: Government, rent, fuel
@@ -225,10 +226,14 @@ EXCLUSIONS:
 - ICICI only: None of the above
 - CAPPED CATEGORIES (ICICI): Utilities (1K points), Education (1K points), Insurance (5K points)
 
-EXAMPLE:
+EXAMPLES:
 ₹7.5L general spend on Atlas → (750000 ÷ 100) × 2 = 15,000 miles
 Milestones: ₹3L (2,500) + ₹7.5L (2,500) = +5,000 miles  
 ✅ Total: 20,000 miles
+
+₹3L hotel spend on Atlas → First ₹2L: (200000 ÷ 100) × 5 = 10,000 miles
+Above cap ₹1L: (100000 ÷ 100) × 2 = 2,000 miles + ₹3L milestone: 2,500 miles
+✅ Total: 14,500 miles
 
 Show calculations step-by-step. For comparisons, discuss both cards."""
         
@@ -246,9 +251,12 @@ Context:
 
 For calculations:
 1. Check exclusions first (excluded = 0 rewards)
-2. Use ONE rate per spend: base OR category (never add both)
-3. Apply milestones only if total spend ≥ threshold
-4. Show step-by-step: (amount ÷ Y) × X = result
+2. **CHECK CAPS**: Split spending above caps to different rates
+3. Use ONE rate per spend: base OR category (never add both)
+4. Apply milestones only if total spend ≥ threshold
+5. Show step-by-step: (amount ÷ Y) × X = result
+
+CRITICAL: For Axis Atlas hotels/flights, 5x rate only applies to first ₹2L/month, above that use 2x base rate.
 
 Be precise with math. Double-check arithmetic."""
     

@@ -216,11 +216,16 @@ CALCULATION RULES:
 3. Category rates: Hotels/flights use accelerated rates, everything else uses base rate
 4. **CHECK CAPS**: Always check monthly/annual caps for accelerated rates
 5. **MILESTONES ARE ANNUAL**: Earned once per year based on total yearly spend (NOT monthly)
-6. **NEVER ASSUME MILESTONES**: Only add milestones if the question mentions total yearly spend ≥ threshold
+6. **MILESTONE LOGIC**: Add milestones ONLY if the spend amount in the question ≥ milestone threshold
+   - ₹3L+ spend = add ₹3L milestone (2,500 miles)
+   - ₹7.5L+ spend = add both ₹3L + ₹7.5L milestones (5,000 miles total)
+   - ₹15L+ spend = add all three milestones (10,000 miles total)
 
 RATES & CAPS:
-- Axis Atlas: 2 miles/₹100 (base), 5 miles/₹100 (hotels/flights CAPPED at ₹2L/month, above cap = base rate)
+- Axis Atlas: 2 miles/₹100 (base), 5 miles/₹100 (hotels/flights SHARE ₹2L/month cap)
 - ICICI EPM: 6 points/₹200 (all categories, with caps per cycle)
+
+CRITICAL: Hotels and flights SHARE the ₹2L monthly cap on Atlas (not separate caps!)
 
 EXCLUSIONS: 
 - Both cards: Government, rent, fuel
@@ -250,14 +255,21 @@ Annual milestone: ₹3L (2,500) = +2,500 miles
 ✅ Total: 8,500 miles
 
 ₹2L flight spend on Atlas → (200000 ÷ 100) × 5 = 10,000 miles (within cap)
-✅ Total: 10,000 miles (NO milestones unless yearly spend mentioned)
-
-₹1L hotel spend on Atlas → (100000 ÷ 100) × 5 = 5,000 miles (under ₹2L cap)
-✅ Total: 5,000 miles
+✅ Total: 10,000 miles (NO milestones, spend < ₹3L threshold)
 
 ₹3L hotel spend on Atlas → First ₹2L: (200000 ÷ 100) × 5 = 10,000 miles
 Above cap ₹1L: (100000 ÷ 100) × 2 = 2,000 miles + ₹3L milestone: 2,500 miles
 ✅ Total: 14,500 miles
+
+₹10L total spend on Atlas (₹2L flights + ₹2L hotels + ₹6L general):
+Flights: (200000 ÷ 100) × 5 = 10,000 miles (uses ₹2L cap)
+Hotels: (200000 ÷ 100) × 2 = 4,000 miles (cap exhausted, base rate)
+General: (600000 ÷ 100) × 2 = 12,000 miles
+Milestones: ₹3L (2,500) + ₹7.5L (2,500) = 5,000 miles
+✅ Total: 31,000 miles
+
+₹1L hotel spend on Atlas → (100000 ÷ 100) × 5 = 5,000 miles (under ₹2L cap)
+✅ Total: 5,000 miles
 
 ₹55K utility spend on ICICI EPM → Calculate: (55000 ÷ 200) × 6 = 1,650 points
 But capped at 1,000 points per cycle → ✅ Actual: 1,000 points

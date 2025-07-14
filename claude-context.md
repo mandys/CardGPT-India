@@ -22,10 +22,12 @@ A modular RAG (Retrieval-Augmented Generation) application for querying Indian c
 ✅ **Token Optimization**: Reduced token usage by 60% while maintaining accuracy
 
 ## Recent Major Improvements
-- **Added renewal benefits data** for both Axis Atlas and ICICI EPM cards (46 documents total)
+- **Added HSBC Premier support** - 71 documents total (Axis Atlas, ICICI EPM, HSBC Premier)
+- **Generic prompt system** - Removed hardcoded Axis/ICICI references for multi-bank support
+- **HSBC Premier integration** - Complete card data with welcome benefits, capping rules, miles transfer
+- **Enhanced test suite** - Added 6 HSBC Premier test cases to validate new card support
 - **Fixed context truncation** for renewal benefits and other important sections
 - **Added Gemini support** with Flash/Pro models (20x cost reduction)
-- **Fixed calculation accuracy** with enhanced prompts and examples
 - **Smart model selection** auto-routes complex queries to better models  
 - **Category detection** correctly handles hotel/utility/education spending
 - **Token optimization** reduced usage from 3K to 1.2K tokens per query

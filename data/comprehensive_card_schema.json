@@ -1,0 +1,372 @@
+{
+  "schema_version": "1.0",
+  "title": "Credit Card Data Schema - Supavec Clone",
+  "description": "Comprehensive JSON schema for credit card data based on Axis Atlas and ICICI EPM analysis. Generated for HSBC card integration.",
+  "generated_from": ["axis-atlas.json", "icici-epm.json"],
+  "generated_date": "2025-07-14",
+  "type": "object",
+  "properties": {
+    "common_terms": {
+      "type": "object",
+      "description": "Bank-wide terms and conditions that apply to all cards",
+      "properties": {
+        "interest_free_grace_period": {
+          "type": "object",
+          "properties": {
+            "duration": { "type": "string", "example": "20 to 50 days depending on transaction date" },
+            "condition_for_loss": { "type": "string" }
+          },
+          "required": ["duration"]
+        },
+        "minimum_amount_due_logic": {
+          "type": "object", 
+          "properties": {
+            "base": { "type": "string" },
+            "floor": { "type": "string", "example": "₹100" }
+          },
+          "required": ["base"]
+        },
+        "finance_charges": {
+          "type": "object",
+          "properties": {
+            "rate_per_month": { "type": "string", "example": "3.75%" },
+            "rate_per_annum": { "type": "string", "example": "45%" },
+            "cash_withdrawal_start": { "type": "string" },
+            "applicability": { "type": "string" },
+            "interest_accrual_on_fees_charges_gst": { "type": "boolean" },
+            "interest_accrual_on_customer_spends_levied_interest_emis": { "type": "boolean" }
+          },
+          "required": ["rate_per_month", "rate_per_annum"]
+        },
+        "surcharge_fees": {
+          "type": "object",
+          "properties": {
+            "dcc_markup": { "type": "string", "example": "1.5%" },
+            "rent": { "type": "string", "example": "1%" },
+            "wallet": { "type": "string" },
+            "fuel": { "type": "string" },
+            "utilities": { "type": "string" },
+            "education": { "type": "string" },
+            "gaming": { "type": "string" }
+          }
+        },
+        "cash_withdrawal": {
+          "type": "object",
+          "properties": {
+            "fee": { "type": "string", "example": "2.5% (min ₹500)" },
+            "limit": { "type": "string", "example": "30% of credit limit" }
+          },
+          "required": ["fee"]
+        },
+        "fuel_surcharge_waiver": {
+          "type": "object",
+          "properties": {
+            "rate": { "type": "string" },
+            "waiver_band": { "type": "string" },
+            "monthly_cap": { "type": "string" },
+            "details": { "type": "string" }
+          }
+        },
+        "other_fees": {
+          "type": "object",
+          "properties": {
+            "cheque_bounce": { "type": "string", "example": "2% (min ₹500)" },
+            "overlimit": { "type": "string" },
+            "replacement_card": { "type": "string" },
+            "cash_payment": { "type": "string" },
+            "reward_redemption_fee": { "type": "string" },
+            "miles_transfer_fee": { "type": "string" }
+          }
+        },
+        "card_management_policies": {
+          "type": "object",
+          "properties": {
+            "activation_period": { "type": "string" },
+            "inactivity_closure": { "type": "string" },
+            "welcome_benefit_one_time": { "type": "string" }
+          }
+        },
+        "reward_points_policy": {
+          "type": "object",
+          "properties": {
+            "earning_eligibility": { "type": "string" },
+            "minimum_transaction": { "type": "string" },
+            "settlement_requirement": { "type": "string" },
+            "reversal_on_emi_conversion": { "type": "string" },
+            "forfeiture_on_termination_or_delinquency": { "type": "string" }
+          }
+        }
+      },
+      "required": ["interest_free_grace_period", "minimum_amount_due_logic", "finance_charges"]
+    },
+    "card": {
+      "type": "object",
+      "description": "Individual credit card information",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique card identifier (snake_case)",
+          "example": "axis_atlas",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "name": {
+          "type": "string", 
+          "description": "Official card name",
+          "example": "Axis Bank Atlas Credit Card"
+        },
+        "bank": {
+          "type": "string",
+          "description": "Issuing bank name",
+          "example": "Axis Bank"
+        },
+        "category": {
+          "type": "string",
+          "description": "Card category/segment",
+          "enum": ["Travel", "Cashback", "Rewards", "Premium", "Lifestyle", "Business"],
+          "example": "Travel"
+        },
+        "network": {
+          "type": "string",
+          "description": "Card network",
+          "enum": ["Visa", "Mastercard", "RuPay", "American Express"],
+          "example": "Visa"
+        },
+        "launch_date": {
+          "type": "string",
+          "description": "Card launch date",
+          "format": "date",
+          "example": "2020-04-01"
+        },
+        "fees": {
+          "type": "object",
+          "properties": {
+            "joining_fee": { "type": ["string", "null"], "example": "₹5,000 + GST" },
+            "annual_fee": { "type": ["string", "null"], "example": "₹5,000 + GST" },
+            "add_on_card_fee": { "type": ["string", "null"], "example": "Nil" },
+            "foreign_currency_markup": { "type": ["string", "null"], "example": "3.5%" },
+            "dcc_markup": { "type": ["string", "null"], "example": "1.5%" },
+            "replacement_card_fee": { "type": ["string", "null"] },
+            "note": { "type": "string", "description": "Use when fee info not available", "example": "Fee information not available. Check: [bank website URL]" }
+          },
+          "required": ["joining_fee", "annual_fee"]
+        },
+        "fee_waiver": {
+          "type": ["object", "null"],
+          "properties": {
+            "joining_fee_waiver": { "type": "string" },
+            "annual_fee_waiver": { "type": "string" },
+            "conditions": { "type": "string" }
+          }
+        },
+        "welcome_benefits": {
+          "type": ["object", "null"],
+          "properties": {
+            "points_miles": { "type": ["string", "number"] },
+            "vouchers": { "type": "object" },
+            "membership": { "type": "object" },
+            "credit_time_days": { "type": "number" },
+            "conditions": { "type": "string" },
+            "note": { "type": "string", "example": "Welcome benefit information not available. Check: [bank website URL]" }
+          }
+        },
+        "rewards": {
+          "type": "object",
+          "properties": {
+            "rate_general": { "type": "string", "example": "2 EDGE Miles/₹100" },
+            "value_per_point": { "type": "string", "example": "₹1 per EDGE Mile" },
+            "earning_rate": { "type": "object" },
+            "accelerated_categories": { "type": "object" },
+            "accrual_exclusions": { "type": "array", "items": { "type": "string" } },
+            "travel": { "type": ["object", "null"] },
+            "dining": { "type": ["object", "null"] },
+            "fuel": { "type": ["object", "null"] },
+            "utility": { "type": ["object", "null"] },
+            "grocery": { "type": ["object", "null"] },
+            "insurance": { "type": ["object", "null"] },
+            "education": { "type": ["object", "null"] },
+            "redemption": { "type": ["object", "null"] }
+          },
+          "required": ["rate_general"]
+        },
+        "reward_capping": {
+          "type": ["object", "null"],
+          "description": "Monthly/annual caps on reward earning",
+          "properties": {
+            "travel_monthly_cap": { "type": "string" },
+            "dining_monthly_cap": { "type": "string" },
+            "utility": { "type": "string" },
+            "grocery": { "type": "string" },
+            "insurance": { "type": "string" },
+            "education": { "type": "string" }
+          }
+        },
+        "milestones": {
+          "type": ["array", "object", "null"],
+          "description": "Spending milestone bonuses",
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "spend": { "type": "string", "example": "₹3L" },
+                  "miles": { "type": "number", "example": 2500 },
+                  "points": { "type": "number" },
+                  "voucher": { "type": "object" }
+                }
+              }
+            },
+            {
+              "type": "object",
+              "patternProperties": {
+                ".*": { "type": "object" }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "renewal_benefits": {
+          "type": ["object", "null"],
+          "properties": {
+            "points_miles": { "type": ["string", "number"] },
+            "vouchers": { "type": "object" },
+            "membership": { "type": "object" },
+            "fee_required": { "type": "boolean" },
+            "note": { "type": "string", "example": "Renewal benefit information not available. Check: [bank website URL]" }
+          }
+        },
+        "lounge_access": {
+          "type": ["object", "null"],
+          "properties": {
+            "domestic": { "type": ["string", "number", "object"] },
+            "international": { "type": ["string", "number", "object"] },
+            "provider": { "type": "string", "example": "Dreamfolks" },
+            "guest_policy": { "type": "string" },
+            "booking_methods": { "type": "array" },
+            "note": { "type": "string", "example": "Lounge access information not available. Check: [bank website URL]" }
+          }
+        },
+        "dining_benefits": {
+          "type": ["object", "null"],
+          "properties": {
+            "restaurant_discounts": { "type": "object" },
+            "delivery_benefits": { "type": "object" },
+            "partnerships": { "type": "array" },
+            "note": { "type": "string", "example": "Dining benefit information not available. Check: [bank website URL]" }
+          }
+        },
+        "insurance": {
+          "type": ["object", "null"],
+          "properties": {
+            "air_accident": { "type": ["string", "object"] },
+            "travel_insurance": { "type": ["string", "object", "array"] },
+            "purchase_protection": { "type": ["string", "object"] },
+            "credit_shield": { "type": ["string", "object"] },
+            "lost_card_liability": { "type": ["string", "object"] },
+            "note": { "type": "string", "example": "Insurance coverage information not available. Check: [bank website URL]" }
+          }
+        },
+        "concierge": {
+          "type": ["object", "null"],
+          "properties": {
+            "services": { "type": "array" },
+            "availability": { "type": "string" },
+            "contact": { "type": "string" },
+            "note": { "type": "string", "example": "Concierge service information not available. Check: [bank website URL]" }
+          }
+        },
+        "bookmyshow": {
+          "type": ["object", "null"],
+          "properties": {
+            "discount": { "type": "string" },
+            "monthly_cap": { "type": "string" },
+            "minimum_tickets": { "type": "number" },
+            "note": { "type": "string", "example": "BookMyShow benefit information not available. Check: [bank website URL]" }
+          }
+        },
+        "golf_benefits": {
+          "type": ["object", "null"],
+          "properties": {
+            "courses": { "type": "array" },
+            "complimentary_rounds": { "type": "number" },
+            "guest_policy": { "type": "string" },
+            "note": { "type": "string", "example": "Golf benefit information not available. Check: [bank website URL]" }
+          }
+        },
+        "miles_transfer": {
+          "type": ["object", "null"],
+          "properties": {
+            "airline_partners": { "type": "array" },
+            "hotel_partners": { "type": "array" },
+            "conversion_rates": { "type": "object" },
+            "transfer_fees": { "type": "object" },
+            "note": { "type": "string", "example": "Miles transfer information not available. Check: [bank website URL]" }
+          }
+        },
+        "eligibility": {
+          "type": ["object", "null"],
+          "properties": {
+            "minimum_age": { "type": ["string", "number"] },
+            "maximum_age": { "type": ["string", "number"] },
+            "minimum_income": { "type": "string" },
+            "employment_type": { "type": "array" },
+            "cibil_score": { "type": ["string", "number"] },
+            "existing_relationship": { "type": "string" },
+            "note": { "type": "string", "example": "Eligibility criteria not available. Check: [bank website URL]" }
+          }
+        },
+        "documentation": {
+          "type": ["object", "null"],
+          "properties": {
+            "identity_proof": { "type": "array" },
+            "address_proof": { "type": "array" },
+            "income_proof": { "type": "array" },
+            "additional_documents": { "type": "array" },
+            "note": { "type": "string", "example": "Document requirements not available. Check: [bank website URL]" }
+          }
+        },
+        "tier_structure": {
+          "type": ["object", "null"],
+          "description": "For cards with tier-based benefits",
+          "properties": {
+            "tiers": { "type": "object" },
+            "upgrade_criteria": { "type": "string" },
+            "tier_benefits": { "type": "object" }
+          }
+        },
+        "inherits": {
+          "type": "array",
+          "description": "References to common_terms sections that apply to this card",
+          "items": { "type": "string" },
+          "example": ["interest_free_grace_period", "finance_charges", "surcharge_fees"]
+        },
+        "last_updated": {
+          "type": "string",
+          "format": "date",
+          "description": "Last update date for this card data"
+        },
+        "source_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Official bank URL for this card",
+          "example": "https://www.axisbank.com/retail/cards/credit-card/atlas-credit-card"
+        },
+        "data_completeness": {
+          "type": "object",
+          "description": "Track which sections have complete/incomplete data",
+          "properties": {
+            "fees": { "type": "string", "enum": ["complete", "partial", "missing"] },
+            "rewards": { "type": "string", "enum": ["complete", "partial", "missing"] },
+            "benefits": { "type": "string", "enum": ["complete", "partial", "missing"] },
+            "insurance": { "type": "string", "enum": ["complete", "partial", "missing"] },
+            "eligibility": { "type": "string", "enum": ["complete", "partial", "missing"] }
+          }
+        }
+      },
+      "required": ["id", "name", "bank", "fees", "rewards"]
+    }
+  },
+  "required": ["common_terms", "card"]
+}

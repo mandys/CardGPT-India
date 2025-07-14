@@ -117,21 +117,21 @@ class QueryEnhancer:
         is_distribution_query = any(word in query.lower() for word in ['split', 'distribution', 'monthly', 'breakdown', 'categories'])
         
         if category and spend_amount:
-            # Make category explicit in the query with specific card guidance
+            # Make category explicit in the query with generic guidance
             if category in ['hotel', 'flight']:
-                enhanced_query += f"\n\nIMPORTANT: This is specifically about {category} spending. Use the accelerated {category} earning rate (5x) for Axis Atlas. CHECK CAPS: 5x rate applies to spend UP TO ₹2L per month. Only split calculation if spend EXCEEDS ₹2L (above ₹2L use base 2x rate)."
+                enhanced_query += f"\n\nIMPORTANT: This is specifically about {category} spending. Check for accelerated earning rates for {category} category. Look for any monthly caps on accelerated rates - if spend exceeds cap, use base rate for excess amount."
             elif category == 'utility':
-                enhanced_query += f"\n\nIMPORTANT: This is about utility spending. Check BOTH rewards AND surcharges: Axis Atlas EXCLUDES utilities (0 rewards) + 1% surcharge on amount above ₹25K/month. ICICI EPM earns 6 points per ₹200 but CAPPED at MAX 1,000 points per cycle + 1% surcharge on amount above ₹50K/month. Calculate surcharge: 1% × (spend - threshold) if spend exceeds threshold."
+                enhanced_query += f"\n\nIMPORTANT: This is about utility spending. Check BOTH rewards AND surcharges: Some cards exclude utilities (0 rewards), others have caps. Check for surcharge fees on amounts above monthly thresholds. Calculate: 1% × (spend - threshold) if spend exceeds threshold."
             elif category in ['fuel', 'rent', 'government', 'insurance']:
-                enhanced_query += f"\n\nIMPORTANT: This is about {category} spending. Check exclusions first - this category may be excluded from earning rewards."
+                enhanced_query += f"\n\nIMPORTANT: This is about {category} spending. Check exclusions first - this category may be excluded from earning rewards on some cards."
             elif category == 'education':
-                enhanced_query += f"\n\nIMPORTANT: This is about education spending. ICICI EPM has a cap of 1,000 points per cycle for education. Axis Atlas has NO exclusions for education - use base rate (2 miles per ₹100)."
+                enhanced_query += f"\n\nIMPORTANT: This is about education spending. Check for earning caps or exclusions for education category. Some cards may have monthly/cycle caps."
         elif category == 'milestone':
             # Handle milestone queries separately (they often don't have spend amounts)
-            enhanced_query += f"\n\nIMPORTANT: This is about milestone benefits. Check both the dedicated 'milestones' section AND the 'renewal_benefits' section which contains milestone-related vouchers and benefits. ICICI EPM has EaseMyTrip vouchers at ₹4L and ₹8L spend milestones."
+            enhanced_query += f"\n\nIMPORTANT: This is about milestone benefits. Check both the dedicated 'milestones' section AND the 'renewal_benefits' section which may contain milestone-related vouchers and benefits."
         elif category == 'utility' and any(keyword in query.lower() for keyword in ['surcharge', 'fee', 'charge', 'cost']):
             # Handle utility fee/surcharge queries separately
-            enhanced_query += f"\n\nIMPORTANT: This is about utility fees/surcharges. Calculate surcharges on amount ABOVE threshold: Axis Atlas 1% on amount above ₹25K/month, ICICI EPM 1% on amount above ₹50K/month. Show surcharge calculation: 1% × (spend - threshold)."
+            enhanced_query += f"\n\nIMPORTANT: This is about utility fees/surcharges. Calculate surcharges on amount ABOVE threshold if mentioned. Show surcharge calculation: percentage × (spend - threshold)."
         elif is_distribution_query:
             enhanced_query += f"\n\nIMPORTANT: This is a spend distribution query. For each category, calculate separately using the appropriate rate (base rate for most categories, accelerated for hotels/flights, zero for excluded categories). Do NOT add base + category rates."
         elif spend_amount and not category:
@@ -139,37 +139,19 @@ class QueryEnhancer:
         
         return enhanced_query, metadata
     
-    def get_category_hints(self, category: str) -> Dict[str, str]:
-        """Get earning rate hints for specific categories"""
-        hints = {
-            'hotel': {
-                'axis_atlas': '5 EDGE Miles per ₹100 for hotel bookings (accelerated rate)',
-                'icici_epm': '6 points per ₹200 (same as general rate)'
-            },
-            'flight': {
-                'axis_atlas': '5 EDGE Miles per ₹100 for flights (accelerated rate)', 
-                'icici_epm': '6 points per ₹200 (same as general rate)'
-            },
-            'fuel': {
-                'axis_atlas': 'Excluded from earning (0 rewards)',
-                'icici_epm': 'Excluded from earning (0 rewards)'
-            },
-            'utility': {
-                'axis_atlas': 'Excluded from earning (0 rewards)',
-                'icici_epm': 'Earns rewards but capped at 1,000 points per cycle'
-            },
-            'rent': {
-                'axis_atlas': 'Excluded from earning (0 rewards)',
-                'icici_epm': 'Excluded from earning (0 rewards)'
-            },
-            'government': {
-                'axis_atlas': 'Excluded from earning (0 rewards)',
-                'icici_epm': 'Excluded from earning (0 rewards)'
-            },
-            'insurance': {
-                'axis_atlas': 'Excluded from earning (0 rewards)',
-                'icici_epm': 'Earns rewards but capped at 5,000 points per cycle'
-            }
+    def get_category_guidance(self, category: str) -> str:
+        """Get general guidance for specific spending categories"""
+        guidance = {
+            'hotel': 'Look for accelerated earning rates for hotel bookings. Check for monthly caps on accelerated rates.',
+            'flight': 'Look for accelerated earning rates for flight bookings. Check for monthly caps on accelerated rates.',
+            'fuel': 'Commonly excluded from earning rewards on most cards. Check exclusion lists.',
+            'utility': 'May be excluded or have earning caps. Check for surcharge fees above spending thresholds.',
+            'rent': 'Commonly excluded from earning rewards on most cards. Check exclusion lists.',
+            'government': 'Commonly excluded from earning rewards on most cards. Check exclusion lists.',
+            'insurance': 'May be excluded or have earning caps depending on the card.',
+            'education': 'May have earning caps or be treated as general spending depending on the card.',
+            'grocery': 'May have earning caps or accelerated rates depending on the card.',
+            'dining': 'Often treated as general spending, but some cards may have accelerated rates.'
         }
         
-        return hints.get(category, {})
+        return guidance.get(category, 'Check the card-specific earning rates and exclusions for this category.')

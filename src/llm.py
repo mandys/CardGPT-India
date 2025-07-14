@@ -7,6 +7,8 @@ import openai
 import google.generativeai as genai
 from typing import List, Dict, Any
 import logging
+import json
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +51,8 @@ class LLMService:
         card_name: str = None, 
         model_choice: str = "gpt-3.5-turbo",  # Changed from use_gpt4 bool
         max_tokens: int = 500,
-        temperature: float = 0.1
+        temperature: float = 0.1,
+        use_calculator: bool = True
     ) -> tuple[str, Dict[str, Any]]:
         """
         Generate an answer using selected LLM
@@ -70,6 +73,12 @@ class LLMService:
         
         # Build context from documents
         context = self._build_context(context_documents)
+        
+        # Check if we should use calculator for calculation queries
+        if use_calculator and self._is_calculation_query(question):
+            calc_result = self._try_calculator(question, context)
+            if calc_result:
+                return calc_result, {"model": "calculator", "tokens": 0, "cost": 0}
         
         # Create prompts
         system_prompt = self._create_system_prompt(card_name)
@@ -228,23 +237,32 @@ CRITICAL: Hotels and flights often SHARE monthly caps (not separate caps!)
 
 EXCLUSIONS (check context to verify): 
 - Common exclusions: Government, rent, fuel
-- Axis Atlas additional: Utilities, insurance, wallet, jewellery
-- ICICI EPM: Fewer exclusions but has caps instead
+- Axis Atlas additional: Utilities, insurance, wallet, jewellery (all get 0 rewards)
+- ICICI EPM: Does NOT exclude utilities/education/insurance - they earn rewards but are CAPPED
 - HSBC Premier: Check context for specific exclusions
 
+CRITICAL: ICICI EPM utility/education/insurance are NOT excluded - they earn 6 points/₹200 with caps!
+
 EARNING CAPS (earns rewards but capped per cycle):
-- Look for "capped at X points per cycle/month" in context
-- Calculate normally, then apply the cap limit
+- ICICI EPM utilities: Earns 6 points/₹200 but CAPPED at 1,000 points per cycle
+- ICICI EPM education: Earns 6 points/₹200 but CAPPED at 1,000 points per cycle  
+- ICICI EPM insurance: Earns 6 points/₹200 but CAPPED at 5,000 points per cycle
+- ICICI EPM grocery: Earns 6 points/₹200 but CAPPED at 1,000 points per cycle
+- Calculate normally: (spend ÷ 200) × 6, then apply the cap limit if exceeded
 
 SURCHARGES (calculate if spend exceeds threshold):
 - Look for surcharge rules in context (typically 1% above thresholds)
 
-MILESTONE EXAMPLES (ANNUAL - verify thresholds in context):
+MILESTONE LOGIC (CUMULATIVE - ALL qualifying milestones earned):
 ₹7.5L yearly spend on Atlas → Base: (750000 ÷ 100) × 2 = 15,000 miles
-Annual milestones: Add milestone bonuses from context
-✅ Total: Base + milestone bonuses
+CUMULATIVE milestones: ₹3L (2,500) + ₹7.5L (2,500) = 5,000 total milestone bonus
+✅ Total: 15,000 + 5,000 = 20,000 miles
 
-₹3L yearly spend → Check if ≥ milestone threshold, add bonus if applicable
+₹3L yearly spend on Atlas → Base: (300000 ÷ 100) × 2 = 6,000 miles  
+CUMULATIVE milestones: ₹3L (2,500) = 2,500 milestone bonus
+✅ Total: 6,000 + 2,500 = 8,500 miles
+
+CRITICAL: Milestones are CUMULATIVE - if you spend ₹7.5L, you get ALL milestones below that threshold!
 
 Show calculations step-by-step. For comparisons, discuss relevant cards from context."""
         
@@ -276,6 +294,93 @@ Be precise with math. Double-check arithmetic."""
     def _no_context_response(self) -> str:
         """Response when no relevant context is found"""
         return "I couldn't find relevant information to answer your question. Please try rephrasing your query or asking about specific credit card features."
+    
+    def _is_calculation_query(self, question: str) -> bool:
+        """Check if this is a calculation query that should use the calculator"""
+        calculation_indicators = [
+            r'spend.*₹\d+',
+            r'₹\d+.*spend',
+            r'how many.*points',
+            r'how many.*miles',
+            r'points.*earn',
+            r'miles.*earn',
+            r'earn.*points',
+            r'earn.*miles',
+            r'\d+.*lakh',
+            r'₹\d+.*L',
+            r'₹\d+K',
+            r'milestone',
+            r'surcharge'
+        ]
+        
+        question_lower = question.lower()
+        return any(re.search(pattern, question_lower) for pattern in calculation_indicators)
+    
+    def _try_calculator(self, question: str, context: str) -> str:
+        """Try to use the calculator for precise calculations"""
+        try:
+            from src.calculator import calculate_rewards
+            
+            # Extract spend amount
+            spend_match = re.search(r'₹\s*(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:lakh|l\b|L\b|k\b|K\b)?', question)
+            if not spend_match:
+                spend_match = re.search(r'(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:lakh|l\b|L\b)', question)
+            
+            if not spend_match:
+                return None
+                
+            spend_str = spend_match.group(1).replace(',', '')
+            spend = float(spend_str)
+            
+            # Handle lakh/L conversion
+            if re.search(r'lakh|l\b|L\b', question, re.IGNORECASE):
+                spend = spend * 100000
+            elif re.search(r'k\b|K\b', question, re.IGNORECASE):
+                spend = spend * 1000
+                
+            spend = int(spend)
+            
+            # Extract card name
+            card = None
+            if 'atlas' in question.lower():
+                card = 'Axis Atlas'
+            elif 'icici' in question.lower() or 'epm' in question.lower():
+                card = 'ICICI EPM'
+            elif 'hsbc' in question.lower() or 'premier' in question.lower():
+                card = 'HSBC Premier'
+            
+            if not card:
+                return None
+            
+            # Extract category
+            category = 'general'
+            if any(word in question.lower() for word in ['hotel', 'hotels']):
+                category = 'hotel'
+            elif any(word in question.lower() for word in ['flight', 'flights', 'airline']):
+                category = 'flight'
+            elif any(word in question.lower() for word in ['utility', 'utilities']):
+                category = 'utility'
+            elif any(word in question.lower() for word in ['education', 'school', 'college']):
+                category = 'education'
+            elif any(word in question.lower() for word in ['insurance']):
+                category = 'insurance'
+            elif any(word in question.lower() for word in ['grocery', 'groceries']):
+                category = 'grocery'
+            
+            # Determine period
+            period = 'annual'
+            if any(word in question.lower() for word in ['month', 'monthly']):
+                period = 'monthly'
+            elif any(word in question.lower() for word in ['year', 'yearly', 'annual']):
+                period = 'annual'
+            
+            # Use calculator
+            result = calculate_rewards(spend, card, category, period)
+            return f"🧮 **Precise Calculation Using Advanced Calculator**\n\n{result}"
+            
+        except Exception as e:
+            logger.error(f"Calculator failed: {e}")
+            return None
     
     def get_model_info(self, model: str = "gpt-4") -> Dict[str, Any]:
         """Get information about a specific model"""

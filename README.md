@@ -128,6 +128,8 @@ git commit -m "Your changes"
 - "How many miles do I earn on ₹2 lakh flight spend with Axis Atlas?"
 - "Compare cash withdrawal fees between cards"
 - "What are the hotel booking rewards for ₹1 lakh spend?"
+- "Are utilities capped for HSBC Premier card?"
+- "What are the joining benefits of HSBC Premier?"
 
 ## Adding New Credit Card Data
 
@@ -186,6 +188,7 @@ JSON Files → Document Chunks → OpenAI Embeddings → In-Memory Vector Store
 - Each section becomes a "document" with text content
 - OpenAI `text-embedding-3-small` converts text to 1536-dimensional vectors
 - Vectors stored in memory (no ChromaDB - just Python arrays)
+- Supports 3 cards: Axis Atlas, ICICI EPM, HSBC Premier
 
 ### 2. **Smart Query Processing** (Per user question)
 ```

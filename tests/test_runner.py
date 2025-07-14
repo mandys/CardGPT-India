@@ -248,6 +248,44 @@ class CreditCardTestRunner:
                 "expected_keywords": ["10,000", "4,000", "12,000", "5,000", "31,000", "milestone"],
                 "expected_calculation": "flights(10K accelerated) + hotels(4K base, cap used) + general(12K) + milestones(5K) = 31K",
                 "critical": True
+            },
+            
+            # HSBC Premier Tests
+            {
+                "category": "HSBC Premier Utilities",
+                "query": "are utilities capped for hsbc premier card?",
+                "expected_keywords": ["capped", "₹1,00,000", "monthly", "utility", "reward points"],
+                "expected_content": "utilities capped at monthly limit"
+            },
+            {
+                "category": "HSBC Premier Welcome Benefits", 
+                "query": "what are the joining benefits of HSBC Premier card?",
+                "expected_keywords": ["Taj", "₹12,000", "Epicure", "EazyDiner", "welcome"],
+                "expected_content": "Taj voucher and membership benefits"
+            },
+            {
+                "category": "HSBC Premier Reward Rate",
+                "query": "What is the reward rate for HSBC Premier?",
+                "expected_keywords": ["3 points", "₹100", "reward points"],
+                "expected_content": "3 points per ₹100 spending"
+            },
+            {
+                "category": "HSBC Premier Utility Calculation",
+                "query": "If I spend ₹50,000 on utilities with HSBC Premier, how many points?",
+                "expected_keywords": ["1,500", "3 points", "₹100", "utility"],
+                "expected_calculation": "(50000 ÷ 100) × 3 = 1,500 points"
+            },
+            {
+                "category": "HSBC Premier Lounge Access",
+                "query": "What lounge access does HSBC Premier provide?",
+                "expected_keywords": ["unlimited", "complimentary", "LoungeKey", "international"],
+                "expected_content": "unlimited domestic and international lounge access"
+            },
+            {
+                "category": "HSBC Premier Miles Transfer",
+                "query": "Can I transfer HSBC Premier points to airlines?",
+                "expected_keywords": ["1:1", "airlines", "Singapore", "Qatar", "British Airways"],
+                "expected_content": "1:1 conversion to multiple airlines"
             }
         ]
     

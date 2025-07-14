@@ -11,6 +11,7 @@ This is an enhanced supavec clone built for RAG/Multi-Model LLM applications to 
 The project contains credit card data in JSON format in the `/data` directory:
 - `axis-atlas.json` - Axis Bank Atlas credit card terms and conditions
 - `icici-epm.json` - ICICI Bank credit card terms and conditions
+- `hsbc-premier.json` - HSBC Premier credit card terms and conditions
 
 Each JSON file contains structured data with:
 - `common_terms` - Standard credit card terms like interest rates, fees, and policies

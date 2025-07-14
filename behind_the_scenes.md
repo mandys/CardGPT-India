@@ -4,19 +4,19 @@
 
 ### **Phase 1: Initial Document Processing (One-time Setup)**
 ```
-INFO:src.retriever:Loaded 46 documents from 2 files
+INFO:src.retriever:Loaded 71 documents from 3 files
 INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
 INFO:httpx:HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
-... (repeated 46 times)
-INFO:src.embedder:Generated 46/46 embeddings successfully
-INFO:src.retriever:Stored 46 documents with embeddings
+... (repeated 71 times)
+INFO:src.embedder:Generated 71/71 embeddings successfully
+INFO:src.retriever:Stored 71 documents with embeddings
 ```
 
 **What's happening:**
-1. **JSON Parsing**: Load `axis-atlas.json` and `icici-epm.json` files
+1. **JSON Parsing**: Load `axis-atlas.json`, `icici-epm.json`, and `hsbc-premier.json` files
 2. **Document Creation**: Each JSON section becomes a separate "document"
 3. **Individual Embedding Calls**: Each document sent separately to OpenAI embedding API
-4. **Vector Storage**: Store 46 vectors in memory for future searches
+4. **Vector Storage**: Store 71 vectors in memory for future searches
 
 ### **Phase 2: User Query Processing (Per Question)**
 ```
@@ -74,11 +74,12 @@ Document 2: {
 }
 ```
 
-**Why 46 Documents from 2 Files?**
+**Why 71 Documents from 3 Files?**
 - Each major JSON section becomes a document
 - ICICI EPM: ~23 sections → 23 documents
-- Axis Atlas: ~23 sections → 23 documents
-- **Total: 46 documents**
+- Axis Atlas: ~23 sections → 23 documents  
+- HSBC Premier: ~25 sections → 25 documents
+- **Total: 71 documents**
 
 ---
 
@@ -91,14 +92,14 @@ JSON Files → Document Chunking → Individual Embedding Calls → Vector Stora
 ```
 
 **Detailed Flow:**
-1. **Load JSON**: Read axis-atlas.json, icici-epm.json
+1. **Load JSON**: Read axis-atlas.json, icici-epm.json, hsbc-premier.json
 2. **Section Extraction**: Split each card into logical sections (rewards, fees, etc.)
 3. **Document Formatting**: Convert each section to readable text
-4. **Embedding Generation**: **46 separate API calls** to OpenAI embeddings
-5. **Vector Storage**: Store 46 vectors (1536 dimensions each) in memory
+4. **Embedding Generation**: **71 separate API calls** to OpenAI embeddings
+5. **Vector Storage**: Store 71 vectors (1536 dimensions each) in memory
 
 **🔴 Inefficiency #1: Individual Embedding Calls**
-- Current: 46 separate API calls
+- Current: 71 separate API calls
 - Could be: 1-2 batch API calls (OpenAI supports up to 2048 inputs per batch)
 
 ### **2. Query Phase (Per User Question)**
@@ -109,11 +110,11 @@ User Question → Query Embedding → Vector Search → Context Selection → LL
 
 **Detailed Flow:**
 1. **Query Embedding**: "does icici epm give points on utility spends" → vector (1 API call)
-2. **Similarity Search**: Compare query vector vs 46 stored vectors (local, fast)
+2. **Similarity Search**: Compare query vector vs 71 stored vectors (local, fast)
 3. **Ranking**: Calculate cosine similarity scores for all documents
 4. **Top-K Selection**: Pick 7 most similar documents (threshold: 0.0)
 5. **Context Building**: Combine 7 documents into context prompt
-6. **Answer Generation**: Send context + question to GPT-3.5 (1 API call)
+6. **Answer Generation**: Send context + question to selected model (1 API call)
 
 ---
 

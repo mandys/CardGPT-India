@@ -49,8 +49,8 @@ class LLMService:
         question: str, 
         context_documents: List[Dict], 
         card_name: str = None, 
-        model_choice: str = "gpt-3.5-turbo",  # Changed from use_gpt4 bool
-        max_tokens: int = 500,
+        model_choice: str = "gemini-1.5-pro",  # Changed from Flash due to performance issues
+        max_tokens: int = 800,  # Increased from 500 to allow comprehensive answers
         temperature: float = 0.1,
         use_calculator: bool = True
     ) -> tuple[str, Dict[str, Any]]:
@@ -79,6 +79,12 @@ class LLMService:
             calc_result = self._try_calculator(question, context)
             if calc_result:
                 return calc_result, {"model": "calculator", "tokens": 0, "cost": 0}
+        
+        # Adjust max_tokens based on query type
+        if any(keyword in question.lower() for keyword in ['transfer partners', 'partners', 'airlines', 'hotels', 'list', 'all', 'complete']):
+            max_tokens = min(max_tokens * 2, 1500)  # Double for comprehensive lists
+        elif any(keyword in question.lower() for keyword in ['benefits', 'features', 'insurance', 'lounge', 'details']):
+            max_tokens = min(max_tokens + 300, 1200)  # Increase for detailed info
         
         # Create prompts
         system_prompt = self._create_system_prompt(card_name)
@@ -147,6 +153,8 @@ class LLMService:
             
             actual_model_name = model_mapping.get(model, model)
             
+            print(f"🔄 Initializing {model} ({actual_model_name}) with {max_tokens} max tokens...")
+            
             gemini_model = genai.GenerativeModel(
                 model_name=actual_model_name,
                 generation_config=genai.types.GenerationConfig(
@@ -155,7 +163,15 @@ class LLMService:
                 )
             )
             
+            print(f"🚀 Sending request to {model}...")
+            import time
+            start_time = time.time()
+            
             response = gemini_model.generate_content(combined_prompt)
+            
+            end_time = time.time()
+            response_time = end_time - start_time
+            print(f"✅ {model} response received in {response_time:.2f} seconds")
             
             # Estimate token usage (Gemini doesn't provide exact counts)
             input_tokens = len(combined_prompt.split()) * 1.3  # Rough estimation
@@ -214,7 +230,7 @@ class LLMService:
     
     def _create_system_prompt(self, card_name: str = None) -> str:
         """Create a concise system prompt for the LLM"""
-        prompt = """You are a credit card expert. Be concise and accurate.
+        prompt = """You are a credit card expert. Be comprehensive and accurate.
 
 CRITICAL: For each ₹ spent, apply ONLY ONE earning rate (base OR category, never both).
 CRITICAL: If question asks about ONE specific card, answer ONLY about that card. Don't compare unnecessarily.
@@ -264,7 +280,9 @@ CUMULATIVE milestones: ₹3L (2,500) = 2,500 milestone bonus
 
 CRITICAL: Milestones are CUMULATIVE - if you spend ₹7.5L, you get ALL milestones below that threshold!
 
-Show calculations step-by-step. For comparisons, discuss relevant cards from context."""
+Show calculations step-by-step. For comparisons, discuss relevant cards from context.
+
+IMPORTANT: For informational queries (benefits, features, transfer partners, etc.), extract ALL relevant information from context. Don't truncate lists or details. If context contains comprehensive information, provide comprehensive answers."""
         
         if card_name:
             prompt += f"\nFocus on information about the {card_name} card."

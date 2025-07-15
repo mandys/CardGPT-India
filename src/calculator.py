@@ -1,95 +1,91 @@
 """
-Credit Card Reward Calculator
-Handles complex calculations with precise milestone and capping logic
+Credit Card Reward Calculator (Data-Driven)
+Handles complex calculations by reading rules directly from JSON data sources.
 """
 
-from typing import Dict, List, Tuple
+from typing import Dict, Any
 import json
+from pathlib import Path
+import re
+
+# --- Data-Access Helper ---
+def get_nested(data: Dict, path: str, default: Any = None) -> Any:
+    """Safely get a value from a nested dictionary using dot notation."""
+    keys = path.split('.')
+    for key in keys:
+        try:
+            if isinstance(data, list):
+                data = data[int(key)]
+            else:
+                data = data[key]
+        except (KeyError, TypeError, IndexError):
+            return default
+    return data
+
+# --- Parsing Helper ---
+def parse_reward_rate(rate_str: str) -> Dict:
+    """Parses a rate string like '2 EDGE Miles/₹100' into a structured dict."""
+    match = re.search(r'(\d+)\s*.*₹(\d+)', rate_str)
+    if match:
+        return {'points': int(match.group(1)), 'per_spend': int(match.group(2))}
+    return {'points': 0, 'per_spend': 1}  # Default to prevent division by zero
+
+def parse_spend_string(spend_str: str) -> int:
+    """Parse spend strings like '₹3L' or '₹4 lakh annual spend' into integer values."""
+    if not spend_str:
+        return 0
+    
+    # Remove currency symbols and clean up
+    clean_str = re.sub(r'[₹,]', '', str(spend_str))
+    
+    # Handle lakh notation (both 'L' and 'lakh')
+    if 'L' in clean_str or 'l' in clean_str or 'lakh' in clean_str.lower():
+        # Extract the numeric part before 'lakh' or 'L'
+        number_match = re.search(r'(\d+(?:\.\d+)?)\s*(?:lakh|L|l)', clean_str, re.IGNORECASE)
+        if number_match:
+            base_value = float(number_match.group(1))
+            return int(base_value * 100000)
+    
+    # Handle thousand notation
+    if 'K' in clean_str or 'k' in clean_str or 'thousand' in clean_str.lower():
+        number_match = re.search(r'(\d+(?:\.\d+)?)\s*(?:thousand|K|k)', clean_str, re.IGNORECASE)
+        if number_match:
+            base_value = float(number_match.group(1))
+            return int(base_value * 1000)
+    
+    # Try to extract any number
+    number_match = re.search(r'(\d+(?:\.\d+)?)', clean_str)
+    if number_match:
+        return int(float(number_match.group(1)))
+    
+    return 0
 
 class CreditCardCalculator:
-    """Precise calculator for credit card rewards with milestone and capping logic"""
+    """
+    (Refactored) Precise, data-driven calculator for credit card rewards.
+    This class is now stateless and relies on the passed-in card_data.
+    """
     
-    def __init__(self):
-        # Load card configuration
-        self.card_configs = self._load_card_configs()
-    
-    def _load_card_configs(self) -> Dict:
-        """Load card configurations from data files"""
-        configs = {}
-        
-        # Axis Atlas configuration
-        configs['axis_atlas'] = {
-            'base_rate': {'points_per_100': 2, 'currency': 'miles'},
-            'accelerated_rates': {
-                'hotel': {'points_per_100': 5, 'monthly_cap': 200000},
-                'flight': {'points_per_100': 5, 'monthly_cap': 200000}  # Shared cap
-            },
-            'exclusions': ['government', 'rent', 'fuel', 'utility', 'insurance', 'wallet', 'jewellery'],
-            'milestones': [
-                {'threshold': 300000, 'bonus': 2500},
-                {'threshold': 750000, 'bonus': 2500}, 
-                {'threshold': 1500000, 'bonus': 5000}
-            ],
-            'surcharges': {
-                'utility': {'rate': 0.01, 'threshold': 25000}
-            }
-        }
-        
-        # ICICI EPM configuration  
-        configs['icici_epm'] = {
-            'base_rate': {'points_per_200': 6, 'currency': 'points'},
-            'exclusions': ['government', 'rent', 'fuel'],
-            'caps': {
-                'utility': {'points_per_200': 6, 'max_points': 1000},
-                'education': {'points_per_200': 6, 'max_points': 1000},
-                'insurance': {'points_per_200': 6, 'max_points': 5000},
-                'grocery': {'points_per_200': 6, 'max_points': 1000}
-            },
-            'milestones': [
-                {'threshold': 400000, 'bonus': 'EaseMyTrip ₹4000'},
-                {'threshold': 800000, 'bonus': 'EaseMyTrip ₹8000'}
-            ],
-            'surcharges': {
-                'utility': {'rate': 0.01, 'threshold': 50000},
-                'fuel': {'rate': 0.01, 'threshold': 10000},
-                'education': {'rate': 0.01, 'threshold': 0}
-            }
-        }
-        
-        # HSBC Premier configuration
-        configs['hsbc_premier'] = {
-            'base_rate': {'points_per_100': 3, 'currency': 'points'},
-            'exclusions': ['fuel'],  # Based on JSON: only cash advances, fees, disputed transactions excluded
-            'caps': {
-                'utility': {'points_per_100': 3, 'max_monthly_spend': 100000},
-                'tax_payment': {'points_per_100': 3, 'max_monthly_spend': 100000},
-                'insurance': {'points_per_100': 3, 'max_monthly_spend': 100000},
-                'education': {'points_per_100': 3, 'max_monthly_spend': 100000}  # Added education capping
-            }
-        }
-        
-        return configs
-    
-    def calculate_rewards(self, spend: int, card: str, category: str = 'general', period: str = 'annual') -> Dict:
+    def calculate_rewards(self, spend: int, card_data: Dict, category: str = 'general', period: str = 'annual') -> Dict:
         """
-        Calculate rewards for a given spend amount
+        Calculate rewards based on dynamic card data from JSON.
         
         Args:
-            spend: Amount spent in rupees
-            card: Card name (axis_atlas, icici_epm, hsbc_premier)
-            category: Spending category (general, hotel, flight, utility, etc.)
-            period: Calculation period (annual, monthly)
+            spend: Amount spent in rupees.
+            card_data: The parsed JSON data for a single credit card.
+            category: Spending category.
+            period: Calculation period (annual, monthly).
             
         Returns:
-            Dict with calculation breakdown
+            Dict with the calculation breakdown.
         """
-        card_key = card.lower().replace(' ', '_').replace('-', '_')
-        if card_key not in self.card_configs:
-            return {'error': f'Card {card} not supported'}
-        
-        config = self.card_configs[card_key]
+        card_name = get_nested(card_data, 'card.name', 'Unknown Card')
+        currency = 'points'  # Default currency
+        if 'miles' in get_nested(card_data, 'card.rewards.rate_general', '').lower():
+            currency = 'miles'
+
         result = {
-            'card': card,
+            'card': card_name,
             'spend': spend,
             'category': category,
             'period': period,
@@ -98,111 +94,165 @@ class CreditCardCalculator:
             'total_rewards': 0,
             'surcharge': 0,
             'calculation_steps': [],
-            'currency': config.get('base_rate', {}).get('currency', 'points')
+            'currency': currency
         }
         
-        # Check exclusions
-        if category in config.get('exclusions', []):
+        # Check exclusions from the JSON data
+        exclusions = get_nested(card_data, 'card.rewards.accrual_exclusions', [])
+        if category.lower() in [ex.lower() for ex in exclusions]:
             result['calculation_steps'].append(f"❌ {category.title()} is excluded from earning rewards")
             return result
         
         # Calculate base rewards
-        base_rewards = self._calculate_base_rewards(spend, card_key, category, config)
+        base_rewards = self._calculate_base_rewards(spend, category, card_data)
         result['base_rewards'] = base_rewards['rewards']
         result['calculation_steps'].extend(base_rewards['steps'])
         
-        # Calculate milestones (for annual periods)
-        if period == 'annual' and 'milestones' in config:
-            milestone_bonus = self._calculate_milestones(spend, config['milestones'])
-            result['milestone_bonus'] = milestone_bonus['bonus']
-            result['calculation_steps'].extend(milestone_bonus['steps'])
+        # Calculate milestones from JSON (for annual periods)
+        if period == 'annual':
+            milestones = get_nested(card_data, 'card.milestones', [])
+            if milestones:
+                milestone_bonus = self._calculate_milestones(spend, milestones)
+                result['milestone_bonus'] = milestone_bonus['bonus']
+                result['calculation_steps'].extend(milestone_bonus['steps'])
         
-        # Calculate surcharges
-        if category in config.get('surcharges', {}):
-            surcharge = self._calculate_surcharge(spend, config['surcharges'][category])
-            result['surcharge'] = surcharge['amount']
-            result['calculation_steps'].extend(surcharge['steps'])
-        
+        # Calculate surcharges from JSON
+        surcharge_rules = get_nested(card_data, 'common_terms.surcharge_fees', {})
+        if category in surcharge_rules:
+            # Parse surcharge rate and threshold from JSON string
+            rate_str = surcharge_rules[category]
+            try:
+                rate = float(re.findall(r"(\d+(?:\.\d+)?)%", rate_str)[0]) / 100
+                threshold_match = re.search(r'₹([\d,]+)', rate_str)
+                threshold = int(threshold_match.group(1).replace(',', '')) if threshold_match else 0
+                
+                surcharge_config = {'rate': rate, 'threshold': threshold}
+                surcharge = self._calculate_surcharge(spend, surcharge_config)
+                result['surcharge'] = surcharge['amount']
+                result['calculation_steps'].extend(surcharge['steps'])
+            except (IndexError, ValueError):
+                result['calculation_steps'].append(f"⚠️ Could not parse surcharge rules for {category}")
+
         result['total_rewards'] = result['base_rewards'] + result['milestone_bonus']
-        
         return result
     
-    def _calculate_base_rewards(self, spend: int, card_key: str, category: str, config: Dict) -> Dict:
-        """Calculate base rewards with proper rate and capping logic"""
+    def _calculate_base_rewards(self, spend: int, category: str, card_data: Dict) -> Dict:
+        """Calculate base rewards by reading rules directly from card_data."""
         steps = []
         
-        # Check for accelerated rates first (Axis Atlas hotels/flights)
-        if card_key == 'axis_atlas' and category in ['hotel', 'flight']:
-            accel_config = config['accelerated_rates'][category]
-            monthly_cap = accel_config['monthly_cap']
+        # Specific logic for accelerated travel rewards on Axis Atlas
+        if 'Atlas' in get_nested(card_data, 'card.name', '') and category in ['hotel', 'flight']:
+            travel_config = get_nested(card_data, 'card.rewards.travel', {})
+            monthly_cap_str = travel_config.get('monthly_cap', '0')
+            monthly_cap = parse_spend_string(monthly_cap_str)
+            
+            accel_rate_info = parse_reward_rate(travel_config.get('rate', ''))
+            base_rate_info = parse_reward_rate(get_nested(card_data, 'card.rewards.rate_general', ''))
             
             if spend <= monthly_cap:
-                # Entire spend gets accelerated rate
-                rewards = (spend // 100) * accel_config['points_per_100']
+                rewards = (spend // accel_rate_info['per_spend']) * accel_rate_info['points']
                 steps.append(f"✅ {category.title()} spend ₹{spend:,} ≤ ₹{monthly_cap:,} cap")
-                steps.append(f"📊 Calculation: ({spend:,} ÷ 100) × {accel_config['points_per_100']} = {rewards:,} miles")
+                steps.append(f"📊 Accelerated Rate: ({spend:,} ÷ {accel_rate_info['per_spend']}) × {accel_rate_info['points']} = {rewards:,} miles")
             else:
-                # Split calculation: cap amount at accelerated + remainder at base
-                cap_rewards = (monthly_cap // 100) * accel_config['points_per_100']
+                # Split calculation
+                cap_rewards = (monthly_cap // accel_rate_info['per_spend']) * accel_rate_info['points']
                 remaining_spend = spend - monthly_cap
-                base_rewards = (remaining_spend // 100) * config['base_rate']['points_per_100']
-                rewards = cap_rewards + base_rewards
+                base_rewards_val = (remaining_spend // base_rate_info['per_spend']) * base_rate_info['points']
+                rewards = cap_rewards + base_rewards_val
                 
-                steps.append(f"💰 First ₹{monthly_cap:,}: ({monthly_cap:,} ÷ 100) × {accel_config['points_per_100']} = {cap_rewards:,} miles")
-                steps.append(f"💰 Remaining ₹{remaining_spend:,}: ({remaining_spend:,} ÷ 100) × {config['base_rate']['points_per_100']} = {base_rewards:,} miles")
-                steps.append(f"📊 Total: {cap_rewards:,} + {base_rewards:,} = {rewards:,} miles")
+                steps.append(f"💰 First ₹{monthly_cap:,} (Accelerated): ({monthly_cap:,} ÷ {accel_rate_info['per_spend']}) × {accel_rate_info['points']} = {cap_rewards:,} miles")
+                steps.append(f"💰 Remaining ₹{remaining_spend:,} (Base): ({remaining_spend:,} ÷ {base_rate_info['per_spend']}) × {base_rate_info['points']} = {base_rewards_val:,} miles")
+                steps.append(f"📊 Total: {cap_rewards:,} + {base_rewards_val:,} = {rewards:,} miles")
             
             return {'rewards': rewards, 'steps': steps}
-        
-        # Check for capped categories (ICICI EPM)
-        if card_key == 'icici_epm' and category in config.get('caps', {}):
-            cap_config = config['caps'][category]
-            calculated_points = (spend // 200) * cap_config['points_per_200']
-            max_points = cap_config['max_points']
+
+        # Logic for capped categories (like ICICI EPM)
+        capping_rules = get_nested(card_data, 'card.rewards.capping_per_statement_cycle', {})
+        if category in capping_rules:
+            # Parse the max points from string like "1,000 Reward Points (MCC...)"
+            cap_str = capping_rules[category]
+            max_points_match = re.search(r'([\d,]+)\s*Reward Points', cap_str)
+            max_points = int(max_points_match.group(1).replace(',', '')) if max_points_match else 0
             
-            if calculated_points <= max_points:
-                rewards = calculated_points
-                steps.append(f"📊 Calculation: ({spend:,} ÷ 200) × {cap_config['points_per_200']} = {calculated_points:,} points")
-                steps.append(f"✅ Under cap limit of {max_points:,} points")
-            else:
-                rewards = max_points
-                steps.append(f"📊 Calculation: ({spend:,} ÷ 200) × {cap_config['points_per_200']} = {calculated_points:,} points")
+            # Parse the earning rate from JSON
+            earning_rate_str = get_nested(card_data, 'card.rewards.rate_general', '')
+            if not earning_rate_str:
+                earning_rate_str = get_nested(card_data, 'card.rewards.earning_rate', '')
+            
+            base_rate_info = parse_reward_rate(earning_rate_str)
+            calculated_points = (spend // base_rate_info['per_spend']) * base_rate_info['points']
+            rewards = min(calculated_points, max_points)
+            
+            steps.append(f"📊 Calculation: ({spend:,} ÷ {base_rate_info['per_spend']}) × {base_rate_info['points']} = {calculated_points:,} points")
+            if calculated_points > max_points:
                 steps.append(f"🔒 Capped at {max_points:,} points per cycle")
-            
+            else:
+                steps.append(f"✅ Under cap limit of {max_points:,} points")
+
             return {'rewards': rewards, 'steps': steps}
+            
+        # Default base rate from JSON
+        base_rate_str = get_nested(card_data, 'card.rewards.rate_general', '')
+        if not base_rate_str:
+            base_rate_str = get_nested(card_data, 'card.rewards.earning_rate', '')
         
-        # Default base rate calculation
-        if card_key == 'icici_epm':
-            rewards = (spend // 200) * config['base_rate']['points_per_200']
-            steps.append(f"📊 Base rate: ({spend:,} ÷ 200) × {config['base_rate']['points_per_200']} = {rewards:,} points")
-        else:
-            rate = config['base_rate'].get('points_per_100', 0)
-            rewards = (spend // 100) * rate
-            steps.append(f"📊 Base rate: ({spend:,} ÷ 100) × {rate} = {rewards:,} {config['base_rate'].get('currency', 'points')}")
+        base_rate_info = parse_reward_rate(base_rate_str)
+        rewards = (spend // base_rate_info['per_spend']) * base_rate_info['points']
+        
+        currency = 'points'
+        if 'miles' in base_rate_str.lower():
+            currency = 'miles'
+        
+        steps.append(f"📊 Base Rate: ({spend:,} ÷ {base_rate_info['per_spend']}) × {base_rate_info['points']} = {rewards:,} {currency}")
         
         return {'rewards': rewards, 'steps': steps}
     
-    def _calculate_milestones(self, spend: int, milestones: List[Dict]) -> Dict:
-        """Calculate cumulative milestone bonuses"""
+    def _calculate_milestones(self, spend: int, milestones) -> Dict:
+        """Calculate cumulative milestone bonuses from JSON (handles both list and dict formats)."""
         steps = []
         total_bonus = 0
         
-        applicable_milestones = [m for m in milestones if spend >= m['threshold']]
+        # Handle different milestone formats
+        if isinstance(milestones, dict):
+            # ICICI EPM format: dict with named milestones
+            for milestone_name, milestone_data in milestones.items():
+                if isinstance(milestone_data, dict):
+                    # Check for spend thresholds
+                    if 'spend_threshold_1st_voucher' in milestone_data:
+                        threshold_str = milestone_data['spend_threshold_1st_voucher']
+                        threshold = parse_spend_string(threshold_str)
+                        if spend >= threshold:
+                            value = milestone_data.get('value', milestone_name)
+                            steps.append(f"   ₹{threshold:,} threshold: Unlocked '{value}'")
+                    
+                    if 'spend_threshold_2nd_voucher' in milestone_data:
+                        threshold_str = milestone_data['spend_threshold_2nd_voucher']
+                        threshold = parse_spend_string(threshold_str)
+                        if spend >= threshold:
+                            value = milestone_data.get('value', milestone_name)
+                            steps.append(f"   ₹{threshold:,} threshold: Unlocked additional '{value}'")
         
-        if applicable_milestones:
-            steps.append("🎯 **CUMULATIVE MILESTONES**:")
-            for milestone in applicable_milestones:
-                if isinstance(milestone['bonus'], int):
-                    total_bonus += milestone['bonus']
-                    steps.append(f"   ₹{milestone['threshold']:,} threshold: +{milestone['bonus']:,} bonus")
-                else:
-                    steps.append(f"   ₹{milestone['threshold']:,} threshold: {milestone['bonus']}")
-            
+        elif isinstance(milestones, list):
+            # Axis Atlas format: list of milestone objects
+            for milestone in milestones:
+                threshold_str = milestone.get('spend', '0')
+                threshold = parse_spend_string(threshold_str)
+                
+                if spend >= threshold:
+                    bonus = milestone.get('miles', milestone.get('bonus', 0))
+                    if isinstance(bonus, int):
+                        total_bonus += bonus
+                        steps.append(f"   ₹{threshold:,} threshold: +{bonus:,} bonus")
+                    else:  # Handle text bonuses like "EaseMyTrip voucher"
+                        steps.append(f"   ₹{threshold:,} threshold: Unlocked '{bonus}'")
+        
+        if steps:
+            steps.insert(0, "🎯 **CUMULATIVE MILESTONES**:")
             if total_bonus > 0:
-                steps.append(f"✅ Total milestone bonus: {total_bonus:,}")
+                steps.append(f"✅ Total numeric milestone bonus: {total_bonus:,}")
         else:
             steps.append(f"❌ No milestones reached (spend ₹{spend:,} below minimum threshold)")
-        
+
         return {'bonus': total_bonus, 'steps': steps}
     
     def _calculate_surcharge(self, spend: int, surcharge_config: Dict) -> Dict:
@@ -220,36 +270,63 @@ class CreditCardCalculator:
             steps.append(f"✅ No surcharge (₹{spend:,} ≤ ₹{threshold:,} threshold)")
             return {'amount': 0, 'steps': steps}
 
-# Usage example function for LLM integration
+# --- UPDATED WRAPPER FUNCTION FOR LLM ---
+
 def calculate_rewards(spend: int, card: str, category: str = 'general', period: str = 'annual') -> str:
     """
-    Function for LLM to call for precise reward calculations
+    (Refactored) Main function for LLM to call. It now loads the specific
+    JSON file for the requested card.
     
     Example: calculate_rewards(750000, 'Axis Atlas', 'general', 'annual')
     """
+    # Map card names to filenames
+    card_filename_map = {
+        'axis atlas': 'axis-atlas.json',
+        'icici epm': 'icici-epm.json', 
+        'hsbc premier': 'hsbc-premier.json'
+    }
+    
+    card_key = card.lower()
+    if card_key not in card_filename_map:
+        return f"Error: Card '{card}' not supported. Available cards: {', '.join(card_filename_map.keys())}"
+    
+    card_filename = card_filename_map[card_key]
+    card_path = Path("data") / card_filename
+    
+    if not card_path.exists():
+        return f"Error: Card configuration file not found for {card} at {card_path}"
+    
+    try:
+        with open(card_path, 'r', encoding='utf-8') as f:
+            card_data = json.load(f)
+    except Exception as e:
+        return f"Error reading or parsing card data for {card}: {e}"
+
     calculator = CreditCardCalculator()
-    result = calculator.calculate_rewards(spend, card, category, period)
+    # Pass the loaded JSON data directly to the calculator
+    result = calculator.calculate_rewards(spend, card_data, category, period)
     
     if 'error' in result:
         return result['error']
     
-    # Format output
-    output = []
-    output.append(f"💳 **{result['card'].title()} - {result['category'].title()} Spending**")
-    output.append(f"💰 Spend: ₹{result['spend']:,}")
-    output.append("")
+    # Format the output string
+    currency = result['currency']
+    output = [
+        f"💳 **{result['card']} - {result['category'].title()} Spending**",
+        f"💰 Spend: ₹{result['spend']:,}",
+        "",
+        *result['calculation_steps'],  # Unpack the list of steps
+        "",
+        "📊 **SUMMARY:**",
+        f"Base rewards: {result['base_rewards']:,} {currency}",
+    ]
     
-    for step in result['calculation_steps']:
-        output.append(step)
-    
-    output.append("")
-    output.append(f"📊 **SUMMARY:**")
-    output.append(f"Base rewards: {result['base_rewards']:,} {result['currency']}")
     if result['milestone_bonus'] > 0:
-        output.append(f"Milestone bonus: +{result['milestone_bonus']:,} {result['currency']}")
-    output.append(f"**Total rewards: {result['total_rewards']:,} {result['currency']}**")
+        output.append(f"Milestone bonus: +{result['milestone_bonus']:,} {currency}")
+    
+    output.append(f"**Total rewards: {result['total_rewards']:,} {currency}**")
     
     if result['surcharge'] > 0:
-        output.append(f"Surcharge fee: ₹{result['surcharge']:,.0f}")
+        output.append(f"Surcharge fee: -₹{result['surcharge']:,.0f}")
     
     return "\n".join(output)

@@ -80,3 +80,6 @@ coverage/
 *.joblib
 *.model
 sample/
+
+# ChromaDB files (regenerated on deployment)
+chroma_db/

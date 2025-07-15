@@ -169,8 +169,15 @@ def process_query(
          metadata.get('spend_amount') and float(metadata.get('spend_amount', '0').replace(',', '')) > 500000)
     )
     
-    # Auto-upgrade to better models for complex calculations
+    # Auto-upgrade models for better performance
     model_to_use = selected_model
+    
+    # Override Flash due to performance issues (88+ seconds response time)
+    if selected_model == "gemini-1.5-flash" and llm.gemini_available:
+        model_to_use = "gemini-1.5-pro"
+        logger.info(f"Auto-upgraded from Flash to Pro for performance: {question[:50]}...")
+    
+    # Auto-upgrade to better models for complex calculations
     if is_complex_calculation and selected_model == "gpt-3.5-turbo":
         # Auto-upgrade to Gemini Pro if available, otherwise GPT-4
         if llm.gemini_available:
@@ -328,28 +335,32 @@ def main():
         if gemini_available:
             model_options.extend(["gemini-1.5-flash", "gemini-1.5-pro"])
         
-        # Set default to Gemini Flash if available, otherwise GPT-3.5
+        # Set default to Gemini Pro if available, otherwise GPT-3.5 (Flash is too slow)
         default_index = 0
-        if gemini_available and "gemini-1.5-flash" in model_options:
-            default_index = model_options.index("gemini-1.5-flash")
+        if gemini_available and "gemini-1.5-pro" in model_options:
+            default_index = model_options.index("gemini-1.5-pro")
         
         selected_model = st.selectbox(
             "Choose AI model:",
             model_options,
             index=default_index,
-            help="GPT-3.5: $0.002, GPT-4: $0.06, Gemini Flash: $0.0003 (20x cheaper!), Gemini Pro: $0.005"
+            help="GPT-3.5: $0.002, GPT-4: $0.06, Gemini Flash: $0.0003 (SLOW 80+ sec!), Gemini Pro: $0.005 (FAST 2-3 sec)"
         )
         
         # Show cost comparison
         cost_info = {
             "gpt-3.5-turbo": "$0.002 per query",
             "gpt-4": "$0.06 per query", 
-            "gemini-1.5-flash": "$0.0003 per query (20x cheaper!)",
-            "gemini-1.5-pro": "$0.005 per query"
+            "gemini-1.5-flash": "$0.0003 per query (SLOW: 80+ seconds!)",
+            "gemini-1.5-pro": "$0.005 per query (FAST: 2-3 seconds) ⚡"
         }
         
         if selected_model in cost_info:
             st.info(f"💰 Expected cost: {cost_info[selected_model]}")
+        
+        # Warning for Flash model
+        if selected_model == "gemini-1.5-flash":
+            st.warning("⚠️ Flash model has performance issues (80+ second response time). The system will automatically use Pro instead.")
         
         # Available cards display
         st.header("📋 Available Cards")

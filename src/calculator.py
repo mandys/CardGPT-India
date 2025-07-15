@@ -118,11 +118,32 @@ class CreditCardCalculator:
         
         # Calculate surcharges from JSON
         surcharge_rules = get_nested(card_data, 'common_terms.surcharge_fees', {})
+        
+        # Flexible check for category (e.g., 'utility' vs 'utilities')
+        surcharge_key = None
         if category in surcharge_rules:
-            # Parse surcharge rate and threshold from JSON string
-            rate_str = surcharge_rules[category]
+            surcharge_key = category
+        elif category + 's' in surcharge_rules:  # Check for plural form
+            surcharge_key = category + 's'
+        elif category.rstrip('s') in surcharge_rules:  # Check for singular form
+            surcharge_key = category.rstrip('s')
+        else:
+            # Special case mapping for common mismatches
+            category_mapping = {
+                'utility': 'utilities',
+                'government': 'government_services',
+                'fuel': 'fuel_payments'
+            }
+            if category in category_mapping and category_mapping[category] in surcharge_rules:
+                surcharge_key = category_mapping[category]
+            
+        if surcharge_key:
+            rate_str = surcharge_rules[surcharge_key]
             try:
-                rate = float(re.findall(r"(\d+(?:\.\d+)?)%", rate_str)[0]) / 100
+                # Use regex to robustly find rate and threshold
+                rate_match = re.search(r'(\d+(?:\.\d+)?)%', rate_str)
+                rate = float(rate_match.group(1)) / 100 if rate_match else 0
+                
                 threshold_match = re.search(r'₹([\d,]+)', rate_str)
                 threshold = int(threshold_match.group(1).replace(',', '')) if threshold_match else 0
                 
@@ -130,7 +151,8 @@ class CreditCardCalculator:
                 surcharge = self._calculate_surcharge(spend, surcharge_config)
                 result['surcharge'] = surcharge['amount']
                 result['calculation_steps'].extend(surcharge['steps'])
-            except (IndexError, ValueError):
+
+            except (IndexError, ValueError, AttributeError):
                 result['calculation_steps'].append(f"⚠️ Could not parse surcharge rules for {category}")
 
         result['total_rewards'] = result['base_rewards'] + result['milestone_bonus']

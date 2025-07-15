@@ -11,6 +11,13 @@ class QueryEnhancer:
     """Enhances user queries to improve LLM accuracy for credit card calculations"""
     
     def __init__(self):
+        # Card name detection patterns
+        self.card_patterns = {
+            'Axis Atlas': ['axis atlas', 'atlas'],
+            'ICICI EPM': ['icici epm', 'epm', 'emeralde private'],
+            'HSBC Premier': ['hsbc premier', 'premier']
+        }
+        
         # Category detection patterns
         self.category_patterns = {
             'hotel': [
@@ -74,6 +81,14 @@ class QueryEnhancer:
             r'(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:thousand|k\b)',
         ]
     
+    def detect_card_name(self, query: str) -> Optional[str]:
+        """Detect credit card name from the query."""
+        query_lower = query.lower()
+        for card_name, keywords in self.card_patterns.items():
+            if any(keyword in query_lower for keyword in keywords):
+                return card_name
+        return None
+    
     def detect_category(self, query: str) -> Optional[str]:
         """Detect spending category from query"""
         query_lower = query.lower()
@@ -95,15 +110,17 @@ class QueryEnhancer:
     
     def enhance_query(self, query: str) -> Tuple[str, Dict[str, any]]:
         """
-        Enhance query with category detection and metadata
+        Enhance query with category and card detection, plus other metadata
         
         Returns:
             Tuple of (enhanced_query, metadata)
         """
+        card_detected = self.detect_card_name(query)  # Call the new method
         category = self.detect_category(query)
         spend_amount = self.detect_spend_amount(query)
         
         metadata = {
+            'card_detected': card_detected,  # Add the detected card to metadata
             'category_detected': category,
             'spend_amount': spend_amount,
             'is_calculation_query': bool(spend_amount),

@@ -531,7 +531,7 @@ class CreditCardTestRunner:
 
 def main():
     """Main function"""
-    model = "gemini-1.5-flash"  # Default to our preferred model
+    model = "gemini-1.5-pro"  # Default to Pro due to Flash performance issues
     
     if len(sys.argv) > 1:
         if sys.argv[1] in ["gpt-4", "gpt-3.5-turbo", "gemini-1.5-flash", "gemini-1.5-pro"]:

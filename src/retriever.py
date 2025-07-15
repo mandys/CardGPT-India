@@ -12,6 +12,74 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+# --- NEW ADVANCED SEMANTIC CHUNKING LOGIC ---
+
+def _format_key_to_natural_language(key: str) -> str:
+    """Converts a snake_case key to a readable title."""
+    return key.replace('_', ' ').title()
+
+
+def _traverse_and_chunk(node: Any, card_name: str, source_file: str, path: str) -> List[Dict]:
+    """
+    (Corrected Version)
+    Recursively traverses a JSON node, creating small, semantic chunks.
+    This version ensures that nested dictionaries are fully included in their parent's chunk.
+    """
+    chunks = []
+
+    if isinstance(node, dict):
+        # This dictionary will become a single chunk.
+        content_parts = []
+        
+        # First, process all children of this node to create readable content.
+        for key, value in node.items():
+            # If the child is another dictionary, format it neatly.
+            if isinstance(value, dict):
+                # Create a readable sub-section for the nested dictionary.
+                sub_parts = [f"  - {_format_key_to_natural_language(k)}: {v}" for k, v in value.items()]
+                readable_value = f"\n{_format_key_to_natural_language(key)}:\n" + "\n".join(sub_parts)
+                content_parts.append(readable_value)
+            # If the child is a list, format it.
+            elif isinstance(value, list):
+                 # We can handle list formatting here if needed, for now just join them
+                readable_value = ", ".join(map(str, value))
+                content_parts.append(f"- {_format_key_to_natural_language(key)}: {readable_value}")
+            # Otherwise, it's a simple key-value pair.
+            else:
+                content_parts.append(f"- {_format_key_to_natural_language(key)}: {value}")
+        
+        # Assemble the full content for the current dictionary chunk.
+        parent_key_formatted = _format_key_to_natural_language(path.split('.')[-1]) if path else "Card Info"
+        content = f"{parent_key_formatted}:\n" + "\n".join(content_parts)
+        
+        chunks.append({
+            "id": f"{card_name}_{path.replace('.', '_')}",
+            "cardName": card_name,
+            "content": content,
+            "section": path,
+            "metadata": {
+                "section": path,
+                "cardType": card_name,
+                "source_file": source_file,
+                "chunk_type": "semantic_grouped"
+            }
+        })
+        
+        # NOW, we recurse into any complex children to create MORE GRANULAR chunks.
+        # This gives us both the complete parent view and the detailed child view.
+        for key, value in node.items():
+            if isinstance(value, (dict, list)):
+                new_path = f"{path}.{key}" if path else key
+                chunks.extend(_traverse_and_chunk(value, card_name, source_file, new_path))
+
+    elif isinstance(node, list):
+        for i, item in enumerate(node):
+            new_path = f"{path}[{i}]"
+            chunks.extend(_traverse_and_chunk(item, card_name, source_file, new_path))
+            
+    return chunks
+
+
 class DocumentRetriever:
     """Service for storing documents and performing vector similarity search"""
     
@@ -23,13 +91,14 @@ class DocumentRetriever:
     
     def load_documents_from_json(self, data_directory: str = "data") -> List[Dict]:
         """
-        Load and process credit card documents from JSON files
+        Load and process credit card documents from JSON files using advanced
+        semantic chunking strategy.
         
         Args:
             data_directory: Directory containing JSON files
             
         Returns:
-            List of processed documents
+            A list of small, granular documents (chunks).
         """
         data_path = Path(data_directory)
         
@@ -40,7 +109,7 @@ class DocumentRetriever:
         if not json_files:
             raise FileNotFoundError(f"No JSON files found in {data_path}")
         
-        documents = []
+        all_chunks = []
         
         for json_file in json_files:
             try:
@@ -48,46 +117,33 @@ class DocumentRetriever:
                     card_data = json.load(f)
                     card_name = self._extract_card_name(json_file.name)
                     
-                    # Process common_terms
+                    # Process common_terms with new chunking
                     if 'common_terms' in card_data:
-                        for section, data in card_data['common_terms'].items():
-                            content = self._format_section_content(section, data)
-                            documents.append({
-                                "id": f"{card_name}_common_{section}",
-                                "cardName": card_name,
-                                "content": content,
-                                "section": f"common_terms_{section}",
-                                "metadata": {
-                                    "section": f"common_terms_{section}",
-                                    "cardType": card_name,
-                                    "source_file": json_file.name
-                                }
-                            })
+                        common_chunks = _traverse_and_chunk(
+                            card_data['common_terms'], 
+                            card_name, 
+                            json_file.name, 
+                            'common_terms'
+                        )
+                        all_chunks.extend(common_chunks)
                     
-                    # Process card-specific data
+                    # Process card-specific data with new chunking
                     if 'card' in card_data:
-                        card_info = card_data['card']
-                        for section, data in card_info.items():
-                            if self._should_process_section(section, data):
-                                content = self._format_section_content(section, data)
-                                documents.append({
-                                    "id": f"{card_name}_card_{section}",
-                                    "cardName": card_name,
-                                    "content": content,
-                                    "section": section,
-                                    "metadata": {
-                                        "section": section,
-                                        "cardType": card_name,
-                                        "source_file": json_file.name
-                                    }
-                                })
-            
+                        card_chunks = _traverse_and_chunk(
+                            card_data['card'], 
+                            card_name, 
+                            json_file.name, 
+                            'card'
+                        )
+                        all_chunks.extend(card_chunks)
+
             except Exception as e:
-                logger.error(f"Error loading {json_file}: {str(e)}")
+                logger.error(f"Error loading and chunking {json_file}: {str(e)}")
                 continue
         
-        logger.info(f"Loaded {len(documents)} documents from {len(json_files)} files")
-        return documents
+        logger.info(f"Loaded and chunked {len(json_files)} files into {len(all_chunks)} semantic chunks.")
+        self.documents = all_chunks
+        return all_chunks
     
     def store_documents_and_embeddings(self, documents: List[Dict], embeddings: List[List[float]]):
         """Store documents and their corresponding embeddings"""
@@ -95,7 +151,7 @@ class DocumentRetriever:
             raise ValueError("Number of documents must match number of embeddings")
         
         self.documents = documents
-        self.embeddings = embeddings
+        self.embeddings = [np.array(e) for e in embeddings if e is not None]  # Store as numpy arrays
         self.is_indexed = True
         
         logger.info(f"Stored {len(documents)} documents with embeddings")
@@ -109,7 +165,7 @@ class DocumentRetriever:
         boost_keywords: Optional[List[str]] = None
     ) -> List[Dict]:
         """
-        Search for documents similar to the query embedding
+        Search for documents similar to the query embedding with efficient pre-filtering.
         
         Args:
             query_embedding: Vector representation of the query
@@ -124,23 +180,31 @@ class DocumentRetriever:
         if not self.is_indexed:
             raise ValueError("Documents not indexed. Call store_documents_and_embeddings first.")
         
-        # Filter documents if card_filter is specified
-        if card_filter:
-            doc_indices = [i for i, doc in enumerate(self.documents) 
-                          if doc['cardName'].lower() == card_filter.lower()]
-        else:
-            doc_indices = list(range(len(self.documents)))
+        query_embedding_np = np.array(query_embedding)
         
-        # Calculate similarities
+        # 1. EFFICIENT PRE-FILTERING (The core improvement)
+        # This step drastically reduces the search space.
+        candidate_indices = []
+        if card_filter:
+            # We only consider documents that match the card name.
+            for i, doc in enumerate(self.documents):
+                if doc.get('cardName', '').lower() == card_filter.lower():
+                    candidate_indices.append(i)
+            logger.info(f"Filtering search to {len(candidate_indices)} chunks for card: {card_filter}")
+        else:
+            # If no filter, we search through all documents.
+            candidate_indices = list(range(len(self.documents)))
+        
+        # 2. SIMILARITY CALCULATION (on the smaller, filtered set)
         similarities = []
-        for idx in doc_indices:
+        for idx in candidate_indices:
             doc = self.documents[idx]
             doc_embedding = self.embeddings[idx]
             
             if doc_embedding is None:
                 continue
             
-            similarity = self._cosine_similarity(query_embedding, doc_embedding)
+            similarity = self._cosine_similarity(query_embedding_np, doc_embedding)
             
             # Apply keyword boosting if specified
             if boost_keywords:
@@ -149,8 +213,8 @@ class DocumentRetriever:
             if similarity >= threshold:
                 similarities.append((similarity, idx))
         
-        # Sort by similarity and get top results
-        similarities.sort(reverse=True)
+        # 3. RANKING
+        similarities.sort(key=lambda x: x[0], reverse=True)
         top_results = similarities[:top_k]
         
         # Build result documents
@@ -160,7 +224,7 @@ class DocumentRetriever:
             doc["similarity"] = similarity
             results.append(doc)
         
-        logger.info(f"Found {len(results)} similar documents (threshold: {threshold})")
+        logger.info(f"Found {len(results)} similar documents from {len(candidate_indices)} candidates.")
         return results
     
     def get_available_cards(self) -> List[str]:
@@ -188,60 +252,15 @@ class DocumentRetriever:
         """Extract and format card name from filename"""
         return filename.replace('.json', '').replace('-', ' ').title()
     
-    def _should_process_section(self, section: str, data: Any) -> bool:
-        """Determine if a section should be processed as a document"""
-        # Skip metadata fields
-        skip_sections = ["id", "name", "bank", "category", "network", "launch_date"]
-        if section in skip_sections:
-            return False
-        
-        # Include important sections regardless of type
-        important_sections = ["fees", "rewards", "reward_capping", "milestones", "insurance", "lounge_access", "welcome_benefits"]
-        if section in important_sections:
-            return True
-        
-        # Include if it's a dictionary with meaningful content
-        return isinstance(data, dict) and data
-    
-    def _format_section_content(self, section: str, data: Any) -> str:
-        """Format section data into readable content"""
-        section_title = section.replace('_', ' ').title()
-        content = f"{section_title}:\n"
-        
-        if isinstance(data, dict):
-            for key, value in data.items():
-                key_formatted = key.replace('_', ' ').title()
-                if isinstance(value, dict):
-                    content += f"  {key_formatted}:\n"
-                    for sub_key, sub_value in value.items():
-                        sub_key_formatted = sub_key.replace('_', ' ').title()
-                        if isinstance(sub_value, (list, dict)):
-                            content += f"    {sub_key_formatted}: {json.dumps(sub_value, indent=2)}\n"
-                        else:
-                            content += f"    {sub_key_formatted}: {sub_value}\n"
-                elif isinstance(value, list):
-                    content += f"  {key_formatted}: {', '.join(map(str, value))}\n"
-                else:
-                    content += f"  {key_formatted}: {value}\n"
-        elif isinstance(data, list):
-            content += f"  {', '.join(map(str, data))}\n"
-        else:
-            content += f"  {data}\n"
-        
-        return content
-    
-    def _cosine_similarity(self, a: List[float], b: List[float]) -> float:
+    def _cosine_similarity(self, a: np.ndarray, b: np.ndarray) -> float:
         """Calculate cosine similarity between two vectors"""
-        a_np = np.array(a)
-        b_np = np.array(b)
-        
-        norm_a = np.linalg.norm(a_np)
-        norm_b = np.linalg.norm(b_np)
+        norm_a = np.linalg.norm(a)
+        norm_b = np.linalg.norm(b)
         
         if norm_a == 0 or norm_b == 0:
             return 0.0
         
-        return np.dot(a_np, b_np) / (norm_a * norm_b)
+        return np.dot(a, b) / (norm_a * norm_b)
     
     def _apply_keyword_boost(self, doc: Dict, similarity: float, keywords: List[str]) -> float:
         """Apply keyword-based boosting to similarity score"""

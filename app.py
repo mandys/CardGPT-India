@@ -99,10 +99,16 @@ def process_query(
     # Generate query embedding (use original question for embedding to maintain search accuracy)
     query_embedding, embedding_usage = embedder.generate_single_embedding(question)
     
-    # Determine search filters
+    # Determine search filters with intelligent card detection
     card_filter = None
+    
+    # Rule 1: The user's explicit UI selection always wins
     if query_mode == "Specific Card" and selected_cards:
         card_filter = selected_cards[0]
+    # Rule 2: If no UI selection, use the card detected from the query text
+    elif metadata.get('card_detected'):
+        card_filter = metadata['card_detected']
+        logger.info(f"Card detected from query: {card_filter} for question: {question[:50]}...")
     elif query_mode == "Compare Cards" and len(selected_cards) >= 2:
         # For comparison, we'll search across all selected cards
         pass

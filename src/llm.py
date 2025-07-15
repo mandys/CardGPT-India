@@ -319,26 +319,13 @@ Be precise with math. Double-check arithmetic."""
     def _try_calculator(self, question: str, context: str) -> str:
         """Try to use the calculator for precise calculations"""
         try:
-            from src.calculator import calculate_rewards
+            from src.calculator import calculate_rewards, parse_spend_string
             
-            # Extract spend amount
-            spend_match = re.search(r'₹\s*(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:lakh|l\b|L\b|k\b|K\b)?', question)
-            if not spend_match:
-                spend_match = re.search(r'(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:lakh|l\b|L\b)', question)
+            # Use the robust spend parser from calculator.py
+            spend = parse_spend_string(question)
             
-            if not spend_match:
-                return None
-                
-            spend_str = spend_match.group(1).replace(',', '')
-            spend = float(spend_str)
-            
-            # Handle lakh/L conversion
-            if re.search(r'lakh|l\b|L\b', question, re.IGNORECASE):
-                spend = spend * 100000
-            elif re.search(r'k\b|K\b', question, re.IGNORECASE):
-                spend = spend * 1000
-                
-            spend = int(spend)
+            if spend == 0:
+                return None  # Exit if no valid spend amount is found
             
             # Extract card name
             card = None

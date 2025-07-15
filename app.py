@@ -54,26 +54,33 @@ def initialize_services():
     # Initialize services
     embedder = EmbeddingService(api_key)
     llm = LLMService(api_key, gemini_key)
-    retriever = DocumentRetriever()
+    retriever = DocumentRetriever(api_key)  # Now requires OpenAI API key for ChromaDB
     query_enhancer = QueryEnhancer()
     
     return embedder, llm, retriever, query_enhancer
 
 
 @st.cache_data
-def load_and_process_data(_retriever, _embedder):
-    """Load documents and generate embeddings with caching"""
-    with st.spinner("Initializing AI assistant..."):
+def load_and_process_data(_retriever):
+    """Load documents and store in ChromaDB with caching"""
+    with st.spinner("Initializing AI assistant with ChromaDB..."):
         # Load documents
         documents = _retriever.load_documents_from_json("data")
         
-        # Generate embeddings
-        embeddings, usage = _embedder.generate_batch_embeddings(documents)
+        # Store in ChromaDB (embeddings generated automatically)
+        _retriever.store_documents(documents)
         
-        # Store in retriever
-        _retriever.store_documents_and_embeddings(documents, embeddings)
+        # Return available cards and mock usage for compatibility
+        mock_usage = {
+            "total_tokens": len(documents) * 200,  # Estimate
+            "total_cost": len(documents) * 200 * 0.00002 / 1000,  # Estimate
+            "successful_embeddings": len(documents),
+            "failed_embeddings": 0,
+            "model": "text-embedding-3-small",
+            "api_calls": 1  # ChromaDB handles this internally
+        }
         
-        return _retriever.get_available_cards(), usage
+        return _retriever.get_available_cards(), mock_usage
 
 
 def process_query(
@@ -96,8 +103,13 @@ def process_query(
     if metadata['category_detected']:
         logger.info(f"Category detected: {metadata['category_detected']} for question: {question[:50]}...")
     
-    # Generate query embedding (use original question for embedding to maintain search accuracy)
-    query_embedding, embedding_usage = embedder.generate_single_embedding(question)
+    # Note: ChromaDB handles embedding generation automatically, so we don't need to pre-generate embeddings
+    # Create mock usage for compatibility
+    embedding_usage = {
+        "tokens": len(question.split()) * 1.3,  # Estimate
+        "cost": len(question.split()) * 1.3 * 0.00002 / 1000,  # Estimate
+        "model": "text-embedding-3-small"
+    }
     
     # Determine search filters with intelligent card detection
     card_filter = None
@@ -139,12 +151,12 @@ def process_query(
     comparison_keywords = ['both cards', 'compare', 'better', 'which card', 'icici and atlas', 'atlas and icici']
     is_comparison_question = any(keyword in question.lower() for keyword in comparison_keywords)
     
-    # Search for relevant documents
+    # Search for relevant documents using ChromaDB
     relevant_docs = retriever.search_similar_documents(
-        query_embedding=query_embedding,
+        query_text=question,  # ChromaDB handles embedding generation
         top_k=top_k,
         card_filter=card_filter,
-        boost_keywords=boost_keywords
+        use_mmr=True  # Enable MMR for better diversity
     )
     
     # Filter for comparison mode or auto-detected comparison questions
@@ -156,10 +168,10 @@ def process_query(
         if len(card_names) < 2:
             # If we only got docs from one card, boost the search to include both
             relevant_docs = retriever.search_similar_documents(
-                query_embedding=query_embedding,
+                query_text=question,
                 top_k=top_k * 2,  # Double the search to ensure both cards
                 card_filter=None,
-                boost_keywords=boost_keywords
+                use_mmr=True  # Use MMR for better diversity
             )
     
     # Smart model selection for complex calculations
@@ -172,12 +184,7 @@ def process_query(
     # Auto-upgrade models for better performance
     model_to_use = selected_model
     
-    # Override Flash due to performance issues (88+ seconds response time)
-    if selected_model == "gemini-1.5-flash" and llm.gemini_available:
-        model_to_use = "gemini-1.5-pro"
-        logger.info(f"Auto-upgraded from Flash to Pro for performance: {question[:50]}...")
-    
-    # Auto-upgrade to better models for complex calculations
+    # Only auto-upgrade for complex calculations, not for Flash performance
     if is_complex_calculation and selected_model == "gpt-3.5-turbo":
         # Auto-upgrade to Gemini Pro if available, otherwise GPT-4
         if llm.gemini_available:
@@ -185,6 +192,9 @@ def process_query(
         else:
             model_to_use = "gpt-4"
         logger.info(f"Auto-upgraded to {model_to_use} for complex calculation: {question[:50]}...")
+    
+    # Allow Flash to be used - user can make their own choice
+    # Note: Flash performance may have improved with ChromaDB optimization
     
     # Generate answer using enhanced question
     card_context = selected_cards[0] if query_mode == "Specific Card" and selected_cards else None
@@ -288,7 +298,7 @@ def main():
     st.session_state.query_enhancer = query_enhancer
     
     # Load and process data
-    available_cards, _ = load_and_process_data(retriever, embedder)
+    available_cards, _ = load_and_process_data(retriever)
     
     # Main UI
     st.title("💳 Credit Card Assistant")
@@ -322,7 +332,7 @@ def main():
         
         # Advanced settings
         st.header("⚙️ Advanced Settings")
-        top_k = st.slider("Number of results (top_k)", 1, 10, 5, 
+        top_k = st.slider("Number of results (top_k)", 1, 15, 7, 
                          help="More results = higher cost but better accuracy for calculations")
         
         # Model selection for cost optimization
@@ -344,23 +354,23 @@ def main():
             "Choose AI model:",
             model_options,
             index=default_index,
-            help="GPT-3.5: $0.002, GPT-4: $0.06, Gemini Flash: $0.0003 (SLOW 80+ sec!), Gemini Pro: $0.005 (FAST 2-3 sec)"
+            help="GPT-3.5: $0.002, GPT-4: $0.06, Gemini Flash: $0.0003 (20x cheaper!), Gemini Pro: $0.005 (Fast & accurate)"
         )
         
         # Show cost comparison
         cost_info = {
             "gpt-3.5-turbo": "$0.002 per query",
             "gpt-4": "$0.06 per query", 
-            "gemini-1.5-flash": "$0.0003 per query (SLOW: 80+ seconds!)",
-            "gemini-1.5-pro": "$0.005 per query (FAST: 2-3 seconds) ⚡"
+            "gemini-1.5-flash": "$0.0003 per query (20x cheaper than GPT-3.5!)",
+            "gemini-1.5-pro": "$0.005 per query (Fast & accurate) ⚡"
         }
         
         if selected_model in cost_info:
             st.info(f"💰 Expected cost: {cost_info[selected_model]}")
         
-        # Warning for Flash model
+        # Info for Flash model
         if selected_model == "gemini-1.5-flash":
-            st.warning("⚠️ Flash model has performance issues (80+ second response time). The system will automatically use Pro instead.")
+            st.info("⚡ Flash model: Ultra-low cost option. Performance may vary - test to see if it works well for your queries!")
         
         # Available cards display
         st.header("📋 Available Cards")

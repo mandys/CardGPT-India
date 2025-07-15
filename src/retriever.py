@@ -1,9 +1,12 @@
 """
 Document Retrieval Service
 Handles vector search, document storage, and similarity calculations
+Now using ChromaDB for improved search and diversity
 """
 
-import numpy as np
+import chromadb
+from chromadb.config import Settings
+from chromadb.utils import embedding_functions
 from typing import List, Dict, Any, Optional
 import json
 from pathlib import Path
@@ -12,7 +15,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-# --- NEW ADVANCED SEMANTIC CHUNKING LOGIC ---
+# --- ADVANCED SEMANTIC CHUNKING LOGIC ---
 
 def _format_key_to_natural_language(key: str) -> str:
     """Converts a snake_case key to a readable title."""
@@ -81,13 +84,33 @@ def _traverse_and_chunk(node: Any, card_name: str, source_file: str, path: str) 
 
 
 class DocumentRetriever:
-    """Service for storing documents and performing vector similarity search"""
+    """Service for storing documents and performing vector similarity search with ChromaDB"""
     
-    def __init__(self):
-        """Initialize the document retriever"""
-        self.documents: List[Dict] = []
-        self.embeddings: List[Optional[List[float]]] = []
-        self.is_indexed = False
+    def __init__(self, openai_api_key: str):
+        """Initialize the document retriever with ChromaDB"""
+        # Initialize ChromaDB client (persistent storage)
+        self.client = chromadb.PersistentClient(
+            path="./chroma_db",
+            settings=Settings(
+                anonymized_telemetry=False,
+                allow_reset=True
+            )
+        )
+        
+        # Create embedding function using OpenAI
+        self.embedding_function = embedding_functions.OpenAIEmbeddingFunction(
+            api_key=openai_api_key,
+            model_name="text-embedding-3-small"
+        )
+        
+        # Get or create collection
+        self.collection = self.client.get_or_create_collection(
+            name="credit_card_docs",
+            embedding_function=self.embedding_function
+        )
+        
+        self.is_indexed = self.collection.count() > 0
+        logger.info(f"ChromaDB initialized with {self.collection.count()} existing documents")
     
     def load_documents_from_json(self, data_directory: str = "data") -> List[Dict]:
         """
@@ -142,133 +165,256 @@ class DocumentRetriever:
                 continue
         
         logger.info(f"Loaded and chunked {len(json_files)} files into {len(all_chunks)} semantic chunks.")
-        self.documents = all_chunks
         return all_chunks
     
-    def store_documents_and_embeddings(self, documents: List[Dict], embeddings: List[List[float]]):
-        """Store documents and their corresponding embeddings"""
-        if len(documents) != len(embeddings):
-            raise ValueError("Number of documents must match number of embeddings")
+    def store_documents(self, documents: List[Dict]):
+        """Store documents in ChromaDB (embeddings generated automatically)"""
+        if not documents:
+            logger.warning("No documents to store")
+            return
         
-        self.documents = documents
-        self.embeddings = [np.array(e) for e in embeddings if e is not None]  # Store as numpy arrays
+        # Clear existing collection if re-indexing
+        try:
+            self.collection.delete()
+        except:
+            pass
+        
+        # Prepare data for ChromaDB
+        doc_ids = [doc['id'] for doc in documents]
+        doc_contents = [doc['content'] for doc in documents]
+        doc_metadatas = [
+            {
+                'cardName': doc['cardName'],
+                'section': doc['section'],
+                'source_file': doc.get('metadata', {}).get('source_file', ''),
+                'chunk_type': doc.get('metadata', {}).get('chunk_type', 'semantic')
+            }
+            for doc in documents
+        ]
+        
+        # Add documents to ChromaDB (embeddings generated automatically)
+        self.collection.add(
+            documents=doc_contents,
+            metadatas=doc_metadatas,
+            ids=doc_ids
+        )
+        
         self.is_indexed = True
-        
-        logger.info(f"Stored {len(documents)} documents with embeddings")
+        logger.info(f"Stored {len(documents)} documents in ChromaDB")
     
     def search_similar_documents(
         self, 
-        query_embedding: List[float], 
+        query_text: str, 
         top_k: int = 5,
-        threshold: float = 0.0,
         card_filter: Optional[str] = None,
-        boost_keywords: Optional[List[str]] = None
+        use_mmr: bool = True
     ) -> List[Dict]:
         """
-        Search for documents similar to the query embedding with efficient pre-filtering.
+        Search for documents similar to the query using ChromaDB with MMR support.
         
         Args:
-            query_embedding: Vector representation of the query
+            query_text: The search query text
             top_k: Number of top results to return
-            threshold: Minimum similarity threshold
             card_filter: Filter by specific card name
-            boost_keywords: Keywords to boost in search
+            use_mmr: Use Maximal Marginal Relevance for diversity
             
         Returns:
             List of similar documents with similarity scores
         """
         if not self.is_indexed:
-            raise ValueError("Documents not indexed. Call store_documents_and_embeddings first.")
+            raise ValueError("Documents not indexed. Call store_documents first.")
         
-        query_embedding_np = np.array(query_embedding)
-        
-        # 1. EFFICIENT PRE-FILTERING (The core improvement)
-        # This step drastically reduces the search space.
-        candidate_indices = []
+        # Build where clause for filtering with case-insensitive matching
+        where_clause = None
         if card_filter:
-            # We only consider documents that match the card name.
-            for i, doc in enumerate(self.documents):
-                if doc.get('cardName', '').lower() == card_filter.lower():
-                    candidate_indices.append(i)
-            logger.info(f"Filtering search to {len(candidate_indices)} chunks for card: {card_filter}")
+            # Find matching card name (case-insensitive)
+            available_cards = self.get_available_cards()
+            matching_card = None
+            for card in available_cards:
+                if card.lower() == card_filter.lower():
+                    matching_card = card
+                    break
+            
+            if matching_card:
+                where_clause = {"cardName": matching_card}
+                logger.info(f"Filtering search to card: {matching_card} (matched from: {card_filter})")
+            else:
+                logger.warning(f"No matching card found for filter: {card_filter}. Available: {available_cards}")
+        
+        # Perform search with ChromaDB
+        # Note: ChromaDB's MMR is still experimental, so we'll implement diversity manually
+        search_k = top_k * 3 if use_mmr else top_k  # Get more candidates for MMR
+        
+        results = self.collection.query(
+            query_texts=[query_text],
+            n_results=search_k,
+            where=where_clause,
+            include=["documents", "metadatas", "distances"]
+        )
+        
+        if not results['documents'][0]:
+            logger.warning("No documents found for query")
+            return []
+        
+        # Process results
+        processed_results = []
+        for doc_content, metadata, distance in zip(
+            results['documents'][0], results['metadatas'][0], results['distances'][0]
+        ):
+            processed_results.append({
+                'content': doc_content,
+                'cardName': metadata['cardName'],
+                'section': metadata['section'],
+                'similarity': 1 - distance,  # Convert distance to similarity
+                'metadata': metadata
+            })
+        
+        # Apply MMR if requested
+        if use_mmr and len(processed_results) > top_k:
+            processed_results = self._apply_mmr_diversity(processed_results, top_k)
         else:
-            # If no filter, we search through all documents.
-            candidate_indices = list(range(len(self.documents)))
+            processed_results = processed_results[:top_k]
         
-        # 2. SIMILARITY CALCULATION (on the smaller, filtered set)
-        similarities = []
-        for idx in candidate_indices:
-            doc = self.documents[idx]
-            doc_embedding = self.embeddings[idx]
-            
-            if doc_embedding is None:
-                continue
-            
-            similarity = self._cosine_similarity(query_embedding_np, doc_embedding)
-            
-            # Apply keyword boosting if specified
-            if boost_keywords:
-                similarity = self._apply_keyword_boost(doc, similarity, boost_keywords)
-            
-            if similarity >= threshold:
-                similarities.append((similarity, idx))
-        
-        # 3. RANKING
-        similarities.sort(key=lambda x: x[0], reverse=True)
-        top_results = similarities[:top_k]
-        
-        # Build result documents
-        results = []
-        for similarity, idx in top_results:
-            doc = self.documents[idx].copy()
-            doc["similarity"] = similarity
-            results.append(doc)
-        
-        logger.info(f"Found {len(results)} similar documents from {len(candidate_indices)} candidates.")
-        return results
+        logger.info(f"Found {len(processed_results)} similar documents")
+        return processed_results
     
     def get_available_cards(self) -> List[str]:
         """Get list of unique card names in the collection"""
-        unique_cards = list(set([doc['cardName'] for doc in self.documents]))
+        if not self.is_indexed:
+            return []
+        
+        # Get all documents to extract unique card names
+        all_docs = self.collection.get()
+        unique_cards = list(set([
+            metadata['cardName'] 
+            for metadata in all_docs['metadatas']
+        ]))
         return sorted(unique_cards)
     
     def get_document_stats(self) -> Dict[str, Any]:
         """Get statistics about the document collection"""
-        if not self.documents:
+        if not self.is_indexed:
             return {"total_documents": 0, "cards": [], "sections": []}
         
-        sections = [doc['section'] for doc in self.documents]
-        unique_sections = list(set(sections))
+        all_docs = self.collection.get()
+        unique_sections = list(set([
+            metadata['section'] 
+            for metadata in all_docs['metadatas']
+        ]))
         
         return {
-            "total_documents": len(self.documents),
+            "total_documents": self.collection.count(),
             "cards": self.get_available_cards(),
             "sections": sorted(unique_sections),
             "indexed": self.is_indexed,
-            "embeddings_available": len([e for e in self.embeddings if e is not None])
+            "embeddings_available": self.collection.count()
         }
     
     def _extract_card_name(self, filename: str) -> str:
         """Extract and format card name from filename"""
         return filename.replace('.json', '').replace('-', ' ').title()
     
-    def _cosine_similarity(self, a: np.ndarray, b: np.ndarray) -> float:
-        """Calculate cosine similarity between two vectors"""
-        norm_a = np.linalg.norm(a)
-        norm_b = np.linalg.norm(b)
+    def _apply_mmr_diversity(self, results: List[Dict], top_k: int, diversity_weight: float = 0.5) -> List[Dict]:
+        """
+        Apply Maximal Marginal Relevance to promote diversity in results.
         
-        if norm_a == 0 or norm_b == 0:
-            return 0.0
+        Args:
+            results: List of search results with similarity scores
+            top_k: Number of results to return
+            diversity_weight: Weight for diversity vs relevance (0.0 = pure relevance, 1.0 = pure diversity)
         
-        return np.dot(a, b) / (norm_a * norm_b)
+        Returns:
+            Diversified list of results
+        """
+        if len(results) <= top_k:
+            return results
+        
+        selected = []
+        remaining = results.copy()
+        
+        # Select the most relevant document first
+        best_doc = max(remaining, key=lambda x: x['similarity'])
+        selected.append(best_doc)
+        remaining.remove(best_doc)
+        
+        # Select remaining documents balancing relevance and diversity
+        while len(selected) < top_k and remaining:
+            best_score = -1
+            best_doc = None
+            
+            for doc in remaining:
+                relevance = doc['similarity']
+                
+                # Calculate diversity (minimum similarity to selected docs)
+                diversity = self._calculate_diversity(doc, selected)
+                
+                # MMR score
+                mmr_score = (1 - diversity_weight) * relevance + diversity_weight * diversity
+                
+                if mmr_score > best_score:
+                    best_score = mmr_score
+                    best_doc = doc
+            
+            if best_doc:
+                selected.append(best_doc)
+                remaining.remove(best_doc)
+        
+        logger.info(f"Applied MMR diversity: {len(selected)} documents selected")
+        return selected
     
-    def _apply_keyword_boost(self, doc: Dict, similarity: float, keywords: List[str]) -> float:
-        """Apply keyword-based boosting to similarity score"""
-        boost_amount = 0.0
+    def _calculate_diversity(self, doc: Dict, selected_docs: List[Dict]) -> float:
+        """
+        Calculate diversity score for a document against selected documents.
         
-        # Check for keywords in section names
-        for keyword in keywords:
-            if keyword.lower() in doc['section'].lower():
-                boost_amount += 0.1
+        Args:
+            doc: Candidate document
+            selected_docs: Already selected documents
+            
+        Returns:
+            Diversity score (higher = more diverse)
+        """
+        if not selected_docs:
+            return 1.0
         
-        return min(similarity + boost_amount, 1.0)  # Cap at 1.0
+        # Simple diversity based on card name and section
+        max_diversity = 0.0
+        
+        for selected in selected_docs:
+            diversity = 0.0
+            
+            # Different card = more diverse
+            if doc['cardName'] != selected['cardName']:
+                diversity += 0.5
+            
+            # Different section = more diverse
+            if doc['section'] != selected['section']:
+                diversity += 0.3
+            
+            # Content-based diversity (simple word overlap)
+            content_diversity = self._calculate_content_diversity(doc['content'], selected['content'])
+            diversity += content_diversity * 0.2
+            
+            max_diversity = max(max_diversity, diversity)
+        
+        return min(max_diversity, 1.0)
+    
+    def _calculate_content_diversity(self, content1: str, content2: str) -> float:
+        """Calculate content diversity between two text strings"""
+        words1 = set(content1.lower().split())
+        words2 = set(content2.lower().split())
+        
+        if not words1 or not words2:
+            return 1.0
+        
+        intersection = words1.intersection(words2)
+        union = words1.union(words2)
+        
+        jaccard_similarity = len(intersection) / len(union)
+        return 1 - jaccard_similarity  # Higher diversity = lower similarity
+    
+    # Legacy method for backward compatibility
+    def store_documents_and_embeddings(self, documents: List[Dict], embeddings: List[List[float]]):
+        """Legacy method - now delegates to store_documents"""
+        logger.warning("store_documents_and_embeddings is deprecated. Use store_documents instead.")
+        # embeddings parameter is ignored since ChromaDB handles embedding generation
+        self.store_documents(documents)

@@ -59,11 +59,12 @@ class CreditCardCalculator:
         # HSBC Premier configuration
         configs['hsbc_premier'] = {
             'base_rate': {'points_per_100': 3, 'currency': 'points'},
-            'exclusions': ['fuel'],  # Based on context, only fuel excluded
+            'exclusions': ['fuel'],  # Based on JSON: only cash advances, fees, disputed transactions excluded
             'caps': {
                 'utility': {'points_per_100': 3, 'max_monthly_spend': 100000},
                 'tax_payment': {'points_per_100': 3, 'max_monthly_spend': 100000},
-                'insurance': {'points_per_100': 3, 'max_monthly_spend': 100000}
+                'insurance': {'points_per_100': 3, 'max_monthly_spend': 100000},
+                'education': {'points_per_100': 3, 'max_monthly_spend': 100000}  # Added education capping
             }
         }
         

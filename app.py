@@ -3,6 +3,14 @@ Supavec Clone - Main Streamlit Application
 RAG-powered Credit Card Assistant for Indian Credit Card Data
 """
 
+# Fix SQLite compatibility for Streamlit Cloud
+import sys
+try:
+    import pysqlite3
+    sys.modules['sqlite3'] = pysqlite3
+except ImportError:
+    pass
+
 import streamlit as st
 import os
 import logging

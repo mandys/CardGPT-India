@@ -70,12 +70,12 @@ class VertexRetriever:
         use_mmr: bool = True  # Kept for compatibility
     ) -> List[Dict]:
         """
-        Search for documents similar to the query using Vertex AI Search.
+        Search for documents similar to the query using Vertex AI Search with precise metadata filtering.
         
         Args:
             query_text: The search query text
             top_k: Number of top results to return
-            card_filter: Filter by specific card name (semantic filtering)
+            card_filter: Filter by specific card name (exact metadata filtering)
             use_mmr: Compatibility parameter (not used in Vertex AI)
             
         Returns:
@@ -84,27 +84,15 @@ class VertexRetriever:
         start_time = time.time()
         
         try:
-            # Enhance query with card filter for semantic search
-            enhanced_query = query_text
+            # Create precise metadata filter instead of query modification
+            filter_str = None
             if card_filter:
-                # Make the card filter more flexible for semantic search
-                card_keywords = {
-                    'Axis Atlas': ['axis', 'atlas', 'axis-atlas'],
-                    'ICICI EPM': ['icici', 'epm', 'icici-epm', 'emeralde'],
-                    'HSBC Premier': ['hsbc', 'premier', 'hsbc-premier']
-                }
-                
-                # Add relevant keywords to the query
-                if card_filter in card_keywords:
-                    keywords = ' '.join(card_keywords[card_filter])
-                    enhanced_query = f"{keywords} {query_text}"
-                else:
-                    enhanced_query = f"{card_filter} {query_text}"
-                
-                logger.info(f"Enhanced query with card filter: {card_filter} -> {enhanced_query}")
+                # Use exact metadata filtering - much more reliable than query modification
+                filter_str = f'cardName="{card_filter}"'
+                logger.info(f"Using metadata filter: {filter_str}")
             
-            # Build and execute search request
-            request = self._build_search_request(enhanced_query, top_k)
+            # Build and execute search request with filter
+            request = self._build_search_request(query_text, top_k, filter_str)
             response = self.client.search(request)
             
             # Process results using the corrected parsing logic
@@ -129,12 +117,13 @@ class VertexRetriever:
             logger.error(f"Unexpected error in Vertex AI Search: {e}")
             return self._fallback_response(query_text, card_filter)
 
-    def _build_search_request(self, query_text: str, top_k: int) -> discoveryengine.SearchRequest:
-        """Constructs the search request object."""
+    def _build_search_request(self, query_text: str, top_k: int, filter_str: Optional[str] = None) -> discoveryengine.SearchRequest:
+        """Constructs the search request object with optional metadata filtering."""
         return discoveryengine.SearchRequest(
             serving_config=self.serving_config,
             query=query_text,
             page_size=top_k,
+            filter=filter_str,  # Use dedicated filter field for precise metadata filtering
             content_search_spec=discoveryengine.SearchRequest.ContentSearchSpec(
                 snippet_spec=discoveryengine.SearchRequest.ContentSearchSpec.SnippetSpec(
                     return_snippet=True
@@ -150,39 +139,44 @@ class VertexRetriever:
         )
 
     def _process_search_response(self, response: discoveryengine.SearchResponse) -> List[Dict]:
-        """Processes the search response and extracts content correctly."""
+        """Processes the search response and extracts content from JSONL format."""
         processed_results = []
         
         for result in response.results:
             # Convert the entire complex result object into a clean dictionary
             result_dict = _convert_search_result_to_dict(result)
             
-            # Now, safely extract data from the dictionary
+            # Extract document information
             document = result_dict.get('document', {})
             struct_data = document.get('derivedStructData', {})
-            card_name = self._extract_card_name(document.get('name', ''))
             
-            # Combine all useful text into a single content block
+            # Extract JSONL metadata (cardName, section, etc.)
+            card_name = struct_data.get('cardName', 'Unknown Card')
+            section = struct_data.get('section', 'unknown')
+            content = struct_data.get('jsonData', '')
+            
+            # If no structured data, fall back to extracting from document name
+            if not content:
+                card_name = self._extract_card_name(document.get('name', ''))
+                content = f"Document ID: {document.get('id', 'unknown')}"
+            
+            # Add summary if available
             content_parts = []
             if 'summary' in result_dict and result_dict['summary']:
                 content_parts.append(f"Summary: {result_dict['summary']}")
             
-            # Format the main structured data into readable text
-            if struct_data:
-                content_parts.append(self._format_dict_to_text(struct_data))
-            
-            # If no content found, add basic document info
-            if not content_parts:
-                content_parts.append(f"Document ID: {document.get('id', 'unknown')}")
+            # Add the main content
+            content_parts.append(content)
             
             processed_results.append({
                 'content': "\n\n".join(content_parts),
                 'cardName': card_name,
-                'section': self._extract_section(struct_data),
+                'section': section,
                 'similarity': getattr(result, 'relevance_score', 0.8),
                 'metadata': {
                     'document_id': document.get('id'),
-                    'vertex_source': True
+                    'vertex_source': True,
+                    'filename': struct_data.get('filename', 'unknown')
                 }
             })
             

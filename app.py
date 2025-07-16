@@ -20,6 +20,7 @@ from typing import List, Dict, Any
 from src.embedder import EmbeddingService
 from src.llm import LLMService
 from src.retriever import DocumentRetriever
+from src.vertex_retriever import VertexRetriever
 from src.query_enhancer import QueryEnhancer
 
 # Configure logging
@@ -59,10 +60,23 @@ def initialize_services():
     # Get Gemini API key (optional)
     gemini_key = st.secrets.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
     
-    # Initialize services
-    embedder = EmbeddingService(api_key)
+    # Get Google Cloud configuration for Vertex AI Search
+    gcp_project_id = st.secrets.get("GCP_PROJECT_ID") or os.getenv("GCP_PROJECT_ID")
+    gcp_location = st.secrets.get("GCP_LOCATION") or os.getenv("GCP_LOCATION") or "global"
+    gcp_data_store_id = st.secrets.get("GCP_DATA_STORE_ID") or os.getenv("GCP_DATA_STORE_ID")
+    
+    # Check if Vertex AI Search is configured
+    if gcp_project_id and gcp_data_store_id:
+        st.info("🚀 Using Vertex AI Search for document retrieval")
+        retriever = VertexRetriever(gcp_project_id, gcp_location, gcp_data_store_id)
+        embedder = None  # No longer needed for Vertex AI Search
+    else:
+        st.warning("⚠️ Vertex AI Search not configured, falling back to ChromaDB")
+        retriever = DocumentRetriever(api_key)
+        embedder = EmbeddingService(api_key)
+    
+    # Initialize other services
     llm = LLMService(api_key, gemini_key)
-    retriever = DocumentRetriever(api_key)  # Now requires OpenAI API key for ChromaDB
     query_enhancer = QueryEnhancer()
     
     return embedder, llm, retriever, query_enhancer
@@ -70,25 +84,44 @@ def initialize_services():
 
 @st.cache_data
 def load_and_process_data(_retriever):
-    """Load documents and store in ChromaDB with caching"""
-    with st.spinner("Initializing AI assistant with ChromaDB..."):
-        # Load documents
-        documents = _retriever.load_documents_from_json("data")
-        
-        # Store in ChromaDB (embeddings generated automatically)
-        _retriever.store_documents(documents)
-        
-        # Return available cards and mock usage for compatibility
-        mock_usage = {
-            "total_tokens": len(documents) * 200,  # Estimate
-            "total_cost": len(documents) * 200 * 0.00002 / 1000,  # Estimate
-            "successful_embeddings": len(documents),
-            "failed_embeddings": 0,
-            "model": "text-embedding-3-small",
-            "api_calls": 1  # ChromaDB handles this internally
-        }
-        
-        return _retriever.get_available_cards(), mock_usage
+    """Load documents and store in database with caching"""
+    
+    # Check if we're using Vertex AI Search
+    if isinstance(_retriever, VertexRetriever):
+        with st.spinner("Initializing AI assistant with Vertex AI Search..."):
+            # Vertex AI Search doesn't need document loading - it's already indexed
+            # Just return available cards and mock usage for compatibility
+            mock_usage = {
+                "total_tokens": 0,  # No embedding tokens needed
+                "total_cost": 0,    # No embedding costs
+                "successful_embeddings": 3,  # 3 JSON files
+                "failed_embeddings": 0,
+                "model": "vertex-ai-search",
+                "api_calls": 0  # No API calls needed for initialization
+            }
+            
+            return _retriever.get_available_cards(), mock_usage
+    
+    else:
+        # ChromaDB path (fallback)
+        with st.spinner("Initializing AI assistant with ChromaDB..."):
+            # Load documents
+            documents = _retriever.load_documents_from_json("data")
+            
+            # Store in ChromaDB (embeddings generated automatically)
+            _retriever.store_documents(documents)
+            
+            # Return available cards and mock usage for compatibility
+            mock_usage = {
+                "total_tokens": len(documents) * 200,  # Estimate
+                "total_cost": len(documents) * 200 * 0.00002 / 1000,  # Estimate
+                "successful_embeddings": len(documents),
+                "failed_embeddings": 0,
+                "model": "text-embedding-3-small",
+                "api_calls": 1  # ChromaDB handles this internally
+            }
+            
+            return _retriever.get_available_cards(), mock_usage
 
 
 def process_query(
@@ -111,13 +144,21 @@ def process_query(
     if metadata['category_detected']:
         logger.info(f"Category detected: {metadata['category_detected']} for question: {question[:50]}...")
     
-    # Note: ChromaDB handles embedding generation automatically, so we don't need to pre-generate embeddings
-    # Create mock usage for compatibility
-    embedding_usage = {
-        "tokens": len(question.split()) * 1.3,  # Estimate
-        "cost": len(question.split()) * 1.3 * 0.00002 / 1000,  # Estimate
-        "model": "text-embedding-3-small"
-    }
+    # Handle embedding usage based on retriever type
+    if isinstance(retriever, VertexRetriever):
+        # Vertex AI Search doesn't need separate embedding calls
+        embedding_usage = {
+            "tokens": 0,  # No separate embedding tokens
+            "cost": 0,    # No separate embedding costs
+            "model": "vertex-ai-search"
+        }
+    else:
+        # ChromaDB path - create mock usage for compatibility
+        embedding_usage = {
+            "tokens": len(question.split()) * 1.3,  # Estimate
+            "cost": len(question.split()) * 1.3 * 0.00002 / 1000,  # Estimate
+            "model": "text-embedding-3-small"
+        }
     
     # Determine search filters with intelligent card detection
     card_filter = None
@@ -159,12 +200,12 @@ def process_query(
     comparison_keywords = ['both cards', 'compare', 'better', 'which card', 'icici and atlas', 'atlas and icici']
     is_comparison_question = any(keyword in question.lower() for keyword in comparison_keywords)
     
-    # Search for relevant documents using ChromaDB
+    # Search for relevant documents using the selected retriever
     relevant_docs = retriever.search_similar_documents(
-        query_text=question,  # ChromaDB handles embedding generation
+        query_text=question,
         top_k=top_k,
         card_filter=card_filter,
-        use_mmr=True  # Enable MMR for better diversity
+        use_mmr=True  # Enable MMR for better diversity (ChromaDB only)
     )
     
     # Filter for comparison mode or auto-detected comparison questions
@@ -179,7 +220,7 @@ def process_query(
                 query_text=question,
                 top_k=top_k * 2,  # Double the search to ensure both cards
                 card_filter=None,
-                use_mmr=True  # Use MMR for better diversity
+                use_mmr=True  # Use MMR for better diversity (ChromaDB only)
             )
     
     # Smart model selection for complex calculations

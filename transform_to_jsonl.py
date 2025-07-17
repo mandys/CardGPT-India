@@ -14,6 +14,7 @@ import json
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 import logging
+import base64
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -184,13 +185,20 @@ def transform_data(data_directory: str = "data", output_file: str = "card_data.j
                 )
                 file_chunks.extend(card_chunks)
             
-            # Convert to Vertex AI format
+            # Convert to Vertex AI Search format - proper document structure
             for chunk in file_chunks:
+                # Encode content as base64 for rawBytes
+                content_bytes = chunk["content"].encode('utf-8')
+                content_base64 = base64.b64encode(content_bytes).decode('utf-8')
+                
                 vertex_chunk = {
                     "id": chunk["id"].replace(".", "_"),  # Vertex needs IDs without dots
-                    "jsonData": chunk["content"],  # The actual content
+                    "content": {
+                        "mimeType": "text/plain",
+                        "rawBytes": content_base64  # Base64 encoded content
+                    },
                     "cardName": chunk["cardName"],
-                    "section": chunk["section"],
+                    "section": chunk["section"], 
                     "filename": chunk["filename"]
                 }
                 all_chunks.append(vertex_chunk)

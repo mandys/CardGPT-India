@@ -4,6 +4,10 @@
 
 Your current results are poor because we're using **unstructured JSON** instead of **structured JSONL**. This guide fixes the issue by implementing your AI/ML friend's solution.
 
+## 🔧 **Format Error Fixed**
+
+The original error `"invalid JSON in google.cloud.discoveryengine.v1main.Document, near 1:89 (offset 88): no such field: 'cardName'"` has been fixed by using the correct Vertex AI Document structure with base64-encoded content.
+
 ## 📋 **Step-by-Step Setup**
 
 ### **Step 1: Upload the New JSONL Data**

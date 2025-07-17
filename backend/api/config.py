@@ -1,0 +1,97 @@
+"""
+Configuration endpoints
+"""
+
+from fastapi import APIRouter, Depends
+from models import ConfigResponse, ModelInfo
+from typing import List
+
+router = APIRouter()
+
+@router.get("/config", response_model=ConfigResponse)
+async def get_config(services=Depends(lambda: {})):
+    """Get API configuration including available models and supported cards"""
+    
+    try:
+        # Define available models
+        available_models = [
+            ModelInfo(
+                name="gemini-1.5-flash",
+                provider="Google",
+                cost_per_1k_input=0.075,
+                cost_per_1k_output=0.3,
+                available=True,
+                description="Ultra-fast model, great for simple queries"
+            ),
+            ModelInfo(
+                name="gemini-1.5-pro",
+                provider="Google",
+                cost_per_1k_input=1.25,
+                cost_per_1k_output=5.0,
+                available=True,
+                description="Balanced model, good for complex queries"
+            ),
+            ModelInfo(
+                name="gpt-3.5-turbo",
+                provider="OpenAI",
+                cost_per_1k_input=1.5,
+                cost_per_1k_output=2.0,
+                available=True,
+                description="Fast and reliable general-purpose model"
+            ),
+            ModelInfo(
+                name="gpt-4",
+                provider="OpenAI",
+                cost_per_1k_input=30.0,
+                cost_per_1k_output=60.0,
+                available=True,
+                description="Premium model with highest accuracy"
+            )
+        ]
+        
+        # Check if Gemini is actually available
+        if "llm_service" in services:
+            gemini_available = services["llm_service"].gemini_available
+            for model in available_models:
+                if model.name.startswith("gemini"):
+                    model.available = gemini_available
+        
+        # Supported credit cards
+        supported_cards = [
+            "Axis Atlas",
+            "ICICI EPM", 
+            "HSBC Premier"
+        ]
+        
+        return ConfigResponse(
+            available_models=available_models,
+            supported_cards=supported_cards,
+            default_model="gemini-1.5-pro",
+            max_top_k=15
+        )
+        
+    except Exception as e:
+        # Return default configuration if there's an error
+        return ConfigResponse(
+            available_models=[],
+            supported_cards=["Axis Atlas", "ICICI EPM", "HSBC Premier"],
+            default_model="gemini-1.5-pro",
+            max_top_k=15
+        )
+
+@router.get("/models", response_model=List[ModelInfo])
+async def get_models(services=Depends(lambda: {})):
+    """Get available AI models"""
+    config = await get_config(services)
+    return config.available_models
+
+@router.get("/cards")
+async def get_cards():
+    """Get supported credit cards"""
+    return {
+        "cards": [
+            "Axis Atlas",
+            "ICICI EPM",
+            "HSBC Premier"
+        ]
+    }

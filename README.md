@@ -1,9 +1,12 @@
 # Credit Card Assistant
 
-A smart AI assistant for querying Indian credit card terms and conditions. Get instant answers about rewards, fees, eligibility, and more using natural language queries.
+A modern full-stack AI assistant for querying Indian credit card terms and conditions. Get instant answers about rewards, fees, eligibility, and more using natural language queries with a professional React interface.
 
 ## Features
 
+- **Modern Full-Stack**: React + TypeScript frontend with FastAPI backend
+- **Responsive Design**: Mobile-first with collapsible sidebar and bottom navigation
+- **Multiple UI Options**: React (current), Streamlit (legacy), Gradio (legacy)
 - **Enterprise Search**: Google Vertex AI Search for fast, accurate document retrieval
 - **Multi-Model AI**: Choose from GPT-4, GPT-3.5, or Gemini 1.5 (Flash/Pro) 
 - **Ultra-Low Cost**: Gemini Flash costs 20x less than GPT-3.5 (~$0.0003/query)
@@ -11,6 +14,7 @@ A smart AI assistant for querying Indian credit card terms and conditions. Get i
 - **Multi-Card Support**: Query individual cards or compare multiple cards
 - **Category-Aware**: Correctly handles hotel/flight vs general spending rates
 - **Real-Time Costs**: Live token usage and cost tracking
+- **Professional UI**: Modern React interface with complete UI control
 
 ## Supported Cards
 
@@ -55,11 +59,33 @@ A smart AI assistant for querying Indian credit card terms and conditions. Get i
    ```
 
 5. **Run the application**
+   
+   **Option A: React + FastAPI (Recommended)**
+   ```bash
+   # Terminal 1: Start backend
+   cd backend
+   ./start_backend.sh
+   
+   # Terminal 2: Start frontend
+   cd cardgpt-ui
+   ./start_frontend.sh
+   ```
+   Available at `http://localhost:3000` (React frontend)
+   API docs at `http://localhost:8000/docs` (FastAPI backend)
+   
+   **Option B: Streamlit (Legacy)**
    ```bash
    streamlit run app.py
    ```
-
-The application will be available at `http://localhost:8501`
+   Available at `http://localhost:8501`
+   
+   **Option C: Gradio (Legacy)**
+   ```bash
+   python app_gradio.py
+   # Or use the start script
+   ./start_gradio.sh
+   ```
+   Available at `http://localhost:7860`
 
 ## Usage
 
@@ -91,22 +117,43 @@ The application will be available at `http://localhost:8501`
 The application uses a modular architecture with the following components:
 
 ```
-├── app.py                 # Main Streamlit application
-├── src/
-│   ├── llm.py            # Multi-model LLM service (GPT-4/3.5, Gemini)
-│   ├── vertex_retriever.py # Google Vertex AI Search integration
-│   ├── query_enhancer.py # Smart query preprocessing
-│   └── calculator.py     # Precise reward calculations
-├── data/                 # Credit card JSON files
-└── requirements.txt      # Python dependencies
+├── backend/                    # FastAPI Backend
+│   ├── main.py                # FastAPI app entry point
+│   ├── models.py              # Pydantic schemas
+│   ├── api/                   # API endpoints
+│   │   ├── chat.py           # Chat endpoints
+│   │   ├── config.py         # Configuration
+│   │   └── health.py         # Health check
+│   ├── services/             # Business logic
+│   │   ├── llm.py           # Multi-model LLM service (GPT-4/3.5, Gemini)
+│   │   ├── vertex_retriever.py # Google Vertex AI Search integration
+│   │   ├── query_enhancer.py   # Smart query preprocessing
+│   │   └── calculator.py       # Precise reward calculations
+│   ├── requirements.txt      # Python dependencies
+│   └── start_backend.sh      # Backend startup script
+├── cardgpt-ui/               # React Frontend
+│   ├── src/
+│   │   ├── components/      # React components
+│   │   ├── services/        # API client
+│   │   ├── hooks/          # React hooks & state
+│   │   └── styles/         # Tailwind CSS
+│   ├── package.json        # Node.js dependencies
+│   └── start_frontend.sh   # Frontend startup script
+├── app.py                   # Streamlit application (legacy)
+├── app_gradio.py           # Gradio UI (legacy)
+├── data/                   # Credit card JSON files
+└── README_REACT_FASTAPI.md # Full documentation
 ```
 
 ### Key Components
 
+- **React Frontend**: Modern TypeScript React app with Tailwind CSS
+- **FastAPI Backend**: RESTful API with automatic documentation
 - **Vertex AI Search**: Enterprise-grade search with Google's managed infrastructure
 - **Multi-Model LLM**: Choose optimal model based on query complexity and cost
 - **Query Enhancement**: Automatic category detection and preprocessing
 - **Smart Calculator**: Precise calculations for rewards, milestones, and fees
+- **Responsive Design**: Mobile-first with collapsible sidebar and bottom navigation
 
 ## Model Costs
 
@@ -162,11 +209,14 @@ GEMINI_API_KEY = "your-gemini-key"
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the application
+# Run Streamlit version
 streamlit run app.py
 
+# Run Gradio version (recommended)
+python app_gradio.py
+
 # Test different models
-# The app will auto-detect available models and show cost comparisons
+# Both apps auto-detect available models and show cost comparisons
 ```
 
 ## Adding New Credit Cards
@@ -214,7 +264,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built by:** [@maharajamandy](https://x.com/maharajamandy) & [@jockaayush](https://x.com/jockaayush)  
 **Powered by:** OpenAI + Google Gemini + Vertex AI Search  
-**Framework:** Streamlit + Python  
+**Framework:** Streamlit + Gradio + Python  
 
 ---
 

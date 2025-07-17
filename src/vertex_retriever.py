@@ -1,290 +1,208 @@
-"""
-Vertex AI Search Retriever
-Replaces the custom ChromaDB implementation with Google's managed Vertex AI Search service.
-Provides enterprise-grade search capabilities with minimal maintenance overhead.
-"""
+# In src/vertex_retriever.py
 
 import time
 import json
 import logging
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional
 from google.cloud import discoveryengine_v1 as discoveryengine
 from google.api_core import exceptions as google_exceptions
 from google.protobuf.json_format import MessageToDict
 
 logger = logging.getLogger(__name__)
 
-
-def _convert_search_result_to_dict(result: discoveryengine.SearchResponse.SearchResult) -> Dict:
-    """A robust helper to convert a search result proto message to a Python dict."""
-    try:
-        return MessageToDict(result._pb)
-    except Exception as e:
-        logger.error(f"Failed to convert search result to dict: {e}")
-        return {}
-
-
 class VertexRetriever:
     """
-    Production-ready Vertex AI Search retriever with simplified, robust response parsing.
+    (Simplified & Corrected) Vertex AI Search retriever.
+    Focuses on robust filtering and clean response parsing.
     """
-    
     def __init__(self, project_id: str, location: str, data_store_id: str):
-        """Initialize the Vertex AI Search retriever."""
         self.project_id = project_id
         self.location = location
         self.data_store_id = data_store_id
-        
-        # Initialize the client
-        try:
-            self.client = discoveryengine.SearchServiceClient()
-            logger.info(f"Vertex AI Search client initialized for project: {project_id}")
-        except Exception as e:
-            logger.error(f"Failed to initialize Vertex AI Search client: {e}")
-            raise
-        
-        # Build the serving config path
+        self.client = discoveryengine.SearchServiceClient()
         self.serving_config = self.client.serving_config_path(
             project=project_id,
             location=location,
             data_store=data_store_id,
-            serving_config="default_config"
+            serving_config="default_config",
         )
-        
-        # Performance tracking
-        self.search_times = []
-        self.search_count = 0
-        self.error_count = 0
-        
-        logger.info(f"Vertex AI Search configured:")
-        logger.info(f"  Project: {project_id}")
-        logger.info(f"  Location: {location}")
-        logger.info(f"  Data Store: {data_store_id}")
-        logger.info(f"  Serving Config: {self.serving_config}")
-    
-    def search_similar_documents(
-        self, 
-        query_text: str, 
-        top_k: int = 5,
-        card_filter: Optional[str] = None,
-        use_mmr: bool = True  # Kept for compatibility
-    ) -> List[Dict]:
-        """
-        Search for documents similar to the query using Vertex AI Search with precise metadata filtering.
-        
-        Args:
-            query_text: The search query text
-            top_k: Number of top results to return
-            card_filter: Filter by specific card name (exact metadata filtering)
-            use_mmr: Compatibility parameter (not used in Vertex AI)
-            
-        Returns:
-            List of similar documents with similarity scores
-        """
-        start_time = time.time()
-        
-        try:
-            # Create precise metadata filter instead of query modification
-            filter_str = None
-            if card_filter:
-                # Use exact metadata filtering - much more reliable than query modification
-                filter_str = f'cardName="{card_filter}"'
-                logger.info(f"Using metadata filter: {filter_str}")
-            
-            # Build and execute search request with filter
-            request = self._build_search_request(query_text, top_k, filter_str)
-            response = self.client.search(request)
-            
-            # Process results using the corrected parsing logic
-            processed_results = self._process_search_response(response)
-            
-            # Track performance
-            search_time = time.time() - start_time
-            self.search_times.append(search_time)
-            self.search_count += 1
-            
-            logger.info(f"Vertex AI Search completed in {search_time:.3f}s, found {len(processed_results)} documents")
-            
-            return processed_results[:top_k]
-            
-        except google_exceptions.GoogleAPIError as e:
-            self.error_count += 1
-            logger.error(f"Vertex AI Search API error: {e}")
-            return self._fallback_response(query_text, card_filter)
-            
-        except Exception as e:
-            self.error_count += 1
-            logger.error(f"Unexpected error in Vertex AI Search: {e}")
-            return self._fallback_response(query_text, card_filter)
+        logger.info(f"Vertex AI Search client initialized for project: {project_id}")
 
-    def _build_search_request(self, query_text: str, top_k: int, filter_str: Optional[str] = None) -> discoveryengine.SearchRequest:
-        """Constructs the search request object with optional metadata filtering."""
-        return discoveryengine.SearchRequest(
+    def search_similar_documents(self, query_text: str, card_filter: Optional[str] = None, top_k: int = 7, use_mmr: bool = False) -> List[Dict]:
+        """Performs a search with precise metadata filtering."""
+        # Note: use_mmr is ignored for Vertex AI Search (ChromaDB-specific parameter)
+        
+        # For now, disable filtering since the data store schema needs to be updated
+        # TODO: Re-enable filtering once the data store is updated with new JSONL format
+        if card_filter:
+            logger.info(f"Card filter '{card_filter}' requested but filtering disabled (data store needs update)")
+            # Enhance query with card name instead of using filter
+            enhanced_query = f"{card_filter} {query_text}"
+        else:
+            enhanced_query = query_text
+            
+        logger.info(f"Executing search with enhanced query: {enhanced_query}")
+        
+        request = discoveryengine.SearchRequest(
             serving_config=self.serving_config,
-            query=query_text,
+            query=enhanced_query,
             page_size=top_k,
-            filter=filter_str,  # Use dedicated filter field for precise metadata filtering
+            # filter=filter_str  # Disabled until data store update
+            # Explicitly request document content
             content_search_spec=discoveryengine.SearchRequest.ContentSearchSpec(
                 snippet_spec=discoveryengine.SearchRequest.ContentSearchSpec.SnippetSpec(
-                    return_snippet=True
-                ),
-                summary_spec=discoveryengine.SearchRequest.ContentSearchSpec.SummarySpec(
-                    summary_result_count=top_k,
-                    include_citations=False
+                    return_snippet=True,
+                    max_snippet_count=3
                 ),
                 extractive_content_spec=discoveryengine.SearchRequest.ContentSearchSpec.ExtractiveContentSpec(
-                    max_extractive_answer_count=3
+                    max_extractive_answer_count=3,
+                    max_extractive_segment_count=3
                 )
             )
         )
+        
+        try:
+            response = self.client.search(request)
+            results = self._process_response(response)
+            
+            # If card_filter is specified, post-process results to filter by card name
+            if card_filter and results:
+                filtered_results = []
+                for result in results:
+                    card_name = result.get('cardName', '')
+                    # More flexible matching
+                    if (card_filter.lower() in card_name.lower() or 
+                        any(word in card_name.lower() for word in card_filter.lower().split())):
+                        filtered_results.append(result)
+                
+                logger.info(f"Post-filtered results: {len(filtered_results)}/{len(results)} documents match '{card_filter}'")
+                return filtered_results[:top_k]
+            
+            return results
+            
+        except google_exceptions.GoogleAPIError as e:
+            logger.error(f"Vertex AI Search API error: {e}")
+            return self._fallback_response(query_text)
 
-    def _process_search_response(self, response: discoveryengine.SearchResponse) -> List[Dict]:
-        """Processes the search response and extracts content from JSONL format."""
+    def _process_response(self, response: discoveryengine.SearchResponse) -> List[Dict]:
+        """(Simplified & Corrected) Processes the search response."""
         processed_results = []
         
-        for result in response.results:
-            # Convert the entire complex result object into a clean dictionary
-            result_dict = _convert_search_result_to_dict(result)
+        logger.info(f"=== DEBUGGING VERTEX AI RESPONSE ===")
+        logger.info(f"Total results: {len(response.results)}")
+        
+        for i, result in enumerate(response.results):
+            logger.info(f"\n--- RESULT {i+1} ---")
             
-            # Extract document information
+            # Convert the complex result object into a simple dictionary
+            result_dict = MessageToDict(result._pb)
+            logger.info(f"Result dict keys: {list(result_dict.keys())}")
+            
+            # Extract the data cleanly and directly
             document = result_dict.get('document', {})
-            struct_data = document.get('derivedStructData', {})
+            logger.info(f"Document keys: {list(document.keys())}")
             
-            # Extract JSONL metadata (cardName, section, etc.)
-            card_name = struct_data.get('cardName', 'Unknown Card')
-            section = struct_data.get('section', 'unknown')
-            content = struct_data.get('jsonData', '')
+            struct_data = document.get('structData', {})
+            logger.info(f"Struct data: {struct_data}")
             
-            # If no structured data, fall back to extracting from document name
+            # Also check derivedStructData
+            derived_struct_data = document.get('derivedStructData', {})
+            logger.info(f"Derived struct data keys: {list(derived_struct_data.keys())}")
+            logger.info(f"Derived struct data: {derived_struct_data}")
+            
+            # Handle both text and raw_bytes content formats
+            content_obj = document.get('content', {})
+            logger.info(f"Content object keys: {list(content_obj.keys())}")
+            logger.info(f"Content object: {content_obj}")
+            
+            content = ''
+            
+            # Priority 1: Check document.content for raw content
+            if 'text' in content_obj:
+                content = content_obj['text']
+                logger.info(f"Found 'text' field, length: {len(content)}")
+                logger.info(f"Text content preview: {content[:200]}...")
+            elif 'rawBytes' in content_obj:
+                # Decode Base64 content
+                import base64
+                try:
+                    raw_bytes = content_obj['rawBytes']
+                    logger.info(f"Found 'rawBytes' field, length: {len(raw_bytes)}")
+                    content_bytes = base64.b64decode(raw_bytes)
+                    content = content_bytes.decode('utf-8')
+                    logger.info(f"Successfully decoded Base64, content length: {len(content)}")
+                    logger.info(f"Decoded content preview: {content[:200]}...")
+                except Exception as e:
+                    logger.error(f"Failed to decode Base64 content: {e}")
+                    content = "Content decoding failed"
+                    
+            # Priority 2: If no raw content, extract from Vertex AI's processed fields
+            if not content and derived_struct_data:
+                logger.info(f"No raw content found, extracting from derivedStructData...")
+                
+                # Try extractive_segments first (most complete)
+                if 'extractive_segments' in derived_struct_data:
+                    segments = derived_struct_data['extractive_segments']
+                    if segments and isinstance(segments, list):
+                        segment_texts = []
+                        for segment in segments:
+                            if isinstance(segment, dict) and 'content' in segment:
+                                segment_texts.append(segment['content'])
+                        
+                        if segment_texts:
+                            content = '\n\n'.join(segment_texts)
+                            logger.info(f"Extracted from extractive_segments, length: {len(content)}")
+                            logger.info(f"Segments content preview: {content[:200]}...")
+                
+                # Fallback to extractive_answers
+                if not content and 'extractive_answers' in derived_struct_data:
+                    answers = derived_struct_data['extractive_answers']
+                    if answers and isinstance(answers, list):
+                        answer_texts = []
+                        for answer in answers:
+                            if isinstance(answer, dict) and 'content' in answer:
+                                answer_texts.append(answer['content'])
+                        
+                        if answer_texts:
+                            content = '\n\n'.join(answer_texts)
+                            logger.info(f"Extracted from extractive_answers, length: {len(content)}")
+                            logger.info(f"Answers content preview: {content[:200]}...")
+            
             if not content:
-                card_name = self._extract_card_name(document.get('name', ''))
-                content = f"Document ID: {document.get('id', 'unknown')}"
+                logger.warning(f"No content found in any field!")
+                logger.info(f"Available content fields: {list(content_obj.keys())}")
+                logger.info(f"Available derived fields: {list(derived_struct_data.keys())}")
             
-            # Add summary if available
-            content_parts = []
-            if 'summary' in result_dict and result_dict['summary']:
-                content_parts.append(f"Summary: {result_dict['summary']}")
+            card_name = struct_data.get('cardName', 'Unknown Card')
+            section = struct_data.get('section', 'details')
             
-            # Add the main content
-            content_parts.append(content)
+            logger.info(f"Final extracted: cardName='{card_name}', section='{section}', content_length={len(content)}")
             
             processed_results.append({
-                'content': "\n\n".join(content_parts),
+                'content': content,
                 'cardName': card_name,
                 'section': section,
-                'similarity': getattr(result, 'relevance_score', 0.8),
-                'metadata': {
-                    'document_id': document.get('id'),
-                    'vertex_source': True,
-                    'filename': struct_data.get('filename', 'unknown')
-                }
+                'similarity': result_dict.get('relevanceScore', 0.8),
             })
-            
+        
+        logger.info(f"=== END DEBUGGING ===")
+        logger.info(f"Successfully processed {len(processed_results)} documents.")
         return processed_results
-
-    def _format_dict_to_text(self, data: Dict, indent: int = 0) -> str:
-        """Recursively formats a dictionary into a readable indented string."""
-        text_parts = []
-        indent_str = "  " * indent
         
-        for key, value in data.items():
-            key_formatted = key.replace('_', ' ').title()
-            if isinstance(value, dict):
-                text_parts.append(f"{indent_str}- {key_formatted}:")
-                text_parts.append(self._format_dict_to_text(value, indent + 1))
-            elif isinstance(value, list):
-                list_items = ", ".join(map(str, value))
-                text_parts.append(f"{indent_str}- {key_formatted}: {list_items}")
-            else:
-                text_parts.append(f"{indent_str}- {key_formatted}: {value}")
-        
-        return "\n".join(text_parts)
-
-    def _extract_card_name(self, document_name: str) -> str:
-        """Extracts card name from the document's resource name."""
-        if 'axis-atlas' in document_name.lower(): return 'Axis Atlas'
-        if 'icici-epm' in document_name.lower(): return 'ICICI EPM'
-        if 'hsbc-premier' in document_name.lower(): return 'HSBC Premier'
-        # Also check for individual keywords
-        if 'axis' in document_name.lower(): return 'Axis Atlas'
-        if 'icici' in document_name.lower(): return 'ICICI EPM'
-        if 'hsbc' in document_name.lower(): return 'HSBC Premier'
-        return 'Unknown Card'
-        
-    def _extract_section(self, data: Dict) -> str:
-        """Extract section information from structured data."""
-        # Try to infer section from the data structure
-        if 'rewards' in str(data).lower():
-            return 'rewards'
-        elif 'fees' in str(data).lower():
-            return 'fees'
-        elif 'benefits' in str(data).lower():
-            return 'benefits'
-        elif 'milestone' in str(data).lower():
-            return 'milestones'
-        else:
-            return 'card_details'
-    
-    def _fallback_response(self, query_text: str, card_filter: Optional[str]) -> List[Dict]:
-        """Provide fallback response when Vertex AI Search fails."""
-        logger.warning("Using fallback response due to Vertex AI Search failure")
-        
-        fallback_content = f"""
-        Search temporarily unavailable. Query: {query_text}
-        
-        Please try again or contact support if the issue persists.
-        Common credit card information:
-        - Annual fees vary by card type
-        - Reward rates depend on spending category
-        - Check card-specific terms and conditions
-        """
-        
-        return [{
-            'content': fallback_content,
-            'cardName': card_filter or 'General',
-            'section': 'fallback_response',
-            'similarity': 0.1,
-            'metadata': {
-                'is_fallback': True,
-                'error_type': 'vertex_ai_search_failure'
-            }
-        }]
-    
     def get_available_cards(self) -> List[str]:
-        """Get list of available cards (hardcoded for now)."""
-        return ['Axis Atlas', 'ICICI EPM', 'HSBC Premier']
-    
-    def get_performance_stats(self) -> Dict[str, Any]:
-        """Get performance statistics for monitoring."""
-        avg_search_time = sum(self.search_times) / len(self.search_times) if self.search_times else 0
-        
-        return {
-            'total_searches': self.search_count,
-            'total_errors': self.error_count,
-            'error_rate': self.error_count / max(self.search_count, 1),
-            'average_search_time': avg_search_time,
-            'last_search_times': self.search_times[-5:] if len(self.search_times) >= 5 else self.search_times,
-            'service_health': 'healthy' if self.error_count / max(self.search_count, 1) < 0.1 else 'degraded'
-        }
-    
-    def health_check(self) -> Dict[str, Any]:
-        """Perform a health check on the Vertex AI Search service."""
-        try:
-            # Try a simple search to verify connectivity
-            test_results = self.search_similar_documents("test query", top_k=1)
-            
-            return {
-                'status': 'healthy',
-                'vertex_ai_accessible': True,
-                'last_test_time': time.time(),
-                'performance_stats': self.get_performance_stats()
-            }
-            
-        except Exception as e:
-            logger.error(f"Health check failed: {e}")
-            return {
-                'status': 'unhealthy',
-                'vertex_ai_accessible': False,
-                'error': str(e),
-                'last_test_time': time.time()
-            }
+        """Returns the list of available credit cards."""
+        return [
+            "Axis Atlas",
+            "ICICI EPM", 
+            "HSBC Premier"
+        ]
+
+    def _fallback_response(self, query: str) -> List[Dict]:
+        """Provides a fallback response on API failure."""
+        logger.warning(f"Using fallback response for query: {query}")
+        return [{
+            'content': f"Search is temporarily unavailable for your query: '{query}'. Please check logs.",
+            'cardName': "System",
+            'section': "Error",
+            'similarity': 0.0
+        }]

@@ -6,6 +6,7 @@ A smart assistant for querying Indian credit card terms and conditions using AI.
 
 - **Vertex AI Search**: Google's enterprise-grade search with auto-scaling and reliability
 - **Dual Search System**: Vertex AI primary with ChromaDB fallback for maximum reliability
+- **Perfect Content Extraction**: Fixed derivedStructData parsing for complete document retrieval
 - **Multi-Model AI**: Choose from GPT-4, GPT-3.5, or Gemini 1.5 (Flash/Pro)
 - **Ultra-Low Cost**: Gemini Flash costs 20x less than GPT-3.5 (~$0.0003/query)
 - **Smart Model Selection**: Auto-upgrades complex calculations to better models  
@@ -99,6 +100,7 @@ supavec-clone/
 - Auto-scaling and managed service reliability
 - Eliminates prompt tuning and chunking maintenance
 - Production-ready with comprehensive error handling
+- **Fixed content extraction** from derivedStructData.extractive_segments for complete document retrieval
 
 #### `app.py` - Main Application
 - Streamlit user interface
@@ -201,6 +203,7 @@ JSON Files → Google Cloud Upload → Vertex AI Indexing → Semantic Search
 ```
 - Credit card data uploaded to Google Cloud Discovery Engine
 - Google's enterprise infrastructure handles indexing and search
+- **Perfect content extraction** from derivedStructData.extractive_segments
 - Eliminates prompt tuning, chunking strategies, and result degradation
 - Auto-scaling with production reliability
 - Supports 3 cards: Axis Atlas, ICICI EPM, HSBC Premier

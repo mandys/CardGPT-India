@@ -208,6 +208,9 @@ def process_query(
         use_mmr=True  # Enable MMR for better diversity (ChromaDB only)
     )
     
+    # Log basic retrieval info
+    logger.info(f"Retrieved {len(relevant_docs)} documents from retriever")
+    
     # Filter for comparison mode or auto-detected comparison questions
     if query_mode == "Compare Cards" and len(selected_cards) >= 2:
         relevant_docs = [doc for doc in relevant_docs if doc['cardName'] in selected_cards]
@@ -282,8 +285,15 @@ def process_and_display_query(prompt, query_mode, selected_cards, top_k, selecte
             query_enhancer=query_enhancer
         )
         
-        # Display answer
-        st.markdown(result["answer"])
+        # Display answer with debug info
+        if result["answer"]:
+            st.markdown(result["answer"])
+        else:
+            st.error("⚠️ No answer generated - check logs for details")
+            st.write("Debug info:")
+            st.write(f"- Documents found: {len(result['documents'])}")
+            st.write(f"- LLM usage: {result['llm_usage']}")
+            st.write(f"- Answer content: {repr(result['answer'])}")
         
         # Display usage metrics
         with st.expander("💰 Token Usage & Cost"):
@@ -331,6 +341,12 @@ def process_and_display_query(prompt, query_mode, selected_cards, top_k, selecte
     except Exception as e:
         error_msg = f"An error occurred: {str(e)}"
         st.error(error_msg)
+        st.error(f"Exception type: {type(e).__name__}")
+        st.error(f"Exception details: {repr(e)}")
+        
+        # Log the error for debugging
+        logger.error(f"Error in process_and_display_query: {str(e)}", exc_info=True)
+        
         st.session_state.messages.append({"role": "assistant", "content": error_msg})
 
 

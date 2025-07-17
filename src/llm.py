@@ -153,8 +153,6 @@ class LLMService:
             
             actual_model_name = model_mapping.get(model, model)
             
-            print(f"🔄 Initializing {model} ({actual_model_name}) with {max_tokens} max tokens...")
-            
             gemini_model = genai.GenerativeModel(
                 model_name=actual_model_name,
                 generation_config=genai.types.GenerationConfig(
@@ -163,7 +161,6 @@ class LLMService:
                 )
             )
             
-            print(f"🚀 Sending request to {model}...")
             import time
             start_time = time.time()
             
@@ -171,7 +168,6 @@ class LLMService:
             
             end_time = time.time()
             response_time = end_time - start_time
-            print(f"✅ {model} response received in {response_time:.2f} seconds")
             
             # Estimate token usage (Gemini doesn't provide exact counts)
             input_tokens = len(combined_prompt.split()) * 1.3  # Rough estimation
@@ -209,80 +205,47 @@ class LLMService:
             return f"Error generating answer: {error_msg}", {"tokens": 0, "cost": 0, "model": model}
     
     def _build_context(self, documents: List[Dict]) -> str:
-        """Build context string from relevant documents with smart truncation"""
+        """
+        (Improved) Build context string from relevant documents without
+        aggressive truncation.
+        """
         context_parts = []
-        for doc in documents:
-            # Give full content for renewal benefits, welcome benefits, and important sections
-            important_sections = ['renewal_benefits', 'welcome_benefits', 'milestones', 'tier_structure']
-            
-            if any(section in doc['section'] for section in important_sections):
-                # Full content for important sections
-                content = doc['content']
-            else:
-                # Truncate other sections to 400 chars
-                content = doc['content'][:400]
-                if len(doc['content']) > 400:
-                    content += '...'
-            
-            context_parts.append(f"{doc['cardName']} {doc['section']}: {content}")
         
-        return "\n\n".join(context_parts)
+        # Limit total context to avoid excessive length, but be generous
+        max_context_chars = 15000  # ~3.7k tokens, well within limits
+        current_chars = 0
+        
+        for doc in documents:
+            content = doc.get('content', '')
+            
+            # Stop adding documents if we exceed the character limit
+            if current_chars + len(content) > max_context_chars:
+                break
+                
+            # Use the full, untruncated content from the document
+            context_part = f"Source Document for '{doc['cardName']}' (section: {doc['section']}):\n{content}"
+            context_parts.append(context_part)
+            current_chars += len(content)
+        
+        final_context = "\n\n---\n\n".join(context_parts)
+        return final_context
     
     def _create_system_prompt(self, card_name: str = None) -> str:
         """Create a concise system prompt for the LLM"""
-        prompt = """You are a credit card expert. Be comprehensive and accurate.
+        prompt = """You are a helpful credit card expert. Answer questions clearly and accurately based on the provided context.
 
-CRITICAL: For each ₹ spent, apply ONLY ONE earning rate (base OR category, never both).
-CRITICAL: If question asks about ONE specific card, answer ONLY about that card. Don't compare unnecessarily.
+IMPORTANT: If the context contains information relevant to the question, use it to provide a comprehensive answer. Don't claim information is missing if it's in the context.
 
-CALCULATION RULES:
-1. Check exclusions first (government, rent, fuel, utilities may be excluded)
-2. Use exact earning rates: "X points per ₹Y" → (spend ÷ Y) × X  
-3. Category rates: Hotels/flights may have accelerated rates, everything else uses base rate
-4. **CHECK CAPS**: Always check monthly/annual caps for accelerated rates
-5. **MILESTONES ARE ANNUAL**: Earned once per year based on total yearly spend (NOT monthly)
-6. **MILESTONE LOGIC**: Add milestones ONLY if the spend amount in the question ≥ milestone threshold
-7. **CAPPING vs EXCLUSION**: "Capped" means rewards earned but limited; "Excluded" means 0 rewards
+For calculations:
+- Use exact rates from context: "X points per ₹Y" → (spend ÷ Y) × X
+- Check for exclusions and caps
+- Apply milestones if spend meets threshold
+- Show calculations step-by-step
 
-KNOWN CARD PATTERNS (use context to verify):
-- Axis Atlas: 2 miles/₹100 (base), 5 miles/₹100 (hotels/flights share ₹2L/month cap)
-- ICICI EPM: 6 points/₹200 (all categories, with caps per cycle)
-- HSBC Premier: 3 points/₹100 (general rate with category caps)
-
-CRITICAL: Hotels and flights often SHARE monthly caps (not separate caps!)
-
-EXCLUSIONS (check context to verify): 
-- Common exclusions: Government, rent, fuel
-- Axis Atlas additional: Utilities, insurance, wallet, jewellery (all get 0 rewards)
-- ICICI EPM: Does NOT exclude utilities/education/insurance - they earn rewards but are CAPPED
-- HSBC Premier: Check context for specific exclusions
-
-CRITICAL: ICICI EPM utility/education/insurance are NOT excluded - they earn 6 points/₹200 with caps!
-
-EARNING CAPS (earns rewards but capped per cycle):
-- ICICI EPM utilities: Earns 6 points/₹200 but CAPPED at 1,000 points per cycle
-- ICICI EPM education: Earns 6 points/₹200 but CAPPED at 1,000 points per cycle  
-- ICICI EPM insurance: Earns 6 points/₹200 but CAPPED at 5,000 points per cycle
-- ICICI EPM grocery: Earns 6 points/₹200 but CAPPED at 1,000 points per cycle
-- Calculate normally: (spend ÷ 200) × 6, then apply the cap limit if exceeded
-
-SURCHARGES (calculate if spend exceeds threshold):
-- Look for surcharge rules in context (typically 1% above thresholds)
-
-MILESTONE LOGIC (CUMULATIVE - ALL qualifying milestones earned):
-₹7.5L yearly spend on Atlas → Base: (750000 ÷ 100) × 2 = 15,000 miles
-CUMULATIVE milestones: ₹3L (2,500) + ₹7.5L (2,500) = 5,000 total milestone bonus
-✅ Total: 15,000 + 5,000 = 20,000 miles
-
-₹3L yearly spend on Atlas → Base: (300000 ÷ 100) × 2 = 6,000 miles  
-CUMULATIVE milestones: ₹3L (2,500) = 2,500 milestone bonus
-✅ Total: 6,000 + 2,500 = 8,500 miles
-
-CRITICAL: Milestones are CUMULATIVE - if you spend ₹7.5L, you get ALL milestones below that threshold!
-
-Show calculations step-by-step. For comparisons, discuss relevant cards from context.
-
-IMPORTANT: For informational queries (benefits, features, transfer partners, etc.), extract ALL relevant information from context. Don't truncate lists or details. If context contains comprehensive information, provide comprehensive answers."""
+For informational queries:
+- Extract all relevant details from context
+- Include specific numbers, dates, and conditions
+- Don't truncate important information"""
         
         if card_name:
             prompt += f"\nFocus on information about the {card_name} card."

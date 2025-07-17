@@ -1,15 +1,8 @@
 """
 Supavec Clone - Main Streamlit Application
 RAG-powered Credit Card Assistant for Indian Credit Card Data
+Enhanced with Vertex AI Search
 """
-
-# Fix SQLite compatibility for Streamlit Cloud
-import sys
-try:
-    import pysqlite3
-    sys.modules['sqlite3'] = pysqlite3
-except ImportError:
-    pass
 
 import streamlit as st
 import os
@@ -17,9 +10,7 @@ import logging
 from typing import List, Dict, Any
 
 # Import our custom services
-from src.embedder import EmbeddingService
 from src.llm import LLMService
-from src.retriever import DocumentRetriever
 from src.vertex_retriever import VertexRetriever
 from src.query_enhancer import QueryEnhancer
 
@@ -40,8 +31,6 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "retriever" not in st.session_state:
     st.session_state.retriever = None
-if "embedder" not in st.session_state:
-    st.session_state.embedder = None
 if "llm" not in st.session_state:
     st.session_state.llm = None
 if "process_last_message" not in st.session_state:
@@ -65,63 +54,29 @@ def initialize_services():
     gcp_location = st.secrets.get("GCP_LOCATION") or os.getenv("GCP_LOCATION") or "global"
     gcp_data_store_id = st.secrets.get("GCP_DATA_STORE_ID") or os.getenv("GCP_DATA_STORE_ID")
     
-    # Check if Vertex AI Search is configured
-    if gcp_project_id and gcp_data_store_id:
-        st.info("🚀 Using Vertex AI Search for document retrieval")
-        retriever = VertexRetriever(gcp_project_id, gcp_location, gcp_data_store_id)
-        embedder = None  # No longer needed for Vertex AI Search
-    else:
-        st.warning("⚠️ Vertex AI Search not configured, falling back to ChromaDB")
-        retriever = DocumentRetriever(api_key)
-        embedder = EmbeddingService(api_key)
+    # Vertex AI Search is required
+    if not gcp_project_id or not gcp_data_store_id:
+        st.error("❌ Vertex AI Search configuration missing. Please set GCP_PROJECT_ID and GCP_DATA_STORE_ID in environment variables or Streamlit secrets.")
+        st.stop()
+    
+    st.info("🚀 Using Vertex AI Search for enterprise-grade document retrieval")
+    retriever = VertexRetriever(gcp_project_id, gcp_location, gcp_data_store_id)
     
     # Initialize other services
     llm = LLMService(api_key, gemini_key)
     query_enhancer = QueryEnhancer()
     
-    return embedder, llm, retriever, query_enhancer
+    return llm, retriever, query_enhancer
 
 
 @st.cache_data
 def load_and_process_data(_retriever):
     """Load documents and store in database with caching"""
     
-    # Check if we're using Vertex AI Search
-    if isinstance(_retriever, VertexRetriever):
-        with st.spinner("Initializing AI assistant with Vertex AI Search..."):
-            # Vertex AI Search doesn't need document loading - it's already indexed
-            # Just return available cards and mock usage for compatibility
-            mock_usage = {
-                "total_tokens": 0,  # No embedding tokens needed
-                "total_cost": 0,    # No embedding costs
-                "successful_embeddings": 3,  # 3 JSON files
-                "failed_embeddings": 0,
-                "model": "vertex-ai-search",
-                "api_calls": 0  # No API calls needed for initialization
-            }
-            
-            return _retriever.get_available_cards(), mock_usage
-    
-    else:
-        # ChromaDB path (fallback)
-        with st.spinner("Initializing AI assistant with ChromaDB..."):
-            # Load documents
-            documents = _retriever.load_documents_from_json("data")
-            
-            # Store in ChromaDB (embeddings generated automatically)
-            _retriever.store_documents(documents)
-            
-            # Return available cards and mock usage for compatibility
-            mock_usage = {
-                "total_tokens": len(documents) * 200,  # Estimate
-                "total_cost": len(documents) * 200 * 0.00002 / 1000,  # Estimate
-                "successful_embeddings": len(documents),
-                "failed_embeddings": 0,
-                "model": "text-embedding-3-small",
-                "api_calls": 1  # ChromaDB handles this internally
-            }
-            
-            return _retriever.get_available_cards(), mock_usage
+    with st.spinner("Initializing AI assistant with Vertex AI Search..."):
+        # Vertex AI Search doesn't need document loading - it's already indexed
+        # Just return available cards
+        return _retriever.get_available_cards()
 
 
 def process_query(
@@ -130,8 +85,7 @@ def process_query(
     selected_cards: List[str], 
     top_k: int, 
     selected_model: str,
-    retriever: DocumentRetriever,
-    embedder: EmbeddingService,
+    retriever: VertexRetriever,
     llm: LLMService,
     query_enhancer: QueryEnhancer
 ) -> Dict[str, Any]:
@@ -144,21 +98,12 @@ def process_query(
     if metadata['category_detected']:
         logger.info(f"Category detected: {metadata['category_detected']} for question: {question[:50]}...")
     
-    # Handle embedding usage based on retriever type
-    if isinstance(retriever, VertexRetriever):
-        # Vertex AI Search doesn't need separate embedding calls
-        embedding_usage = {
-            "tokens": 0,  # No separate embedding tokens
-            "cost": 0,    # No separate embedding costs
-            "model": "vertex-ai-search"
-        }
-    else:
-        # ChromaDB path - create mock usage for compatibility
-        embedding_usage = {
-            "tokens": len(question.split()) * 1.3,  # Estimate
-            "cost": len(question.split()) * 1.3 * 0.00002 / 1000,  # Estimate
-            "model": "text-embedding-3-small"
-        }
+    # Vertex AI Search doesn't need separate embedding calls
+    embedding_usage = {
+        "tokens": 0,  # No separate embedding tokens
+        "cost": 0,    # No separate embedding costs
+        "model": "vertex-ai-search"
+    }
     
     # Determine search filters with intelligent card detection
     card_filter = None
@@ -174,42 +119,20 @@ def process_query(
         # For comparison, we'll search across all selected cards
         pass
     
-    # Apply keyword boosting for spend-related and milestone queries
-    boost_keywords = []
-    if any(keyword in question.lower() for keyword in ['spend', 'earn', 'miles', 'points', 'yearly', 'annual']):
-        boost_keywords = ['reward', 'milestone']
-    
-    # Boost milestone-related searches
-    if any(keyword in question.lower() for keyword in ['milestone', 'milestones', 'milestone benefit', 'milestone benefits']):
-        boost_keywords.extend(['milestone', 'renewal_benefits', 'easemytrip'])
-    
-    # Boost renewal benefits searches  
-    if any(keyword in question.lower() for keyword in ['renewal', 'renewal benefit', 'renewal benefits', 'annual benefit']):
-        boost_keywords.extend(['renewal', 'milestone', 'welcome'])
-    
-    # Boost surcharge and fee related searches
-    if any(keyword in question.lower() for keyword in ['surcharge', 'fee', 'fees', 'charge', 'charges', 'cost']):
-        boost_keywords.extend(['surcharge', 'fees', 'other_fees', 'charges'])
-    
-    # Boost utility + fee combination searches
-    if any(utility_word in question.lower() for utility_word in ['utility', 'utilities']) and \
-       any(fee_word in question.lower() for fee_word in ['surcharge', 'fee', 'charge', 'cost']):
-        boost_keywords.extend(['surcharge_fees', 'utility', 'utilities'])
-    
     # Check if question implies comparison (both cards, compare, etc.)
     comparison_keywords = ['both cards', 'compare', 'better', 'which card', 'icici and atlas', 'atlas and icici']
     is_comparison_question = any(keyword in question.lower() for keyword in comparison_keywords)
     
-    # Search for relevant documents using the selected retriever
+    # Search for relevant documents using Vertex AI Search
     relevant_docs = retriever.search_similar_documents(
         query_text=question,
         top_k=top_k,
         card_filter=card_filter,
-        use_mmr=True  # Enable MMR for better diversity (ChromaDB only)
+        use_mmr=True  # Parameter for compatibility (ignored by Vertex AI)
     )
     
     # Log basic retrieval info
-    logger.info(f"Retrieved {len(relevant_docs)} documents from retriever")
+    logger.info(f"Retrieved {len(relevant_docs)} documents from Vertex AI Search")
     
     # Filter for comparison mode or auto-detected comparison questions
     if query_mode == "Compare Cards" and len(selected_cards) >= 2:
@@ -223,7 +146,7 @@ def process_query(
                 query_text=question,
                 top_k=top_k * 2,  # Double the search to ensure both cards
                 card_filter=None,
-                use_mmr=True  # Use MMR for better diversity (ChromaDB only)
+                use_mmr=True  # Parameter for compatibility (ignored by Vertex AI)
             )
     
     # Smart model selection for complex calculations
@@ -244,9 +167,6 @@ def process_query(
         else:
             model_to_use = "gpt-4"
         logger.info(f"Auto-upgraded to {model_to_use} for complex calculation: {question[:50]}...")
-    
-    # Allow Flash to be used - user can make their own choice
-    # Note: Flash performance may have improved with ChromaDB optimization
     
     # Generate answer using enhanced question
     card_context = selected_cards[0] if query_mode == "Specific Card" and selected_cards else None
@@ -269,7 +189,7 @@ def process_query(
     }
 
 
-def process_and_display_query(prompt, query_mode, selected_cards, top_k, selected_model, retriever, embedder, llm, query_enhancer):
+def process_and_display_query(prompt, query_mode, selected_cards, top_k, selected_model, retriever, llm, query_enhancer):
     """Process a query and display the results"""
     try:
         # Process the query
@@ -280,7 +200,6 @@ def process_and_display_query(prompt, query_mode, selected_cards, top_k, selecte
             top_k=top_k,
             selected_model=selected_model,
             retriever=retriever,
-            embedder=embedder,
             llm=llm,
             query_enhancer=query_enhancer
         )
@@ -299,7 +218,7 @@ def process_and_display_query(prompt, query_mode, selected_cards, top_k, selecte
         with st.expander("💰 Token Usage & Cost"):
             col1, col2 = st.columns(2)
             with col1:
-                st.metric("🔍 Query Embedding", 
+                st.metric("🔍 Vertex AI Search", 
                         f"{result['embedding_usage']['tokens']} tokens", 
                         f"${result['embedding_usage']['cost']:.6f}")
             with col2:
@@ -354,16 +273,15 @@ def main():
     """Main application function"""
     
     # Initialize services
-    embedder, llm, retriever, query_enhancer = initialize_services()
+    llm, retriever, query_enhancer = initialize_services()
     
     # Store in session state
-    st.session_state.embedder = embedder
     st.session_state.llm = llm
     st.session_state.retriever = retriever
     st.session_state.query_enhancer = query_enhancer
     
     # Load and process data
-    available_cards, _ = load_and_process_data(retriever)
+    available_cards = load_and_process_data(retriever)
     
     # Main UI
     st.title("💳 Credit Card Assistant")
@@ -410,7 +328,7 @@ def main():
         if gemini_available:
             model_options.extend(["gemini-1.5-flash", "gemini-1.5-pro"])
         
-        # Set default to Gemini Pro if available, otherwise GPT-3.5 (Flash is too slow)
+        # Set default to Gemini Pro if available, otherwise GPT-3.5
         default_index = 0
         if gemini_available and "gemini-1.5-pro" in model_options:
             default_index = model_options.index("gemini-1.5-pro")
@@ -467,7 +385,7 @@ def main():
                 with st.expander("💰 Cost Breakdown"):
                     usage = message["usage"]
                     st.write(f"💸 **Total Cost**: ${usage['total_cost']:.4f}")
-                    st.write(f"🔍 Embedding: {usage['embedding']['tokens']} tokens (${usage['embedding']['cost']:.6f})")
+                    st.write(f"🔍 Search: {usage['embedding']['tokens']} tokens (${usage['embedding']['cost']:.6f})")
                     st.write(f"🤖 {usage['llm'].get('model', 'unknown')}: {usage['llm'].get('total_tokens', 0)} tokens (${usage['llm'].get('cost', 0):.4f})")
             if "sources" in message:
                 with st.expander("📚 Sources"):
@@ -488,7 +406,7 @@ def main():
         # Generate response
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                process_and_display_query(prompt, query_mode, selected_cards, top_k, selected_model, retriever, embedder, llm, query_enhancer)
+                process_and_display_query(prompt, query_mode, selected_cards, top_k, selected_model, retriever, llm, query_enhancer)
     
     # Check if there's a new user message that needs processing (from example buttons)
     if (hasattr(st.session_state, 'process_last_message') and 
@@ -505,7 +423,7 @@ def main():
         # Generate response
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                process_and_display_query(prompt, query_mode, selected_cards, top_k, selected_model, retriever, embedder, llm, query_enhancer)
+                process_and_display_query(prompt, query_mode, selected_cards, top_k, selected_model, retriever, llm, query_enhancer)
         
         # Clear the flag
         st.session_state.process_last_message = False
@@ -553,7 +471,7 @@ def main():
     # Footer
     st.divider()
     st.markdown("---")
-    st.markdown("💳 **Credit Card Assistant** - Built by [@maharajamandy](https://x.com/maharajamandy) & [@jockaayush](https://x.com/jockaayush) | Powered by OpenAI + Google Gemini")
+    st.markdown("💳 **Credit Card Assistant** - Built by [@maharajamandy](https://x.com/maharajamandy) & [@jockaayush](https://x.com/jockaayush) | Powered by Google Vertex AI Search + OpenAI + Gemini")
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ import time
 import json
 import logging
 from typing import List, Dict, Optional
-from google.cloud import discoveryengine_v1 as discoveryengine
+from google.cloud import discoveryengine
 from google.api_core import exceptions as google_exceptions
 from google.protobuf.json_format import MessageToDict
 

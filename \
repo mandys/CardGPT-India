@@ -1,0 +1,20 @@
+{
+Providers: [
+{
+name: "kimi-k2",
+api_base_url: "https://openrouter.ai/api/v1/chat/completions",
+api_key: "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",
+models: [
+"moonshotai/kimi-k2"
+],
+transformer: {
+use: [
+"openrouter"
+]
+}
+}
+],
+Router: {
+default: "kimi-k2,moonshotai/kimi-k2"
+}
+}

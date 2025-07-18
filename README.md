@@ -264,7 +264,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built by:** [@maharajamandy](https://x.com/maharajamandy) & [@jockaayush](https://x.com/jockaayush)  
 **Powered by:** OpenAI + Google Gemini + Vertex AI Search  
-**Framework:** Streamlit + Gradio + Python  
+**Framework:** React + FastAPI + Python  
 
 ---
 

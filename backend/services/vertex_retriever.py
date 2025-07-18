@@ -67,15 +67,23 @@ class VertexRetriever:
             
             # If card_filter is specified, post-process results to filter by card name
             if card_filter and results:
+                # Import here to avoid circular import
+                from services.query_enhancer import QueryEnhancer
+                enhancer = QueryEnhancer()
+                
+                # Get the actual card name from mapping
+                actual_card_name = enhancer.card_name_mapping.get(card_filter, card_filter)
+                
                 filtered_results = []
                 for result in results:
                     card_name = result.get('cardName', '')
-                    # More flexible matching
-                    if (card_filter.lower() in card_name.lower() or 
+                    # Check if this document matches the requested card
+                    if (actual_card_name.lower() in card_name.lower() or 
+                        card_filter.lower() in card_name.lower() or 
                         any(word in card_name.lower() for word in card_filter.lower().split())):
                         filtered_results.append(result)
                 
-                logger.info(f"Post-filtered results: {len(filtered_results)}/{len(results)} documents match '{card_filter}'")
+                logger.info(f"Post-filtered results: {len(filtered_results)}/{len(results)} documents match '{card_filter}' (mapped to '{actual_card_name}')")
                 return filtered_results[:top_k]
             
             return results
@@ -170,15 +178,6 @@ class VertexRetriever:
                     logger.info(f"Combined content from multiple sources, total length: {len(content)}")
                     logger.info(f"Combined content preview: {content[:200]}...")
                     
-                    # Log if golf benefits are found
-                    if 'golf' in content.lower():
-                        logger.info(f"✅ GOLF BENEFITS FOUND in extracted content!")
-                        golf_parts = [part for part in all_content_parts if 'golf' in part.lower()]
-                        for i, part in enumerate(golf_parts):
-                            logger.info(f"Golf content part {i+1}: {part[:100]}...")
-                    else:
-                        logger.warning(f"⚠️  No golf benefits found in extracted content")
-                        logger.info(f"Available content parts: {[part[:50] + '...' for part in all_content_parts[:3]]}")
             
             if not content:
                 logger.warning(f"No content found in any field!")

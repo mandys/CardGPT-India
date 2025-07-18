@@ -140,33 +140,45 @@ class VertexRetriever:
             if not content and derived_struct_data:
                 logger.info(f"No raw content found, extracting from derivedStructData...")
                 
-                # Try extractive_segments first (most complete)
+                # Collect all available content from multiple sources
+                all_content_parts = []
+                
+                # Extract from extractive_segments (most complete)
                 if 'extractive_segments' in derived_struct_data:
                     segments = derived_struct_data['extractive_segments']
                     if segments and isinstance(segments, list):
-                        segment_texts = []
                         for segment in segments:
                             if isinstance(segment, dict) and 'content' in segment:
-                                segment_texts.append(segment['content'])
-                        
-                        if segment_texts:
-                            content = '\n\n'.join(segment_texts)
-                            logger.info(f"Extracted from extractive_segments, length: {len(content)}")
-                            logger.info(f"Segments content preview: {content[:200]}...")
+                                all_content_parts.append(segment['content'])
+                        logger.info(f"Extracted {len(all_content_parts)} segments from extractive_segments")
                 
-                # Fallback to extractive_answers
-                if not content and 'extractive_answers' in derived_struct_data:
+                # ALSO extract from extractive_answers (contains specific information like golf benefits)
+                if 'extractive_answers' in derived_struct_data:
                     answers = derived_struct_data['extractive_answers']
                     if answers and isinstance(answers, list):
-                        answer_texts = []
                         for answer in answers:
                             if isinstance(answer, dict) and 'content' in answer:
-                                answer_texts.append(answer['content'])
-                        
-                        if answer_texts:
-                            content = '\n\n'.join(answer_texts)
-                            logger.info(f"Extracted from extractive_answers, length: {len(content)}")
-                            logger.info(f"Answers content preview: {content[:200]}...")
+                                # Only add if not already present to avoid duplicates
+                                answer_content = answer['content']
+                                if answer_content not in all_content_parts:
+                                    all_content_parts.append(answer_content)
+                        logger.info(f"Added {len([a for a in answers if isinstance(a, dict) and 'content' in a])} answers from extractive_answers")
+                
+                # Combine all content parts
+                if all_content_parts:
+                    content = '\n\n'.join(all_content_parts)
+                    logger.info(f"Combined content from multiple sources, total length: {len(content)}")
+                    logger.info(f"Combined content preview: {content[:200]}...")
+                    
+                    # Log if golf benefits are found
+                    if 'golf' in content.lower():
+                        logger.info(f"✅ GOLF BENEFITS FOUND in extracted content!")
+                        golf_parts = [part for part in all_content_parts if 'golf' in part.lower()]
+                        for i, part in enumerate(golf_parts):
+                            logger.info(f"Golf content part {i+1}: {part[:100]}...")
+                    else:
+                        logger.warning(f"⚠️  No golf benefits found in extracted content")
+                        logger.info(f"Available content parts: {[part[:50] + '...' for part in all_content_parts[:3]]}")
             
             if not content:
                 logger.warning(f"No content found in any field!")

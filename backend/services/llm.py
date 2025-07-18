@@ -74,6 +74,33 @@ class LLMService:
         # Build context from documents
         context = self._build_context(context_documents)
         
+        # Debug logging for golf benefits
+        if 'golf' in question.lower():
+            logger.info(f"🏌️ Golf query detected: {question}")
+            logger.info(f"📄 Context documents: {len(context_documents)}")
+            for i, doc in enumerate(context_documents):
+                if 'golf' in doc.get('content', '').lower():
+                    logger.info(f"✅ Document {i+1} contains golf info: {doc.get('content', '')[:100]}...")
+                else:
+                    logger.info(f"❌ Document {i+1} does not contain golf info")
+            
+            if 'golf' in context.lower():
+                logger.info(f"✅ Golf benefits found in final context sent to LLM")
+                # Extract the golf-related parts for debugging
+                golf_parts = []
+                for line in context.split('\n'):
+                    if 'golf' in line.lower():
+                        golf_parts.append(line.strip())
+                logger.info(f"Golf-related lines in context: {golf_parts}")
+                
+                # Log the full context being sent to LLM for debugging
+                logger.info(f"🔍 FULL CONTEXT BEING SENT TO LLM:")
+                logger.info(f"Context length: {len(context)} characters")
+                logger.info(f"Context content: {context}")
+            else:
+                logger.warning(f"⚠️ Golf benefits NOT found in final context sent to LLM")
+                logger.info(f"Context preview: {context[:200]}...")
+        
         # Check if we should use calculator for calculation queries
         if use_calculator and self._is_calculation_query(question):
             calc_result = self._try_calculator(question, context)
@@ -234,7 +261,9 @@ class LLMService:
         """Create a concise system prompt for the LLM"""
         prompt = """You are a helpful credit card expert. Answer questions clearly and accurately based on the provided context.
 
-IMPORTANT: If the context contains information relevant to the question, use it to provide a comprehensive answer. Don't claim information is missing if it's in the context.
+CRITICAL: If the context contains information relevant to the question, use it to provide a comprehensive answer. NEVER claim information is missing if it exists in the context.
+
+Pay special attention to all benefits mentioned in the context, including golf benefits, dining benefits, travel benefits, lounge access, and other lifestyle benefits. If asked about golf benefits and the context mentions golf, provide all available details.
 
 For calculations:
 - Use exact rates from context: "X points per ₹Y" → (spend ÷ Y) × X
@@ -245,7 +274,8 @@ For calculations:
 For informational queries:
 - Extract all relevant details from context
 - Include specific numbers, dates, and conditions
-- Don't truncate important information"""
+- Don't truncate important information
+- If the context mentions a benefit but doesn't provide complete details, say what is available and note that additional details may be available elsewhere"""
         
         if card_name:
             prompt += f"\nFocus on information about the {card_name} card."

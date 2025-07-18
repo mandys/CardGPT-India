@@ -187,10 +187,54 @@
       "minimum_tickets": null
     },
     "golf_benefits": {
-      "courses": null,
-      "complimentary_rounds": null,
-      "guest_policy": null,
-      "note": "Exclusive golfing privileges are available [51]. Access to select golf courses [56]."
+      "program_name": "HSBC Golf League",
+      "eligibility_tiers": {
+        "global_private_banking": {
+          "complimentary_golf_games": "Unlimited",
+          "complimentary_golf_lessons": "Unlimited",
+          "guest_passes": 12,
+          "international_access": 8,
+          "monthly_game_cap": "No capping"
+        },
+        "executive_banking": {
+          "complimentary_golf_games": 50,
+          "complimentary_golf_lessons": 25,
+          "guest_passes": 8,
+          "international_access": 4,
+          "monthly_game_cap": 4
+        },
+        "premier_qualified": {
+          "complimentary_golf_games": 24,
+          "complimentary_golf_lessons": 12,
+          "guest_passes": 4,
+          "international_access": 2,
+          "monthly_game_cap": 2
+        },
+        "premier_others": {
+          "complimentary_golf_games": 6,
+          "complimentary_golf_lessons": 2,
+          "guest_passes": 2,
+          "international_access": 0,
+          "monthly_game_cap": 2
+        }
+      },
+      "key_benefits": [
+        "Access to exclusive golfing community",
+        "Instant golf bookings via The Golf League app",
+        "Exclusive guest access",
+        "Special discounts on golf accessories"
+      ],
+      "booking_details": {
+        "advance_booking_required": "3 days",
+        "instant_booking_available": true,
+        "guest_booking_policy": "Must be made simultaneously with personal booking",
+        "app_name": "The Golf League app"
+      },
+      "support": {
+        "concierge_phone": "1800 208 7899",
+        "concierge_hours": "Monday to Friday, 10:00 to 18:00"
+      },
+      "note": "Exclusive golfing privileges are available [51]. Access to select golf courses [56]. Premier Credit Card customers get access to HSBC Golf League with tiered benefits based on their HSBC relationship level."
     },
     "miles_transfer": {
       "airline_partners": [

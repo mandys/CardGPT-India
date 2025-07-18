@@ -5,6 +5,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  metadata?: Record<string, any>;
 }
 
 export interface ChatRequest {

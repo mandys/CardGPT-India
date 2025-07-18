@@ -67,6 +67,13 @@ const MainLayout: React.FC = () => {
     handleSendMessage(example);
   };
 
+  const handleCardSelection = (selectedCards: string[], originalQuery: string) => {
+    // Create a new query with selected cards
+    const cardsList = selectedCards.join(', ');
+    const newQuery = `Compare ${cardsList} for: ${originalQuery}`;
+    handleSendMessage(newQuery);
+  };
+
   const handleModelChange = (model: string) => {
     setSettings({ selectedModel: model });
   };
@@ -119,6 +126,7 @@ const MainLayout: React.FC = () => {
             isLoading={isLoading}
             onSendMessage={handleSendMessage}
             onExampleClick={handleExampleClick}
+            onCardSelection={handleCardSelection}
           />
         </div>
       </div>

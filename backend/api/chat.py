@@ -29,6 +29,30 @@ async def chat_endpoint(request: ChatRequest, services=Depends(get_services)):
         if not all([llm_service, retriever_service, query_enhancer_service]):
             raise HTTPException(status_code=503, detail="Services not available")
         
+        # Check if this is a generic comparison query
+        if query_enhancer_service.is_generic_comparison_query(request.message):
+            available_cards = query_enhancer_service.get_available_cards()
+            card_selection_prompt = f"""I noticed you're asking for a comparison without specifying which cards to compare. 
+
+To provide you with the most accurate and focused comparison, please select 2-3 cards from our available options:
+
+**Available Cards:**
+{chr(10).join([f"• {card}" for card in available_cards])}
+
+Which specific cards would you like me to compare for your query: "{request.message}"?
+
+This approach will give you more precise results and save processing time."""
+            
+            return ChatResponse(
+                answer=card_selection_prompt,
+                sources=[],
+                embedding_usage=UsageInfo(tokens=0, cost=0.0, model="none"),
+                llm_usage=UsageInfo(tokens=0, cost=0.0, model="card-selection"),
+                total_cost=0.0,
+                enhanced_question=request.message,
+                metadata={"requires_card_selection": True, "available_cards": available_cards, "original_query": request.message}
+            )
+        
         # Process query using the same logic as the existing apps
         result = await process_query(
             question=request.message,
@@ -73,12 +97,21 @@ async def process_query(
     # No separate embedding costs for Vertex AI
     embedding_usage = {"tokens": 0, "cost": 0, "model": "vertex-ai-search"}
     
-    # Determine search filters
+    # Determine search filters and handle multiple cards in comparison queries
     search_card_filter = None
     if query_mode == "Specific Card" and card_filter and card_filter != "None":
         search_card_filter = card_filter
     elif metadata.get('card_detected'):
         search_card_filter = metadata['card_detected']
+    
+    # For comparison queries mentioning multiple cards, search without filter to get all cards
+    if "compare" in question.lower() and any(card in question.lower() for card in ["atlas", "icici", "epm", "hsbc", "premier"]):
+        search_card_filter = None  # Search all cards for comparison
+        # Enhance the search query with relevant keywords for better document retrieval
+        if any(keyword in question.lower() for keyword in ["hotel", "flight", "travel"]):
+            question += " rewards earning rate points miles travel hotel flight"
+        elif "insurance" in question.lower():
+            question += " capping per statement cycle 5000 reward points MCC 6300 5960"
     
     # Search documents
     relevant_docs = retriever_service.search_similar_documents(

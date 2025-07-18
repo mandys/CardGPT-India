@@ -14,8 +14,15 @@ class QueryEnhancer:
         # Card name detection patterns
         self.card_patterns = {
             'Axis Atlas': ['axis atlas', 'atlas'],
-            'ICICI EPM': ['icici epm', 'epm', 'emeralde private'],
+            'ICICI EPM': ['icici epm', 'epm', 'emeralde private', 'icici bank emeralde'],
             'HSBC Premier': ['hsbc premier', 'premier']
+        }
+        
+        # Mapping from user-friendly names to actual card names in data
+        self.card_name_mapping = {
+            'ICICI EPM': 'ICICI Bank Emeralde Private Metal Credit Card',
+            'Axis Atlas': 'Axis Atlas',
+            'HSBC Premier': 'HSBC Premier Credit Card'
         }
         
         # Category detection patterns
@@ -139,10 +146,15 @@ class QueryEnhancer:
                 enhanced_query += f"\n\nIMPORTANT: This is specifically about {category} spending. Check for accelerated earning rates for {category} category. Look for any monthly caps on accelerated rates - if spend exceeds cap, use base rate for excess amount."
             elif category == 'utility':
                 enhanced_query += f"\n\nIMPORTANT: This is about utility spending. Check BOTH rewards AND surcharges: Some cards exclude utilities (0 rewards), others have caps. Check for surcharge fees on amounts above monthly thresholds. Calculate: 1% × (spend - threshold) if spend exceeds threshold."
-            elif category in ['fuel', 'rent', 'government', 'insurance']:
+            elif category == 'insurance':
+                enhanced_query += f"\n\nIMPORTANT: This is about insurance spending rewards. Look for: 1) General earning rate (6 points per ₹200), 2) 'Capping Per Statement Cycle' section showing '5,000 Reward Points (MCC 6300, 5960)' for insurance. ICICI earns normal rate up to 5,000 points cap. Axis Atlas excludes insurance from rewards. Do NOT confuse with insurance benefits/coverage."
+            elif category in ['fuel', 'rent', 'government']:
                 enhanced_query += f"\n\nIMPORTANT: This is about {category} spending. Check exclusions first - this category may be excluded from earning rewards on some cards."
             elif category == 'education':
                 enhanced_query += f"\n\nIMPORTANT: This is about education spending. Check for earning caps or exclusions for education category. Some cards may have monthly/cycle caps."
+        elif category in ['hotel', 'flight'] and not spend_amount:
+            # Handle category queries without spend amounts (like comparisons)
+            enhanced_query += f"\n\nIMPORTANT: This is about {category} rewards comparison. For each card, find: 1) Base earning rate (general rate), 2) Travel/Hotel specific rates if any, 3) Monthly caps on accelerated rates, 4) Any exclusions. Look in 'rewards', 'travel', and 'rate_general' sections."
         elif category == 'milestone':
             # Handle milestone queries separately (they often don't have spend amounts)
             enhanced_query += f"\n\nIMPORTANT: This is about milestone benefits. Check both the dedicated 'milestones' section AND the 'renewal_benefits' section which may contain milestone-related vouchers and benefits."
@@ -172,3 +184,31 @@ class QueryEnhancer:
         }
         
         return guidance.get(category, 'Check the card-specific earning rates and exclusions for this category.')
+    
+    def is_generic_comparison_query(self, query: str) -> bool:
+        """
+        Detect if this is a generic comparison question without specific cards mentioned.
+        Returns True if user is asking for comparison but no specific cards are mentioned.
+        """
+        query_lower = query.lower()
+        
+        # Comparison indicators
+        comparison_keywords = [
+            'which card', 'which credit card', 'best card', 'better card',
+            'compare', 'comparison', 'vs', 'versus', 'difference',
+            'recommend', 'recommendation', 'suggest', 'should i',
+            'which one', 'what card', 'best for', 'better for'
+        ]
+        
+        # Check if it's a comparison query
+        has_comparison = any(keyword in query_lower for keyword in comparison_keywords)
+        
+        # Check if specific cards are mentioned
+        has_specific_card = self.detect_card_name(query) is not None
+        
+        # It's generic if it's a comparison question but no specific cards are mentioned
+        return has_comparison and not has_specific_card
+    
+    def get_available_cards(self) -> list[str]:
+        """Get list of available cards from our data directory"""
+        return list(self.card_patterns.keys())

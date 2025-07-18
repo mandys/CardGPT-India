@@ -73,6 +73,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         role: 'assistant',
         content: response.answer,
         timestamp: new Date(),
+        metadata: response.metadata,
       };
       
       set({

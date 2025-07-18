@@ -9,6 +9,7 @@ interface ChatInterfaceProps {
   isLoading: boolean;
   onSendMessage: (message: string) => void;
   onExampleClick: (example: string) => void;
+  onCardSelection?: (selectedCards: string[], originalQuery: string) => void;
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -16,6 +17,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   isLoading,
   onSendMessage,
   onExampleClick,
+  onCardSelection,
 }) => {
   const [inputMessage, setInputMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -83,7 +85,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         ) : (
           <>
             {messages.map((message) => (
-              <MessageBubble key={message.id} message={message} />
+              <MessageBubble 
+                key={message.id} 
+                message={message} 
+                onCardSelection={onCardSelection}
+              />
             ))}
             {isLoading && <TypingIndicator />}
           </>

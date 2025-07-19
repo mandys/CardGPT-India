@@ -264,7 +264,7 @@ async def log_response(query_logger, session_id: str, start_time: float, status_
         response_data = ResponseLogData(
             response_status=status_code,
             execution_time_ms=execution_time_ms,
-            llm_tokens_used=llm_usage.get("total_tokens", 0),
+            llm_tokens_used=llm_usage.get("tokens", llm_usage.get("total_tokens", 0)),
             llm_cost=llm_usage.get("cost", 0.0),
             search_results_count=len(result.get("documents", []))
         )

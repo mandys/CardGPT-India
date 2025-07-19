@@ -142,52 +142,117 @@ class QueryLogger:
                 ))
                 conn.commit()
                 
-            # Update daily statistics
-            await self._update_daily_stats(response_data)
+            # Update daily statistics with complete query information
+            await self._update_daily_stats(session_id, response_data)
             
             logger.debug(f"Response logged for session {session_id}")
             
         except Exception as e:
             logger.error(f"Failed to log response: {e}")
     
-    async def _update_daily_stats(self, response_data: ResponseLogData):
-        """Update daily aggregated statistics"""
+    async def _update_daily_stats(self, session_id: str, response_data: ResponseLogData):
+        """Update daily aggregated statistics with detailed metrics"""
         try:
             today = datetime.now().date().isoformat()
             
             with sqlite3.connect(self.db_path) as conn:
+                # Get the complete query information for detailed stats
+                conn.row_factory = sqlite3.Row
+                cursor = conn.execute(
+                    "SELECT * FROM query_logs WHERE session_id = ?", (session_id,)
+                )
+                query_log = cursor.fetchone()
+                
+                if not query_log:
+                    logger.warning(f"No query log found for session {session_id}")
+                    return
+                
                 # Get current day's stats
                 cursor = conn.execute(
                     "SELECT * FROM query_stats WHERE date = ?", (today,)
                 )
                 existing = cursor.fetchone()
                 
+                # Categorize the query for detailed stats
+                model_used = query_log['selected_model']
+                query_mode = query_log['query_mode']
+                is_successful = response_data.response_status == 200
+                
+                # Model usage counters
+                gemini_flash_increment = 1 if model_used == "gemini-1.5-flash" else 0
+                gemini_pro_increment = 1 if model_used == "gemini-1.5-pro" else 0
+                
+                # Query type counters
+                general_increment = 1 if query_mode == "General Query" else 0
+                specific_card_increment = 1 if query_mode == "Specific Card" else 0
+                comparison_increment = 1 if "compare" in query_log['query_text'].lower() else 0
+                
                 if existing:
-                    # Update existing record
+                    # Update existing record with detailed metrics
                     conn.execute("""
                         UPDATE query_stats 
                         SET total_queries = total_queries + 1,
                             successful_queries = successful_queries + ?,
-                            failed_queries = failed_queries + ?
+                            failed_queries = failed_queries + ?,
+                            gemini_flash_queries = gemini_flash_queries + ?,
+                            gemini_pro_queries = gemini_pro_queries + ?,
+                            general_queries = general_queries + ?,
+                            specific_card_queries = specific_card_queries + ?,
+                            comparison_queries = comparison_queries + ?,
+                            avg_execution_time_ms = CASE 
+                                WHEN successful_queries > 0 THEN 
+                                    ROUND((COALESCE(avg_execution_time_ms, 0) * successful_queries + ?) / (successful_queries + ?), 2)
+                                ELSE ? 
+                            END,
+                            avg_tokens_used = CASE 
+                                WHEN successful_queries > 0 THEN 
+                                    ROUND((COALESCE(avg_tokens_used, 0) * successful_queries + ?) / (successful_queries + ?), 2)
+                                ELSE ? 
+                            END,
+                            total_cost = ROUND(total_cost + ?, 6)
                         WHERE date = ?
                     """, (
-                        1 if response_data.response_status == 200 else 0,
-                        1 if response_data.response_status != 200 else 0,
+                        1 if is_successful else 0,
+                        1 if not is_successful else 0,
+                        gemini_flash_increment,
+                        gemini_pro_increment,
+                        general_increment,
+                        specific_card_increment,
+                        comparison_increment,
+                        response_data.execution_time_ms,
+                        1 if is_successful else 0,
+                        response_data.execution_time_ms,
+                        response_data.llm_tokens_used,
+                        1 if is_successful else 0,
+                        response_data.llm_tokens_used,
+                        response_data.llm_cost,
                         today
                     ))
                 else:
-                    # Create new record
+                    # Create new record with detailed metrics
                     conn.execute("""
                         INSERT INTO query_stats (
-                            date, total_queries, successful_queries, failed_queries
-                        ) VALUES (?, 1, ?, ?)
+                            date, total_queries, successful_queries, failed_queries,
+                            gemini_flash_queries, gemini_pro_queries,
+                            general_queries, specific_card_queries, comparison_queries,
+                            avg_execution_time_ms, avg_tokens_used, total_cost
+                        ) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, (
                         today,
-                        1 if response_data.response_status == 200 else 0,
-                        1 if response_data.response_status != 200 else 0
+                        1 if is_successful else 0,
+                        1 if not is_successful else 0,
+                        gemini_flash_increment,
+                        gemini_pro_increment,
+                        general_increment,
+                        specific_card_increment,
+                        comparison_increment,
+                        response_data.execution_time_ms if is_successful else None,
+                        response_data.llm_tokens_used if is_successful else None,
+                        response_data.llm_cost
                     ))
                     
                 conn.commit()
+                logger.debug(f"Daily stats updated for {today}: model={model_used}, mode={query_mode}, cost={response_data.llm_cost}")
                 
         except Exception as e:
             logger.error(f"Failed to update daily stats: {e}")

@@ -13,7 +13,7 @@ import sys
 sys.path.append('.')
 
 from services.query_logger import QueryLogger
-from models.logging_models import LoggingConfig, QueryLogData, ResponseLogData, ExportRequest
+from logging_models.logging_models import LoggingConfig, QueryLogData, ResponseLogData, ExportRequest
 import logging
 
 # Configure logging

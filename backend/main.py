@@ -82,8 +82,9 @@ allowed_origins = [
     "http://localhost:3000", 
     "http://localhost:3001", 
     "http://localhost:5173",  # React dev servers
-    "https://*.vercel.app",   # Vercel deployments
-    "https://vercel.app"      # Vercel root domain
+    "https://cardgpt-india.vercel.app",  # Your specific Vercel domain
+    "https://cardgpt-india-git-main-mandys.vercel.app",  # Git-specific domain
+    "*"  # Allow all origins for now (can restrict later)
 ]
 
 # Add environment-specific origins

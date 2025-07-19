@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 
 # Import our models and API routes
 from models import HealthResponse, ErrorResponse, ConfigResponse, ModelInfo
-from api import chat, config, health
+from api import chat, config, health, admin
 
 # Load environment variables
 load_dotenv()
@@ -35,6 +35,8 @@ async def lifespan(app: FastAPI):
         from services.llm import LLMService
         from services.vertex_retriever import VertexRetriever
         from services.query_enhancer import QueryEnhancer
+        from services.query_logger import QueryLogger
+        from models.logging_models import LoggingConfig
         
         # Get Google API keys (Google-only architecture)
         gemini_key = os.getenv("GEMINI_API_KEY")
@@ -54,6 +56,17 @@ async def lifespan(app: FastAPI):
         app_state["llm_service"] = LLMService(gemini_key)
         app_state["retriever_service"] = VertexRetriever(gcp_project_id, gcp_location, gcp_data_store_id)
         app_state["query_enhancer_service"] = QueryEnhancer()
+        
+        # Initialize query logger
+        logging_config = LoggingConfig(
+            enabled=os.getenv("ENABLE_QUERY_LOGGING", "true").lower() == "true",
+            db_path=os.getenv("QUERY_LOG_DB_PATH", "logs/query_logs.db"),
+            retention_days=int(os.getenv("LOG_RETENTION_DAYS", "90")),
+            anonymize_after_days=int(os.getenv("ANONYMIZE_AFTER_DAYS", "30")),
+            hash_salt=os.getenv("HASH_SALT_SECRET", "default-salt-change-in-production"),
+            gdpr_compliance_mode=os.getenv("GDPR_COMPLIANCE_MODE", "true").lower() == "true"
+        )
+        app_state["query_logger"] = QueryLogger(logging_config)
         
         logger.info("✅ All services initialized successfully")
         
@@ -131,6 +144,7 @@ def get_services():
 app.include_router(chat.router, prefix="/api", tags=["chat"])
 app.include_router(config.router, prefix="/api", tags=["config"])
 app.include_router(health.router, prefix="/api", tags=["health"])
+app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 
 # Root endpoint
 @app.get("/")

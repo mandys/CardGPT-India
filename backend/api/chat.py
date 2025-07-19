@@ -2,9 +2,10 @@
 Chat API endpoints
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from models import ChatRequest, ChatResponse, QueryEnhanceRequest, QueryEnhanceResponse, DocumentSource, UsageInfo
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -17,17 +18,25 @@ def get_services():
     return app_state
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat_endpoint(request: ChatRequest, services=Depends(get_services)):
+async def chat_endpoint(request: ChatRequest, http_request: Request, services=Depends(get_services)):
     """Main chat endpoint for processing user queries"""
+    
+    start_time = time.time()
+    session_id = None
     
     try:
         # Get services
         llm_service = services.get("llm_service")
         retriever_service = services.get("retriever_service")
         query_enhancer_service = services.get("query_enhancer_service")
+        query_logger = services.get("query_logger")
         
         if not all([llm_service, retriever_service, query_enhancer_service]):
             raise HTTPException(status_code=503, detail="Services not available")
+        
+        # Log query if logging is enabled
+        if query_logger and query_logger.config.enabled:
+            session_id = await log_query(query_logger, request, http_request)
         
         # Check if this is a generic comparison query
         if query_enhancer_service.is_generic_comparison_query(request.message):
@@ -65,7 +74,7 @@ This approach will give you more precise results and save processing time."""
             query_enhancer_service=query_enhancer_service
         )
         
-        return ChatResponse(
+        response = ChatResponse(
             answer=result["answer"],
             sources=[DocumentSource(**doc) for doc in result["documents"]],
             embedding_usage=UsageInfo(**result["embedding_usage"]),
@@ -75,7 +84,20 @@ This approach will give you more precise results and save processing time."""
             metadata=result["metadata"]
         )
         
+        # Log response metrics
+        if query_logger and session_id:
+            await log_response(query_logger, session_id, start_time, 200, result)
+            
+        return response
+        
     except Exception as e:
+        # Log error response if we have session_id
+        if query_logger and session_id:
+            try:
+                await log_response(query_logger, session_id, start_time, 500, {})
+            except:
+                pass  # Don't let logging failures break error handling
+        
         logger.error(f"Chat endpoint error: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -196,3 +218,72 @@ async def enhance_query_endpoint(request: QueryEnhanceRequest, services=Depends(
     except Exception as e:
         logger.error(f"Query enhance endpoint error: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# Helper functions for query logging
+
+async def log_query(query_logger, request: ChatRequest, http_request: Request) -> str:
+    """Log the incoming query"""
+    try:
+        import sys
+        sys.path.append('..')
+        from models.logging_models import QueryLogData
+        
+        # Extract user context
+        user_ip = get_client_ip(http_request)
+        user_agent = http_request.headers.get("user-agent", "")
+        
+        # Create log data
+        query_data = QueryLogData(
+            query_text=request.message,
+            selected_model=request.model,
+            query_mode=request.query_mode,
+            card_filter=request.card_filter,
+            top_k=request.top_k,
+            user_ip=user_ip,
+            user_agent=user_agent
+        )
+        
+        session_id = await query_logger.log_query(query_data)
+        return session_id
+        
+    except Exception as e:
+        logger.error(f"Failed to log query: {e}")
+        return "unknown-session"
+
+async def log_response(query_logger, session_id: str, start_time: float, status_code: int, result: dict):
+    """Log the response metrics"""
+    try:
+        import sys
+        sys.path.append('..')
+        from models.logging_models import ResponseLogData
+        
+        execution_time_ms = int((time.time() - start_time) * 1000)
+        llm_usage = result.get("llm_usage", {})
+        
+        response_data = ResponseLogData(
+            response_status=status_code,
+            execution_time_ms=execution_time_ms,
+            llm_tokens_used=llm_usage.get("total_tokens", 0),
+            llm_cost=llm_usage.get("cost", 0.0),
+            search_results_count=len(result.get("documents", []))
+        )
+        
+        await query_logger.log_response(session_id, response_data)
+        
+    except Exception as e:
+        logger.error(f"Failed to log response: {e}")
+
+def get_client_ip(request: Request) -> str:
+    """Extract client IP address from request"""
+    # Check for forwarded headers (for reverse proxies)
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip
+    
+    # Fallback to direct client
+    return request.client.host if request.client else "unknown"

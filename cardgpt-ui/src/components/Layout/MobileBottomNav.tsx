@@ -4,27 +4,29 @@ import { useSidebar } from '../../hooks/useSidebar';
 
 interface MobileBottomNavProps {
   onClearChat?: () => void;
+  onShowSettings?: () => void;
   onShowAnalytics?: () => void;
   onShowProfile?: () => void;
 }
 
 const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   onClearChat,
+  onShowSettings,
   onShowAnalytics,
   onShowProfile,
 }) => {
-  const { toggleSidebar, isMobile } = useSidebar();
+  const { isMobile } = useSidebar();
 
   // Only show on mobile
   if (!isMobile) return null;
 
   return (
-    <div className="mobile-bottom-nav fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 z-30 lg:hidden">
+    <div className="mobile-bottom-nav fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-2 z-30 lg:hidden">
       <div className="flex justify-around items-center">
         {/* Chat */}
         <button
           onClick={onClearChat}
-          className="flex flex-col items-center p-2 text-gray-600 hover:text-primary-600 transition-colors"
+          className="flex flex-col items-center p-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 transition-colors"
         >
           <MessageCircle className="w-5 h-5" />
           <span className="text-xs mt-1">Chat</span>
@@ -32,8 +34,8 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         
         {/* Settings */}
         <button
-          onClick={toggleSidebar}
-          className="flex flex-col items-center p-2 text-gray-600 hover:text-primary-600 transition-colors"
+          onClick={onShowSettings}
+          className="flex flex-col items-center p-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 transition-colors"
         >
           <Settings className="w-5 h-5" />
           <span className="text-xs mt-1">Settings</span>
@@ -42,7 +44,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         {/* Analytics */}
         <button
           onClick={onShowAnalytics}
-          className="flex flex-col items-center p-2 text-gray-600 hover:text-primary-600 transition-colors"
+          className="flex flex-col items-center p-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 transition-colors"
         >
           <BarChart3 className="w-5 h-5" />
           <span className="text-xs mt-1">Analytics</span>
@@ -51,7 +53,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         {/* Profile */}
         <button
           onClick={onShowProfile}
-          className="flex flex-col items-center p-2 text-gray-600 hover:text-primary-600 transition-colors"
+          className="flex flex-col items-center p-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 transition-colors"
         >
           <User className="w-5 h-5" />
           <span className="text-xs mt-1">Profile</span>

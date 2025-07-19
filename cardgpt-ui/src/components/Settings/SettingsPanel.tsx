@@ -3,6 +3,7 @@ import { Settings, Zap, CreditCard, Search } from 'lucide-react';
 import { ModelInfo, QueryMode, CardFilter } from '../../types';
 import ModelSelector from './ModelSelector';
 import QueryModeSelector from './QueryModeSelector';
+import { ThemeToggle } from './ThemeToggle';
 
 interface SettingsPanelProps {
   models: ModelInfo[];
@@ -34,20 +35,25 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-2">
           <Settings className="w-5 h-5 text-primary-600" />
-          <h2 className="text-lg font-semibold text-gray-800">Settings</h2>
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-white">Settings</h2>
         </div>
       </div>
       
       {/* Settings Content */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* Theme Toggle */}
+        <div>
+          <ThemeToggle />
+        </div>
+        
         {/* Model Selection */}
         <div>
           <div className="flex items-center space-x-2 mb-3">
             <Zap className="w-4 h-4 text-orange-500" />
-            <label className="text-sm font-medium text-gray-700">AI Model</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">AI Model</label>
           </div>
           <ModelSelector
             models={models}
@@ -61,7 +67,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <div>
           <div className="flex items-center space-x-2 mb-3">
             <Search className="w-4 h-4 text-blue-500" />
-            <label className="text-sm font-medium text-gray-700">Query Mode</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Query Mode</label>
           </div>
           <QueryModeSelector
             queryMode={queryMode}
@@ -74,7 +80,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <div>
           <div className="flex items-center space-x-2 mb-3">
             <CreditCard className="w-4 h-4 text-purple-500" />
-            <label className="text-sm font-medium text-gray-700">Card Filter</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Card Filter</label>
           </div>
           <select
             value={cardFilter}

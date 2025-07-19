@@ -3,6 +3,7 @@ import Header from './Header';
 import Sidebar from './Sidebar';
 import MobileBottomNav from './MobileBottomNav';
 import ChatInterface from '../Chat/ChatInterface';
+import SettingsModal from '../Settings/SettingsModal';
 import { useChatStore } from '../../hooks/useChat';
 import { useSidebar } from '../../hooks/useSidebar';
 import { apiClient } from '../../services/api';
@@ -11,6 +12,7 @@ import { QueryMode, CardFilter } from '../../types';
 const MainLayout: React.FC = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   
   const {
     messages,
@@ -93,7 +95,7 @@ const MainLayout: React.FC = () => {
   const availableModels = config?.available_models || [];
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <Header
         isConnected={isConnected}
@@ -134,8 +136,25 @@ const MainLayout: React.FC = () => {
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav
         onClearChat={clearMessages}
+        onShowSettings={() => setIsSettingsModalOpen(true)}
         onShowAnalytics={() => {/* TODO: Implement analytics view */}}
         onShowProfile={() => {/* TODO: Implement profile view */}}
+      />
+      
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        models={availableModels}
+        selectedModel={settings.selectedModel}
+        onModelChange={handleModelChange}
+        queryMode={settings.queryMode}
+        onQueryModeChange={handleQueryModeChange}
+        cardFilter={settings.cardFilter}
+        onCardFilterChange={handleCardFilterChange}
+        topK={settings.topK}
+        onTopKChange={handleTopKChange}
+        isLoading={isLoading}
       />
     </div>
   );

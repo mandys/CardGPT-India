@@ -9,7 +9,7 @@
   }
   
   body {
-    @apply font-sans text-gray-900 bg-gray-50;
+    @apply font-sans text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-900;
   }
   
   /* Custom scrollbar */
@@ -18,15 +18,15 @@
   }
   
   ::-webkit-scrollbar-track {
-    @apply bg-gray-100;
+    @apply bg-gray-100 dark:bg-gray-800;
   }
   
   ::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 rounded-full;
+    @apply bg-gray-300 dark:bg-gray-600 rounded-full;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400;
+    @apply bg-gray-400 dark:bg-gray-500;
   }
 }
 
@@ -46,12 +46,12 @@
   
   /* Card styles */
   .card {
-    @apply bg-white rounded-lg shadow-card border border-gray-200 p-6;
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-card border border-gray-200 dark:border-gray-700 p-6;
   }
   
   /* Input styles */
   .input-field {
-    @apply block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200;
+    @apply block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200;
   }
   
   /* Message bubbles */
@@ -60,7 +60,7 @@
   }
   
   .message-assistant {
-    @apply bg-white text-gray-800 rounded-lg px-4 py-2 max-w-xs lg:max-w-md shadow-sm border border-gray-200;
+    @apply bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-lg px-4 py-2 max-w-xs lg:max-w-md shadow-sm border border-gray-200 dark:border-gray-700;
   }
   
   /* Loading animation */

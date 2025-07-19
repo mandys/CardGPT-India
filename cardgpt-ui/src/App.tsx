@@ -1,5 +1,6 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from './contexts/ThemeContext';
 import MainLayout from './components/Layout/MainLayout';
 import './styles/globals.css';
 
@@ -17,9 +18,11 @@ const queryClient = new QueryClient({
 const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="App">
-        <MainLayout />
-      </div>
+      <ThemeProvider>
+        <div className="App">
+          <MainLayout />
+        </div>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 };

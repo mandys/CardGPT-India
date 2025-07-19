@@ -1,13 +1,13 @@
 # Claude Context - Supavec Clone Project
 
 ## Project Overview
-A modern full-stack RAG (Retrieval-Augmented Generation) application for querying Indian credit card terms and conditions. Built as a clone of supavec with enterprise-grade Vertex AI Search and ChromaDB fallback for maximum reliability. Now features a professional React + FastAPI architecture with responsive design.
+A modern full-stack RAG (Retrieval-Augmented Generation) application for querying Indian credit card terms and conditions. Built as a clone of supavec with enterprise-grade Vertex AI Search. Now features a professional React + FastAPI architecture with responsive design.
 
 ## Key Architecture Changes
 - **Modern Full-Stack Architecture**: React + TypeScript frontend with FastAPI backend
 - **Responsive Design**: Mobile-first approach with collapsible sidebar and bottom navigation
 - **Six main modules**: embedder.py, llm.py, retriever.py, vertex_retriever.py, query_enhancer.py, calculator.py
-- **Dual search system**: Vertex AI Search (primary) + ChromaDB (fallback)
+- **Dual search system**: Vertex AI Search (primary)
 - **Multi-model support**: OpenAI (GPT-4/3.5) + Google Gemini (Flash/Pro)
 - **Smart query preprocessing** with category detection and model routing
 - **Improved calculation logic** for rewards/miles (base rate + milestone bonuses)
@@ -149,4 +149,4 @@ A modern full-stack RAG (Retrieval-Augmented Generation) application for queryin
 - **Current state**: Modern full-stack application with React frontend and FastAPI backend
 - **Benefits**: Complete UI control, responsive design, ultra-low cost, enterprise reliability
 - **Migration complete**: From Python-only to modern full-stack architecture
-- **Dual reliability**: Vertex AI + ChromaDB ensures 99.9% uptime
+- **Dual reliability**: Vertex AI ensures 99.9% uptime

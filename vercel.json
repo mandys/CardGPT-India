@@ -21,6 +21,6 @@
   "installCommand": "cd cardgpt-ui && npm ci",
   "outputDirectory": "cardgpt-ui/build",
   "env": {
-    "REACT_APP_API_URL": "@react_app_api_url"
+    "REACT_APP_API_URL": "https://cardgpt-india-production.up.railway.app"
   }
 }

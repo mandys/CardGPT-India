@@ -121,6 +121,15 @@ async def process_query(
         # Add card names to search query for better retrieval
         if card_names_to_boost:
             question += f" {' '.join(card_names_to_boost)}"
+            
+        # Add card-specific reward terminology for better search targeting
+        question_lower = question.lower()
+        if any(pattern in question_lower for pattern in ["axis", "atlas"]):
+            question += " EDGE Miles earning rate"
+        if any(pattern in question_lower for pattern in ["icici", "epm"]):
+            question += " Reward Points earning rate"
+        if any(pattern in question_lower for pattern in ["hsbc", "premier"]):
+            question += " Reward points earning rate"
         
         # Enhance the search query with relevant keywords for better document retrieval
         if any(keyword in question.lower() for keyword in ["hotel", "flight", "travel"]):

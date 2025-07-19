@@ -200,7 +200,11 @@ CRITICAL FOR COMPARISONS: When comparing cards, look for ALL card names in the c
 
 For earning rate comparisons:
 - Look for "rate_general", "earning_rate", "travel", "hotel", "flight", "capping_per_statement_cycle", "reward_capping" sections in the context
-- Base earning rates are often expressed as "X points per ₹Y spent"
+- Base earning rates are expressed as "X points per ₹Y spent" OR "X EDGE Miles/₹Y" OR "X miles per ₹Y"
+- REWARD TYPES BY CARD:
+  * Axis Atlas: Uses "EDGE Miles" (e.g., "2 EDGE Miles/₹100", "5 EDGE Miles/₹100")
+  * ICICI EPM: Uses "Reward Points" (e.g., "6 points per ₹200") 
+  * HSBC Premier: Uses "Reward points" (e.g., "3 points per ₹100")
 - Travel categories may include hotels, flights, and general travel
 - For insurance spending: Check "capping_per_statement_cycle" or "reward_capping" for limits, NOT "insurance" benefits section
 - Check for both general rates and category-specific rates
@@ -220,11 +224,13 @@ For informational queries:
 - If you see earning information for one card but not another, carefully re-read the context as the information may be there but in a different format
 
 CARD NAME RECOGNITION:
-- "Axis Bank Atlas Credit Card" = "Axis Atlas" 
-- "ICICI Bank Emeralde Private Metal Credit Card" = "ICICI EPM"
-- When users ask about "Axis Atlas", look for documents labeled "Axis Bank Atlas Credit Card"
-- When users ask about "ICICI EPM", look for documents labeled "ICICI Bank Emeralde Private Metal Credit Card"
-- NEVER claim a card's information is missing if there are documents for that card in the context"""
+- "Axis Bank Atlas Credit Card" = "Axis Atlas" (uses EDGE Miles as reward currency)
+- "ICICI Bank Emeralde Private Metal Credit Card" = "ICICI EPM" (uses Reward Points)
+- "HSBC Premier Credit Card" = "HSBC Premier" (uses Reward points)
+- When users ask about "Axis Atlas", look for documents labeled "Axis Bank Atlas Credit Card" and search for "EDGE Miles" rates
+- When users ask about "ICICI EPM", look for documents labeled "ICICI Bank Emeralde Private Metal Credit Card" 
+- NEVER claim a card's information is missing if there are documents for that card in the context
+- PAY SPECIAL ATTENTION: Axis Atlas reward information uses "EDGE Miles" terminology, not "points"""
         
         if card_name:
             prompt += f"\nFocus on information about the {card_name} card."

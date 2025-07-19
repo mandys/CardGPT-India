@@ -21,7 +21,7 @@ class QueryEnhancer:
         # Mapping from user-friendly names to actual card names in data
         self.card_name_mapping = {
             'ICICI EPM': 'ICICI Bank Emeralde Private Metal Credit Card',
-            'Axis Atlas': 'Axis Atlas',
+            'Axis Atlas': 'Axis Bank Atlas Credit Card',
             'HSBC Premier': 'HSBC Premier Credit Card'
         }
         

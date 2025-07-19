@@ -112,11 +112,11 @@ async def process_query(
         card_names_to_boost = []
         question_lower = question.lower()
         if any(pattern in question_lower for pattern in ["axis", "atlas"]):
-            card_names_to_boost.append("Axis Atlas")
+            card_names_to_boost.append("Axis Bank Atlas Credit Card")
         if any(pattern in question_lower for pattern in ["icici", "epm", "emeralde"]):
             card_names_to_boost.append("ICICI Bank Emeralde Private Metal Credit Card")
         if any(pattern in question_lower for pattern in ["hsbc", "premier"]):
-            card_names_to_boost.append("HSBC Premier")
+            card_names_to_boost.append("HSBC Premier Credit Card")
             
         # Add card names to search query for better retrieval
         if card_names_to_boost:

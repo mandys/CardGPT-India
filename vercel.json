@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "name": "credit-card-assistant",
+  "builds": [
+    {
+      "src": "cardgpt-ui/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "cardgpt-ui/$1"
+    }
+  ],
+  "buildCommand": "cd cardgpt-ui && npm ci && npm run build",
+  "devCommand": "cd cardgpt-ui && npm start",
+  "installCommand": "cd cardgpt-ui && npm ci",
+  "outputDirectory": "cardgpt-ui/build",
+  "env": {
+    "REACT_APP_API_URL": "@react_app_api_url"
+  }
+}

@@ -166,6 +166,47 @@ async def get_logging_config(services=Depends(get_services)):
         logger.error(f"Failed to get logging config: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/logs/recent")
+async def get_recent_logs(
+    limit: int = Query(10, ge=1, le=100, description="Number of recent logs to retrieve"),
+    services=Depends(get_services)
+):
+    """Get recent query logs for quick viewing (GET endpoint for convenience)"""
+    
+    try:
+        query_logger = services.get("query_logger")
+        
+        if not query_logger:
+            raise HTTPException(status_code=503, detail="Query logger service not available")
+        
+        # Export recent logs
+        from logging_models.logging_models import ExportRequest
+        export_request = ExportRequest(
+            format="json",
+            anonymized_only=False,
+            include_failed_queries=True
+        )
+        
+        export_result = await query_logger.export_training_data(export_request)
+        
+        # Read the exported file and return the data directly
+        import json
+        with open(export_result.file_path, 'r') as f:
+            all_data = json.load(f)
+        
+        # Return only the most recent entries
+        recent_data = all_data[:limit]
+        
+        return {
+            "logs": recent_data,
+            "total_available": len(all_data),
+            "showing": len(recent_data)
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get recent logs: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/logs/health")
 async def check_logging_health(services=Depends(get_services)):
     """Check health status of logging system"""

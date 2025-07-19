@@ -77,30 +77,100 @@ The system works automatically once environment variables are set.
 
 ### Admin Management (`/api/admin/`)
 
-#### Get Query Statistics
+#### 📊 **View Query Statistics**
 ```bash
 GET /api/admin/logs/stats?days=30
 ```
 Returns daily aggregated statistics for analytics.
 
-#### Export Training Data
+**Example Response:**
+```json
+[
+  {
+    "date": "2025-07-19",
+    "total_queries": 15,
+    "successful_queries": 14,
+    "failed_queries": 1,
+    "gemini_flash_queries": 12,
+    "gemini_pro_queries": 3,
+    "general_queries": 8,
+    "specific_card_queries": 5,
+    "comparison_queries": 2,
+    "avg_execution_time_ms": 3250.5,
+    "avg_tokens_used": 2847.3,
+    "total_cost": 0.024156
+  }
+]
+```
+
+#### 📋 **View Recent Logs (NEW - GET Endpoint)**
 ```bash
-POST /api/admin/logs/export
+GET /api/admin/logs/recent?limit=10
+```
+Quick way to view recent query logs without POST request.
+
+**Example Response:**
+```json
 {
-  "format": "json",
-  "anonymized_only": true,
-  "start_date": "2025-01-01",
-  "end_date": "2025-01-31"
+  "logs": [
+    {
+      "session_id": "3d5d9b39-5746-4f0f-9764-6367efe684eb",
+      "query_text": "Are utilities capped for HSBC Premier card?",
+      "enhanced_query": null,
+      "selected_model": "gemini-1.5-flash",
+      "query_mode": "General Query",
+      "card_filter": null,
+      "response_status": 200,
+      "execution_time_ms": 5449,
+      "llm_tokens_used": 3122,
+      "llm_cost": 0.00024531,
+      "search_results_count": 5,
+      "timestamp": "2025-07-19 11:19:55"
+    }
+  ],
+  "total_available": 15,
+  "showing": 10
 }
 ```
 
-#### Manual Cleanup (GDPR)
+#### 📤 **Export Training Data (POST)**
+```bash
+POST /api/admin/logs/export
+Content-Type: application/json
+
+{
+  "format": "json",
+  "anonymized_only": false,
+  "start_date": "2025-07-01",
+  "end_date": "2025-07-31",
+  "include_failed_queries": true
+}
+```
+
+**Export Parameters:**
+- `format`: "json" or "csv"
+- `anonymized_only`: true/false (include only anonymized data)
+- `start_date`/`end_date`: "YYYY-MM-DD" format (optional)
+- `include_failed_queries`: true/false
+
+**Example Response:**
+```json
+{
+  "export_id": "export_20250719_165212",
+  "record_count": 150,
+  "file_path": "exports/export_20250719_165212.json",
+  "gist_url": null,
+  "created_at": "2025-07-19T16:52:12.989503"
+}
+```
+
+#### 🧹 **Manual Cleanup (GDPR)**
 ```bash
 POST /api/admin/logs/cleanup
 ```
 Immediately runs retention policy cleanup.
 
-#### Session Data Management
+#### 👤 **Session Data Management**
 ```bash
 # Get session data (for user requests)
 GET /api/admin/logs/session/{session_id}
@@ -109,11 +179,55 @@ GET /api/admin/logs/session/{session_id}
 DELETE /api/admin/logs/session/{session_id}
 ```
 
-#### System Health
+#### ⚙️ **System Configuration & Health**
 ```bash
-GET /api/admin/logs/health
+GET /api/admin/logs/config    # View logging configuration
+GET /api/admin/logs/health    # Check system health
 ```
-Check logging system status and database connectivity.
+
+## Usage Examples
+
+### 1. **Simple Data Viewing (GET)**
+```bash
+# View 20 most recent logs
+curl "http://localhost:8000/api/admin/logs/recent?limit=20" | jq .
+
+# View daily statistics for last week
+curl "http://localhost:8000/api/admin/logs/stats?days=7" | jq .
+```
+
+### 2. **Export All Data (POST)**
+```bash
+curl -X POST "http://localhost:8000/api/admin/logs/export" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "format": "json",
+    "anonymized_only": false,
+    "include_failed_queries": true
+  }' | jq .
+```
+
+### 3. **Export Specific Date Range**
+```bash
+curl -X POST "http://localhost:8000/api/admin/logs/export" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "format": "csv",
+    "anonymized_only": true,
+    "start_date": "2025-07-01",
+    "end_date": "2025-07-31",
+    "include_failed_queries": false
+  }' | jq .
+```
+
+### 4. **Direct Database Query**
+```bash
+# View recent queries
+sqlite3 logs/query_logs.db "SELECT query_text, selected_model, execution_time_ms, llm_tokens_used, llm_cost, timestamp FROM query_logs ORDER BY timestamp DESC LIMIT 10;"
+
+# View daily stats
+sqlite3 logs/query_logs.db "SELECT * FROM query_stats ORDER BY date DESC;"
+```
 
 ## Database Schema
 

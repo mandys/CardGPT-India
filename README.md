@@ -51,12 +51,23 @@ A modern full-stack AI assistant for querying Indian credit card terms and condi
    export VERTEX_AI_DATA_STORE_ID="your-data-store-id"
    ```
 
-4. **Authenticate with Google Cloud**
+4. **Set up data files (Required)**
+   ```bash
+   # The credit card data files are not included in the repository
+   # Contact project maintainers for access to the data files
+   # Place the following files in the data/ directory:
+   # - data/axis-atlas.json
+   # - data/hsbc-premier.json  
+   # - data/icici-epm.json
+   # See data/README.md for detailed instructions
+   ```
+
+5. **Authenticate with Google Cloud**
    ```bash
    gcloud auth application-default login
    ```
 
-5. **Run the application**
+6. **Run the application**
    
    **Option A: React + FastAPI (Recommended)**
    ```bash

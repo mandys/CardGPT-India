@@ -77,11 +77,29 @@ To add new credit card data:
 4. **ChromaDB Fallback**: The system will automatically detect and ingest new files
 5. **No maintenance required**: Vertex AI handles indexing and optimization automatically
 
+## Data Files & Privacy Protection
+
+### Data Files Not in Repository
+- **data/*.json** - Credit card data files are NOT committed to git (IP protection)
+- ***.jsonl** - Training data files are NOT committed to git  
+- **backend/exports/** - Query log exports are NOT committed to git (privacy protection)
+
+### Local Development Setup
+- Data files must be present locally in `data/` directory for development
+- See `data/README.md` for complete setup instructions
+- Contact project maintainers for access to the cleaned data files
+
+### Important: Never Commit
+- Credit card JSON files (valuable cleaned data from PDFs)
+- JSONL training files (used for Google bucket uploads)
+- Export files from query logging (contain user data)
+
 ## Maintenance Tasks
 
 - keep @CLAUDE.md @README.md @behind_the_scenes.md @claude-context.md updated at all times
 - Always do a git add/commit of code when updating core functionality documentation files
 - Ensure all memory files are consistently updated with new project features and changes
+- Verify sensitive data files are not accidentally committed
 
 ## Commit Guidelines
 

@@ -83,3 +83,13 @@ sample/
 
 # ChromaDB files (regenerated on deployment)
 chroma_db/
+
+# Data files (valuable cleaned data - keep local, not in repo)
+data/*.json
+
+# Training data files (for Google bucket upload - keep local)
+*.jsonl
+
+# Query logging exports (contains user data - privacy protection)
+backend/exports/
+exports/

@@ -166,26 +166,57 @@ class LLMService:
     
     def _build_context(self, documents: List[Dict]) -> str:
         """
-        (Improved) Build context string from relevant documents without
-        aggressive truncation.
+        (Improved) Build context string from relevant documents with
+        balanced representation for comparison queries.
         """
         context_parts = []
         
-        # Limit total context to avoid excessive length, but be generous
-        max_context_chars = 15000  # ~3.7k tokens, well within limits
-        current_chars = 0
+        # For comparison queries, ensure balanced representation
+        card_names = set(doc.get('cardName', '') for doc in documents)
+        is_comparison = len(card_names) > 1
         
-        for doc in documents:
-            content = doc.get('content', '')
+        if is_comparison:
+            # Group documents by card name for balanced representation
+            card_docs = {}
+            for doc in documents:
+                card_name = doc.get('cardName', '')
+                if card_name not in card_docs:
+                    card_docs[card_name] = []
+                card_docs[card_name].append(doc)
             
-            # Stop adding documents if we exceed the character limit
-            if current_chars + len(content) > max_context_chars:
-                break
+            # Limit per card to ensure all cards are represented
+            max_context_chars = 15000
+            chars_per_card = max_context_chars // len(card_names)
+            
+            for card_name, docs in card_docs.items():
+                current_card_chars = 0
+                for doc in docs:
+                    content = doc.get('content', '')
+                    if current_card_chars + len(content) > chars_per_card:
+                        # Truncate this document to fit within the card's allocation
+                        remaining_chars = chars_per_card - current_card_chars
+                        if remaining_chars > 500:  # Only include if we have reasonable space
+                            content = content[:remaining_chars] + "..."
+                        else:
+                            break
+                    
+                    context_part = f"Source Document for '{doc['cardName']}' (section: {doc['section']}):\n{content}"
+                    context_parts.append(context_part)
+                    current_card_chars += len(content)
+        else:
+            # Single card or general query - use original logic
+            max_context_chars = 15000
+            current_chars = 0
+            
+            for doc in documents:
+                content = doc.get('content', '')
                 
-            # Use the full, untruncated content from the document
-            context_part = f"Source Document for '{doc['cardName']}' (section: {doc['section']}):\n{content}"
-            context_parts.append(context_part)
-            current_chars += len(content)
+                if current_chars + len(content) > max_context_chars:
+                    break
+                    
+                context_part = f"Source Document for '{doc['cardName']}' (section: {doc['section']}):\n{content}"
+                context_parts.append(context_part)
+                current_chars += len(content)
         
         final_context = "\n\n---\n\n".join(context_parts)
         return final_context

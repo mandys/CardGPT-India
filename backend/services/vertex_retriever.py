@@ -1,12 +1,16 @@
 # In src/vertex_retriever.py
 
+import os
 import time
 import json
 import logging
+import tempfile
 from typing import List, Dict, Optional
 from google.cloud import discoveryengine
 from google.api_core import exceptions as google_exceptions
 from google.protobuf.json_format import MessageToDict
+from google.auth import default
+from google.oauth2 import service_account
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +23,14 @@ class VertexRetriever:
         self.project_id = project_id
         self.location = location
         self.data_store_id = data_store_id
-        self.client = discoveryengine.SearchServiceClient()
+        
+        # Set up authentication
+        credentials = self._get_credentials()
+        if credentials:
+            self.client = discoveryengine.SearchServiceClient(credentials=credentials)
+        else:
+            self.client = discoveryengine.SearchServiceClient()
+            
         self.serving_config = self.client.serving_config_path(
             project=project_id,
             location=location,
@@ -27,6 +38,35 @@ class VertexRetriever:
             serving_config="default_config",
         )
         logger.info(f"Vertex AI Search client initialized for project: {project_id}")
+
+    def _get_credentials(self):
+        """Get Google Cloud credentials from environment variables or default."""
+        try:
+            # Check if we have JSON credentials in environment variable
+            creds_json = os.getenv('GOOGLE_APPLICATION_CREDENTIALS_JSON')
+            if creds_json:
+                logger.info("Using GOOGLE_APPLICATION_CREDENTIALS_JSON from environment")
+                # Parse the JSON credentials
+                creds_info = json.loads(creds_json)
+                credentials = service_account.Credentials.from_service_account_info(creds_info)
+                return credentials
+            
+            # Check if GOOGLE_APPLICATION_CREDENTIALS file path is set
+            creds_file = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+            if creds_file and os.path.exists(creds_file):
+                logger.info(f"Using GOOGLE_APPLICATION_CREDENTIALS file: {creds_file}")
+                credentials = service_account.Credentials.from_service_account_file(creds_file)
+                return credentials
+            
+            # Try default credentials (local development)
+            logger.info("Attempting to use default credentials")
+            credentials, _ = default()
+            return credentials
+            
+        except Exception as e:
+            logger.warning(f"Failed to load credentials: {e}")
+            # Return None to let the client try default auth
+            return None
 
     def search_similar_documents(self, query_text: str, card_filter: Optional[str] = None, top_k: int = 7, use_mmr: bool = False) -> List[Dict]:
         """Performs a search with precise metadata filtering."""

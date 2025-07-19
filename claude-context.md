@@ -37,10 +37,38 @@ A modern full-stack RAG (Retrieval-Augmented Generation) application for queryin
 ✅ **Production Deployment**: Ready for production with real API keys
 
 ## Recent Major Improvements
-- **🎯 REACT + FASTAPI MIGRATION** - Complete modern full-stack architecture with React frontend and FastAPI backend
-- **📱 RESPONSIVE DESIGN** - Mobile-first approach with collapsible sidebar and bottom navigation
-- **🔧 FULL-STACK INTEGRATION SUCCESS** - FastAPI backend running on port 8000, React frontend communicating via API
-- **✅ PRODUCTION READY** - All endpoints working, real API keys configured, ready for deployment
+
+### **🚀 PRODUCTION DEPLOYMENT SUCCESS (Latest)**
+- **Railway Backend Deployment**: Successfully deployed FastAPI backend to Railway after resolving multiple deployment issues
+- **Smart Card Selection System**: Implemented intelligent UI that prompts users to select specific cards for comparison instead of wasting tokens on generic queries
+- **Insurance/Hotel Query Fixes**: Fixed complex search issues where ICICI EPM data wasn't being found due to card name mapping and search targeting problems
+- **Markdown Rendering**: Added react-markdown for proper formatting of AI responses (bold, lists, headers)
+- **Dependency Cleanup**: Removed Streamlit/Gradio dependencies from production deployment for clean FastAPI-only backend
+
+### **🎯 DEPLOYMENT CHALLENGES RESOLVED**
+- **Git Clone Issues**: Fixed Railway deployment failures caused by problematic filename `"\"` (literal backslash) in repository
+- **Dependency Conflicts**: Resolved Python version and package conflicts by cleaning requirements.txt and removing UI framework dependencies
+- **Card Name Mapping**: Fixed ICICI EPM search issues by mapping user-friendly names ("ICICI EPM") to actual data names ("ICICI Bank Emeralde Private Metal Credit Card")
+- **Search Targeting**: Enhanced query processing to find reward capping data instead of insurance benefits/coverage data
+- **Environment Configuration**: Set up proper CORS, API URL handling, and environment variables for production deployment
+
+### **🎨 USER EXPERIENCE ENHANCEMENTS**
+- **Card Selection UI**: Created React component with checkboxes allowing users to select 2-3 cards for focused comparison
+- **Generic Query Detection**: System automatically detects open-ended questions like "which card is better for X?" and prompts for specific card selection
+- **Token Optimization**: Prevents wasteful broad searches across all cards, saving significant API costs
+- **Responsive Interface**: Enhanced mobile-first design with proper card selection and markdown rendering
+
+### **🔧 TECHNICAL ARCHITECTURE IMPROVEMENTS**
+- **Smart Query Enhancement**: Added category-specific search keyword injection for better document retrieval
+- **LLM Prompt Optimization**: Updated prompts to distinguish between different types of content (rewards vs benefits vs coverage)
+- **Multi-Model Routing**: Enhanced system to automatically select appropriate AI model based on query complexity
+- **Production Configuration**: Set up Railway deployment with nixpacks.toml, proper build commands, and environment handling
+
+### **📊 CURRENT DEPLOYMENT STATUS**
+- **Backend**: ✅ Successfully deployed to Railway with clean build
+- **Frontend**: 🔄 Ready for Vercel deployment (React + TypeScript)
+- **API Integration**: ✅ CORS configured, environment variables ready
+- **Testing**: 🔄 Pending public URL generation and end-to-end testing
 - **🎨 GRADIO UI IMPLEMENTATION** - Added professional Gradio interface as recommended alternative to Streamlit
 - **🚀 VERTEX AI SEARCH INTEGRATION** - Implemented enterprise-grade search with Google Cloud Discovery Engine
 - **🔧 CRITICAL CONTENT EXTRACTION FIX** - Solved empty content issue by extracting from derivedStructData.extractive_segments

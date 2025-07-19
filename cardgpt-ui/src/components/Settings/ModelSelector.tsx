@@ -65,8 +65,8 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
           key={model.name}
           className={`p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
             selectedModel === model.name
-              ? 'border-primary-300 bg-primary-50'
-              : 'border-gray-200 hover:border-gray-300'
+              ? 'border-primary-300 bg-primary-50 dark:border-primary-500 dark:bg-primary-900/20'
+              : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 bg-white dark:bg-gray-700/50'
           } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
           onClick={() => !disabled && onModelChange(model.name)}
         >
@@ -75,12 +75,12 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
               <span className="text-lg">{getModelIcon(model.provider)}</span>
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {model.name}
                   </span>
                   {getModelBadge(model)}
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-gray-500 dark:text-gray-400">
                   {model.provider} • {model.description}
                 </div>
               </div>
@@ -88,10 +88,10 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
             
             <div className="flex items-center space-x-2">
               <div className="text-right">
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-gray-500 dark:text-gray-400">
                   {formatCost(model.cost_per_1k_input)}/1K
                 </div>
-                <div className="text-xs text-gray-400">
+                <div className="text-xs text-gray-400 dark:text-gray-500">
                   input tokens
                 </div>
               </div>

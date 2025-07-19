@@ -58,14 +58,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   return (
     <div className="flex flex-col h-full">
       {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900">
         {messages.length === 0 ? (
           <div className="text-center py-8">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
                 💳 Credit Card Assistant
               </h2>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-300">
                 Ask me anything about Indian credit card terms and conditions
               </p>
             </div>
@@ -75,7 +75,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 <button
                   key={index}
                   onClick={() => onExampleClick(example)}
-                  className="p-3 bg-white rounded-lg shadow-sm border border-gray-200 hover:border-primary-300 hover:shadow-md transition-all duration-200 text-left text-sm text-gray-700 hover:text-primary-600"
+                  className="p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-400 hover:shadow-md transition-all duration-200 text-left text-sm text-gray-700 dark:text-gray-300 hover:text-primary-600"
                 >
                   {example}
                 </button>
@@ -98,7 +98,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
 
       {/* Input Area */}
-      <div className="bg-white border-t border-gray-200 p-4">
+      <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
         <form onSubmit={handleSubmit} className="flex space-x-2">
           <input
             ref={inputRef}

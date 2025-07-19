@@ -112,21 +112,21 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
             value={topK}
             onChange={(e) => onTopKChange(Number(e.target.value))}
             disabled={isLoading}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+            className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
           />
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
             <span>1</span>
             <span>15</span>
           </div>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             More results = better accuracy, higher cost
           </p>
         </div>
       </div>
       
       {/* Footer */}
-      <div className="p-4 border-t border-gray-200 bg-gray-50">
-        <div className="text-xs text-gray-500 text-center">
+      <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+        <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
           <p>💡 Tip: Use Gemini Flash for fastest, cheapest queries</p>
         </div>
       </div>

@@ -68,15 +68,15 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
           ? `inset-y-0 left-0 transform ${isOpen ? 'translate-x-0' : '-translate-x-full'}`
           : `${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`
       } ${isOpen ? 'w-80' : 'w-0 lg:w-16'}`}>
-        <div className="h-full bg-white border-r border-gray-200 flex flex-col">
+        <div className="h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
           {/* Mobile close button */}
           {isMobile && (
             <div className="flex justify-end p-4 lg:hidden">
               <button
                 onClick={closeSidebar}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
               </button>
             </div>
           )}

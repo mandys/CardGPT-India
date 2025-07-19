@@ -107,6 +107,21 @@ async def process_query(
     # For comparison queries mentioning multiple cards, search without filter to get all cards
     if "compare" in question.lower() and any(card in question.lower() for card in ["atlas", "icici", "epm", "hsbc", "premier"]):
         search_card_filter = None  # Search all cards for comparison
+        
+        # Boost search with actual card names for better document retrieval
+        card_names_to_boost = []
+        question_lower = question.lower()
+        if any(pattern in question_lower for pattern in ["axis", "atlas"]):
+            card_names_to_boost.append("Axis Atlas")
+        if any(pattern in question_lower for pattern in ["icici", "epm", "emeralde"]):
+            card_names_to_boost.append("ICICI Bank Emeralde Private Metal Credit Card")
+        if any(pattern in question_lower for pattern in ["hsbc", "premier"]):
+            card_names_to_boost.append("HSBC Premier")
+            
+        # Add card names to search query for better retrieval
+        if card_names_to_boost:
+            question += f" {' '.join(card_names_to_boost)}"
+        
         # Enhance the search query with relevant keywords for better document retrieval
         if any(keyword in question.lower() for keyword in ["hotel", "flight", "travel"]):
             question += " rewards earning rate points miles travel hotel flight"

@@ -196,6 +196,8 @@ class LLMService:
 
 CRITICAL: If the context contains information relevant to the question, use it to provide a comprehensive answer. NEVER claim information is missing if it exists in the context.
 
+CRITICAL FOR COMPARISONS: When comparing cards, look for ALL card names in the context. If documents exist for both cards (even with different section names), use information from BOTH cards. Look carefully at the "Source Document" headers to identify which card each section belongs to.
+
 For earning rate comparisons:
 - Look for "rate_general", "earning_rate", "travel", "hotel", "flight", "capping_per_statement_cycle", "reward_capping" sections in the context
 - Base earning rates are often expressed as "X points per ₹Y spent"
@@ -215,7 +217,14 @@ For informational queries:
 - Extract all relevant details from context
 - Include specific numbers, dates, and conditions
 - Don't truncate important information
-- If you see earning information for one card but not another, carefully re-read the context as the information may be there but in a different format"""
+- If you see earning information for one card but not another, carefully re-read the context as the information may be there but in a different format
+
+CARD NAME RECOGNITION:
+- "Axis Bank Atlas Credit Card" = "Axis Atlas" 
+- "ICICI Bank Emeralde Private Metal Credit Card" = "ICICI EPM"
+- When users ask about "Axis Atlas", look for documents labeled "Axis Bank Atlas Credit Card"
+- When users ask about "ICICI EPM", look for documents labeled "ICICI Bank Emeralde Private Metal Credit Card"
+- NEVER claim a card's information is missing if there are documents for that card in the context"""
         
         if card_name:
             prompt += f"\nFocus on information about the {card_name} card."

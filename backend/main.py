@@ -36,12 +36,11 @@ async def lifespan(app: FastAPI):
         from services.vertex_retriever import VertexRetriever
         from services.query_enhancer import QueryEnhancer
         
-        # Get API keys
-        openai_key = os.getenv("OPENAI_API_KEY")
+        # Get Google API keys (Google-only architecture)
         gemini_key = os.getenv("GEMINI_API_KEY")
         
-        if not openai_key:
-            raise ValueError("OPENAI_API_KEY not found in environment variables")
+        if not gemini_key:
+            raise ValueError("GEMINI_API_KEY not found in environment variables")
         
         # Get Google Cloud config
         gcp_project_id = os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("GCP_PROJECT_ID")
@@ -51,8 +50,8 @@ async def lifespan(app: FastAPI):
         if not gcp_project_id or not gcp_data_store_id:
             raise ValueError("Google Cloud project ID and data store ID are required")
         
-        # Initialize services
-        app_state["llm_service"] = LLMService(openai_key, gemini_key)
+        # Initialize services (Google-only)
+        app_state["llm_service"] = LLMService(gemini_key)
         app_state["retriever_service"] = VertexRetriever(gcp_project_id, gcp_location, gcp_data_store_id)
         app_state["query_enhancer_service"] = QueryEnhancer()
         

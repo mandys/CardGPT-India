@@ -1,9 +1,9 @@
 """
-OpenAI LLM Service
-Handles text generation using OpenAI's chat models (GPT-4, GPT-3.5-turbo)
+Google Gemini LLM Service
+Handles text generation using Google's Gemini models (Flash/Pro)
+Ultra-low cost architecture with Google-only services
 """
 
-import openai
 import google.generativeai as genai
 from typing import List, Dict, Any
 import logging
@@ -14,13 +14,11 @@ logger = logging.getLogger(__name__)
 
 
 class LLMService:
-    """Service for generating answers using OpenAI's chat models"""
+    """Service for generating answers using Google Gemini models"""
     
-    def __init__(self, api_key: str, gemini_api_key: str = None):
-        """Initialize the LLM service with API keys"""
-        self.client = openai.OpenAI(api_key=api_key)
-        
-        # Initialize Gemini if API key provided
+    def __init__(self, gemini_api_key: str):
+        """Initialize the LLM service with Gemini API key"""
+        # Initialize Gemini
         self.gemini_available = False
         if gemini_api_key:
             try:
@@ -35,13 +33,13 @@ class LLMService:
                 logger.info("Gemini API initialized successfully")
             except Exception as e:
                 logger.warning(f"Failed to initialize Gemini: {e}")
+        else:
+            raise ValueError("GEMINI_API_KEY is required for Google-only architecture")
         
-        # Model pricing (per 1K tokens)
+        # Google Gemini model pricing (per 1K tokens) - Ultra-low cost!
         self.model_pricing = {
-            "gpt-4": {"input": 0.03, "output": 0.06},
-            "gpt-3.5-turbo": {"input": 0.0015, "output": 0.002},
-            "gemini-1.5-flash": {"input": 0.000075, "output": 0.0003},  # Much cheaper!
-            "gemini-1.5-pro": {"input": 0.00125, "output": 0.005}
+            "gemini-1.5-flash": {"input": 0.000075, "output": 0.0003},   # Ultra fast & cheap
+            "gemini-1.5-pro": {"input": 0.00125, "output": 0.005}       # Balanced performance
         }
     
     def generate_answer(
@@ -61,7 +59,7 @@ class LLMService:
             question: User's question
             context_documents: Relevant documents for context
             card_name: Specific card to focus on (optional)
-            model_choice: Model to use (gpt-4, gpt-3.5-turbo, gemini-1.5-flash, gemini-1.5-pro)
+            model_choice: Gemini model to use (gemini-1.5-flash, gemini-1.5-pro)
             max_tokens: Maximum tokens in response
             temperature: Creativity parameter (0.0 to 1.0)
             
@@ -90,49 +88,11 @@ class LLMService:
         system_prompt = self._create_system_prompt(card_name)
         user_prompt = self._create_user_prompt(question, context)
         
-        # Route to appropriate model
-        if model_choice.startswith("gemini"):
-            return self._generate_gemini_answer(system_prompt, user_prompt, model_choice, max_tokens, temperature)
-        else:
-            return self._generate_openai_answer(system_prompt, user_prompt, model_choice, max_tokens, temperature)
-    
-    def _generate_openai_answer(self, system_prompt: str, user_prompt: str, model: str, max_tokens: int, temperature: float):
-        """Generate answer using OpenAI models"""
-        pricing = self.model_pricing[model]
-        
-        try:
-            response = self.client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                max_tokens=max_tokens,
-                temperature=temperature
-            )
+        # Google Gemini only architecture
+        if not model_choice.startswith("gemini"):
+            raise ValueError(f"Only Gemini models are supported. Requested: {model_choice}")
             
-            # Calculate costs
-            input_tokens = response.usage.prompt_tokens
-            output_tokens = response.usage.completion_tokens
-            total_cost = (input_tokens * pricing["input"] / 1000) + (output_tokens * pricing["output"] / 1000)
-            
-            usage_info = {
-                "model": model,
-                "input_tokens": input_tokens,
-                "output_tokens": output_tokens,
-                "total_tokens": response.usage.total_tokens,
-                "cost": total_cost,
-                "pricing": pricing
-            }
-            
-            answer = response.choices[0].message.content or "Sorry, I couldn't generate a response."
-            logger.info(f"Generated answer using {model}: {input_tokens} input + {output_tokens} output tokens")
-            
-            return answer, usage_info
-            
-        except Exception as e:
-            logger.error(f"Error generating answer with {model}: {str(e)}")
-            return f"Error generating answer: {str(e)}", {"tokens": 0, "cost": 0, "model": model}
+        return self._generate_gemini_answer(system_prompt, user_prompt, model_choice, max_tokens, temperature)
     
     def _generate_gemini_answer(self, system_prompt: str, user_prompt: str, model: str, max_tokens: int, temperature: float):
         """Generate answer using Gemini models"""
@@ -360,14 +320,22 @@ Be precise with math. Double-check arithmetic."""
             logger.error(f"Calculator failed: {e}")
             return None
     
-    def get_model_info(self, model: str = "gpt-4") -> Dict[str, Any]:
-        """Get information about a specific model"""
+    def get_model_info(self, model: str = "gemini-1.5-flash") -> Dict[str, Any]:
+        """Get information about a specific Gemini model"""
         if model not in self.model_pricing:
             raise ValueError(f"Unknown model: {model}")
+        
+        # Gemini model specifications
+        model_specs = {
+            "gemini-1.5-flash": {"context_window": 1048576, "max_output_tokens": 8192},  # 1M context
+            "gemini-1.5-pro": {"context_window": 2097152, "max_output_tokens": 8192}    # 2M context
+        }
+        
+        specs = model_specs.get(model, {"context_window": 1048576, "max_output_tokens": 8192})
         
         return {
             "model": model,
             "pricing": self.model_pricing[model],
-            "context_window": 128000 if model == "gpt-4" else 16385,
-            "max_output_tokens": 4096
+            "context_window": specs["context_window"],
+            "max_output_tokens": specs["max_output_tokens"]
         }

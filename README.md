@@ -8,8 +8,8 @@ A modern full-stack AI assistant for querying Indian credit card terms and condi
 - **Responsive Design**: Mobile-first with collapsible sidebar and bottom navigation
 - **Multiple UI Options**: React (current), Streamlit (legacy), Gradio (legacy)
 - **Enterprise Search**: Google Vertex AI Search for fast, accurate document retrieval
-- **Multi-Model AI**: Choose from GPT-4, GPT-3.5, or Gemini 1.5 (Flash/Pro) 
-- **Ultra-Low Cost**: Gemini Flash costs 20x less than GPT-3.5 (~$0.0003/query)
+- **Google-Only AI**: Powered exclusively by Gemini 1.5 (Flash/Pro) models
+- **Ultra-Low Cost**: Gemini Flash costs only $0.0003/query (20x cheaper than traditional models)
 - **Smart Calculations**: Automatically handles complex reward calculations with milestones
 - **Multi-Card Support**: Query individual cards or compare multiple cards
 - **Category-Aware**: Correctly handles hotel/flight vs general spending rates
@@ -27,8 +27,7 @@ A modern full-stack AI assistant for querying Indian credit card terms and condi
 ### Prerequisites
 
 - Python 3.8+
-- OpenAI API key (required)
-- Gemini API key (optional, for ultra-low cost queries)
+- Gemini API key (required - Google-only architecture)
 - Google Cloud credentials (required for Vertex AI Search)
 
 ### Installation
@@ -46,8 +45,7 @@ A modern full-stack AI assistant for querying Indian credit card terms and condi
 
 3. **Set up environment variables**
    ```bash
-   export OPENAI_API_KEY="your-api-key-here"
-   export GEMINI_API_KEY="your-gemini-key-here"  # Optional but recommended
+   export GEMINI_API_KEY="your-gemini-key-here"  # Required for Google-only architecture
    export GOOGLE_CLOUD_PROJECT="your-project-id"
    export VERTEX_AI_LOCATION="global"
    export VERTEX_AI_DATA_STORE_ID="your-data-store-id"
@@ -159,12 +157,10 @@ The application uses a modular architecture with the following components:
 
 | Model | Cost per Query | Best For | Speed |
 |-------|---------------|----------|-------|
-| **Gemini 1.5 Flash** | **$0.0003** | Simple queries | ⚡ Fast |
-| **GPT-3.5-turbo** | $0.002 | General queries | 🚀 Fast |
+| **Gemini 1.5 Flash** | **$0.0003** | Simple queries | ⚡ Ultra Fast |
 | **Gemini 1.5 Pro** | $0.005 | Complex calculations | ⚡ Fast |
-| **GPT-4** | $0.06 | Premium accuracy | 🐌 Slow |
 
-**💡 Recommendation**: Use Gemini Flash as default (20x cheaper than GPT-3.5!)
+**💡 Google-Only Architecture**: Ultra-low cost with industry-leading performance!
 
 ## Google Cloud Setup
 
@@ -189,7 +185,6 @@ Add to your `.streamlit/secrets.toml`:
 GOOGLE_CLOUD_PROJECT = "your-project-id"
 VERTEX_AI_LOCATION = "global"
 VERTEX_AI_DATA_STORE_ID = "your-data-store-id"
-OPENAI_API_KEY = "your-openai-key"
 GEMINI_API_KEY = "your-gemini-key"
 ```
 
@@ -263,7 +258,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Credits
 
 **Built by:** [@maharajamandy](https://x.com/maharajamandy) & [@jockaayush](https://x.com/jockaayush)  
-**Powered by:** OpenAI + Google Gemini + Vertex AI Search  
+**Powered by:** Google Gemini + Vertex AI Search  
 **Framework:** React + FastAPI + Python  
 
 ---

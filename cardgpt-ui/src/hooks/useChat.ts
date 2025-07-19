@@ -30,7 +30,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   error: null,
   
   settings: {
-    selectedModel: 'gemini-1.5-pro',
+    selectedModel: 'gemini-1.5-flash',  // Ultra-fast default
     queryMode: 'General Query' as QueryMode,
     cardFilter: 'None' as CardFilter,
     topK: 7,

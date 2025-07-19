@@ -41,13 +41,6 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
         </span>
       );
     }
-    if (model.name.includes('gpt-4')) {
-      return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
-          Premium
-        </span>
-      );
-    }
     return null;
   };
 

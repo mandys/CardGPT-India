@@ -2,9 +2,8 @@
 # This file is kept for compatibility with Streamlit/Gradio apps (legacy)
 # For FastAPI backend deployment, Railway should use backend/requirements.txt
 
-# Core dependencies (without UI frameworks)
+# Google-only architecture (no OpenAI dependency)
 requests>=2.28.0
-openai>=1.0.0
 numpy>=1.24.0
 google-generativeai>=0.3.0
 google-cloud-discoveryengine>=0.11.0

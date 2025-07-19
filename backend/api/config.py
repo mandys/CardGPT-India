@@ -13,39 +13,23 @@ async def get_config(services=Depends(lambda: {})):
     """Get API configuration including available models and supported cards"""
     
     try:
-        # Define available models
+        # Google-only model selection (ultra-low cost architecture)
         available_models = [
             ModelInfo(
                 name="gemini-1.5-flash",
                 provider="Google",
-                cost_per_1k_input=0.075,
-                cost_per_1k_output=0.3,
+                cost_per_1k_input=0.075,  # $0.000075
+                cost_per_1k_output=0.3,   # $0.0003
                 available=True,
                 description="Ultra-fast model, great for simple queries"
             ),
             ModelInfo(
                 name="gemini-1.5-pro",
                 provider="Google",
-                cost_per_1k_input=1.25,
-                cost_per_1k_output=5.0,
+                cost_per_1k_input=1.25,   # $0.00125
+                cost_per_1k_output=5.0,   # $0.005
                 available=True,
                 description="Balanced model, good for complex queries"
-            ),
-            ModelInfo(
-                name="gpt-3.5-turbo",
-                provider="OpenAI",
-                cost_per_1k_input=1.5,
-                cost_per_1k_output=2.0,
-                available=True,
-                description="Fast and reliable general-purpose model"
-            ),
-            ModelInfo(
-                name="gpt-4",
-                provider="OpenAI",
-                cost_per_1k_input=30.0,
-                cost_per_1k_output=60.0,
-                available=True,
-                description="Premium model with highest accuracy"
             )
         ]
         
@@ -66,7 +50,7 @@ async def get_config(services=Depends(lambda: {})):
         return ConfigResponse(
             available_models=available_models,
             supported_cards=supported_cards,
-            default_model="gemini-1.5-pro",
+            default_model="gemini-1.5-flash",  # Ultra-fast default
             max_top_k=15
         )
         
@@ -75,7 +59,7 @@ async def get_config(services=Depends(lambda: {})):
         return ConfigResponse(
             available_models=[],
             supported_cards=["Axis Atlas", "ICICI EPM", "HSBC Premier"],
-            default_model="gemini-1.5-pro",
+            default_model="gemini-1.5-flash",
             max_top_k=15
         )
 

@@ -8,7 +8,7 @@ from typing import List, Optional
 import logging
 import sys
 sys.path.append('..')
-from models.logging_models import QueryStatsEntry, ExportRequest, ExportResponse
+from logging_models.logging_models import QueryStatsEntry, ExportRequest, ExportResponse
 
 logger = logging.getLogger(__name__)
 

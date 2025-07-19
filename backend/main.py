@@ -36,7 +36,7 @@ async def lifespan(app: FastAPI):
         from services.vertex_retriever import VertexRetriever
         from services.query_enhancer import QueryEnhancer
         from services.query_logger import QueryLogger
-        from models.logging_models import LoggingConfig
+        from logging_models.logging_models import LoggingConfig
         
         # Get Google API keys (Google-only architecture)
         gemini_key = os.getenv("GEMINI_API_KEY")

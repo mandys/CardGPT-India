@@ -66,7 +66,7 @@ class QueryLogEntry(BaseModel):
     is_exported: bool = Field(False, description="Whether included in training exports")
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class QueryStatsEntry(BaseModel):
     """Daily aggregated statistics (privacy-safe)"""
@@ -90,7 +90,7 @@ class QueryStatsEntry(BaseModel):
     total_cost: Optional[float] = Field(0.0, description="Total cost for the day")
     
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class LoggingConfig(BaseModel):
     """Configuration for query logging system"""

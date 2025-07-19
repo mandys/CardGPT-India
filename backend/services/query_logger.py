@@ -12,7 +12,7 @@ from pathlib import Path
 import json
 
 try:
-    from models.logging_models import (
+    from logging_models.logging_models import (
         QueryLogData, ResponseLogData, QueryLogEntry, QueryStatsEntry,
         LoggingConfig, ExportRequest, ExportResponse
     )
@@ -20,7 +20,7 @@ except ImportError:
     import sys
     import os
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from models.logging_models import (
+    from logging_models.logging_models import (
         QueryLogData, ResponseLogData, QueryLogEntry, QueryStatsEntry,
         LoggingConfig, ExportRequest, ExportResponse
     )

@@ -227,7 +227,7 @@ async def log_query(query_logger, request: ChatRequest, http_request: Request) -
     try:
         import sys
         sys.path.append('..')
-        from models.logging_models import QueryLogData
+        from logging_models.logging_models import QueryLogData
         
         # Extract user context
         user_ip = get_client_ip(http_request)
@@ -256,7 +256,7 @@ async def log_response(query_logger, session_id: str, start_time: float, status_
     try:
         import sys
         sys.path.append('..')
-        from models.logging_models import ResponseLogData
+        from logging_models.logging_models import ResponseLogData
         
         execution_time_ms = int((time.time() - start_time) * 1000)
         llm_usage = result.get("llm_usage", {})

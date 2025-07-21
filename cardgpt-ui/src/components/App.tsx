@@ -2,12 +2,12 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { AuthProvider } from './contexts/AuthContext';
-import LandingPage from './components/Landing/LandingPage';
-import MainLayout from './components/Layout/MainLayout';
-import PrivacyPolicy from './components/Pages/PrivacyPolicy';
-import './styles/globals.css';
+import { ThemeProvider } from '../contexts/ThemeContext';
+import { AuthProvider } from '../contexts/AuthContext';
+import LandingPage from './Landing/LandingPage';
+import MainLayout from './Layout/MainLayout';
+import PrivacyPolicy from './Pages/PrivacyPolicy';
+import '../styles/globals.css';
 
 // Create a client for React Query (fixed for Vercel deployment)
 const queryClient = new QueryClient({

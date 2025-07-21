@@ -2,18 +2,12 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../contexts/ThemeContext';
 import { 
-  CreditCard, 
   Brain, 
   Calculator, 
-  FileText, 
   Users, 
-  Home, 
-  Shield, 
-  Info, 
   Sun, 
   Moon,
   ArrowRight,
-  Star,
   Zap,
   Sparkles,
   MessageSquare

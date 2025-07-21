@@ -1,7 +1,17 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
 import './styles/globals.css';
+// import App from './App';
+
+// Temporary test component to debug Vercel issue
+const App = () => {
+  return (
+    <div style={{ padding: '2rem', textAlign: 'center' }}>
+      <h1>CardGPT - Temporary Fix</h1>
+      <p>Testing Vercel deployment - will restore full app once working</p>
+    </div>
+  );
+};
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

@@ -1,56 +1,79 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { GoogleOAuthProvider } from '@react-oauth/google';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { AuthProvider } from './contexts/AuthContext';
-import LandingPage from './components/Landing/LandingPage';
-import MainLayout from './components/Layout/MainLayout';
-import PrivacyPolicy from './components/Pages/PrivacyPolicy';
 import './styles/globals.css';
 
-// Create React Query client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 2,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
-    },
-  },
-});
-
-const GOOGLE_CLIENT_ID = "910315304252-im8oclg36n7dun7hjs2atkv8p2ln7ng7.apps.googleusercontent.com";
-
-// Full App component inline to avoid import issues
+// Simple landing page until we can figure out the import issue
 const App: React.FC = () => {
   return (
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <ThemeProvider>
-            <Router>
-              <div className="App">
-                <Routes>
-                  {/* Landing Page - Default Route */}
-                  <Route path="/" element={<LandingPage />} />
-                  
-                  {/* Chat Interface */}
-                  <Route path="/chat" element={<MainLayout />} />
-                  
-                  {/* Privacy Policy */}
-                  <Route path="/privacy" element={<PrivacyPolicy />} />
-                  
-                  {/* Redirect any unknown routes to landing page */}
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </div>
-            </Router>
-          </ThemeProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </GoogleOAuthProvider>
+    <div style={{ 
+      minHeight: '100vh', 
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    }}>
+      <div style={{
+        background: 'white',
+        borderRadius: '20px',
+        padding: '3rem',
+        boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+        textAlign: 'center',
+        maxWidth: '600px'
+      }}>
+        <div style={{
+          width: '80px',
+          height: '80px',
+          background: 'linear-gradient(135deg, #667eea, #764ba2)',
+          borderRadius: '20px',
+          margin: '0 auto 2rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '2rem'
+        }}>
+          💳
+        </div>
+        <h1 style={{
+          fontSize: '2.5rem',
+          margin: '0 0 1rem',
+          color: '#1a1a1a'
+        }}>
+          CardGPT India
+        </h1>
+        <p style={{
+          fontSize: '1.2rem',
+          color: '#666',
+          lineHeight: '1.6',
+          margin: '0 0 2rem'
+        }}>
+          AI-Powered Credit Card Assistant for Indian Credit Cards
+        </p>
+        <div style={{
+          background: '#f8f9fa',
+          padding: '1.5rem',
+          borderRadius: '12px',
+          margin: '2rem 0'
+        }}>
+          <h3 style={{ margin: '0 0 1rem', color: '#333' }}>🚧 Temporary Notice</h3>
+          <p style={{ margin: '0', color: '#666', fontSize: '1rem' }}>
+            We're currently resolving deployment issues. The full application will be restored shortly.
+            <br />
+            <br />
+            <strong>Features Coming Soon:</strong>
+            <br />• Compare Axis Atlas, HSBC Premier, and ICICI EPM
+            <br />• AI-powered reward calculations
+            <br />• Smart spending recommendations
+          </p>
+        </div>
+        <div style={{
+          fontSize: '0.9rem',
+          color: '#888'
+        }}>
+          Built with React + TypeScript + FastAPI
+        </div>
+      </div>
+    </div>
   );
 };
 

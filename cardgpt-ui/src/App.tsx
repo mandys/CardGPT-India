@@ -9,7 +9,7 @@ import MainLayout from './components/Layout/MainLayout';
 import PrivacyPolicy from './components/Pages/PrivacyPolicy';
 import './styles/globals.css';
 
-// Create a client for React Query
+// Create a client for React Query (fixed for Vercel deployment)
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

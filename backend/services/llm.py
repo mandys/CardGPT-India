@@ -49,7 +49,7 @@ class LLMService:
         context_documents: List[Dict], 
         card_name: str = None, 
         model_choice: str = "gemini-1.5-pro",  # Changed from Flash due to performance issues
-        max_tokens: int = 800,  # Increased from 500 to allow comprehensive answers
+        max_tokens: int = 1200,  # Increased from 800 for Gemini 2.5 Flash-Lite detailed responses
         temperature: float = 0.1
     ) -> tuple[str, Dict[str, Any]]:
         """
@@ -75,13 +75,15 @@ class LLMService:
         # Enhance prompts for calculation queries
         is_calculation = self._is_calculation_query(question)
         if is_calculation:
-            max_tokens = min(max_tokens + 200, 1000)  # More tokens for detailed calculations
+            max_tokens = min(max_tokens + 400, 1600)  # More tokens for detailed calculations
         
         # Adjust max_tokens based on query type
         if any(keyword in question.lower() for keyword in ['transfer partners', 'partners', 'airlines', 'hotels', 'list', 'all', 'complete']):
-            max_tokens = min(max_tokens * 2, 1500)  # Double for comprehensive lists
+            max_tokens = min(max_tokens * 2, 2000)  # Double for comprehensive lists
         elif any(keyword in question.lower() for keyword in ['benefits', 'features', 'insurance', 'lounge', 'details']):
-            max_tokens = min(max_tokens + 300, 1200)  # Increase for detailed info
+            max_tokens = min(max_tokens + 400, 1600)  # Increase for detailed info
+        elif any(keyword in question.lower() for keyword in ['compare', 'comparison', 'split', 'spending', 'distribution']):
+            max_tokens = min(max_tokens + 600, 1800)  # Extra tokens for complex comparisons
         
         # Create prompts with calculation enhancement
         system_prompt = self._create_system_prompt(card_name, is_calculation)
@@ -99,7 +101,7 @@ class LLMService:
         context_documents: List[Dict], 
         card_name: str = None, 
         model_choice: str = "gemini-1.5-pro",
-        max_tokens: int = 800,
+        max_tokens: int = 1200,
         temperature: float = 0.1
     ):
         """
@@ -126,13 +128,15 @@ class LLMService:
         # Enhance prompts for calculation queries
         is_calculation = self._is_calculation_query(question)
         if is_calculation:
-            max_tokens = min(max_tokens + 200, 1000)  # More tokens for detailed calculations
+            max_tokens = min(max_tokens + 400, 1600)  # More tokens for detailed calculations
         
         # Adjust max_tokens based on query type
         if any(keyword in question.lower() for keyword in ['transfer partners', 'partners', 'airlines', 'hotels', 'list', 'all', 'complete']):
-            max_tokens = min(max_tokens * 2, 1500)  # Double for comprehensive lists
+            max_tokens = min(max_tokens * 2, 2000)  # Double for comprehensive lists
         elif any(keyword in question.lower() for keyword in ['benefits', 'features', 'insurance', 'lounge', 'details']):
-            max_tokens = min(max_tokens + 300, 1200)  # Increase for detailed info
+            max_tokens = min(max_tokens + 400, 1600)  # Increase for detailed info
+        elif any(keyword in question.lower() for keyword in ['compare', 'comparison', 'split', 'spending', 'distribution']):
+            max_tokens = min(max_tokens + 600, 1800)  # Extra tokens for complex comparisons
         
         # Create prompts with calculation enhancement
         system_prompt = self._create_system_prompt(card_name, is_calculation)

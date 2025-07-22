@@ -1,20 +1,20 @@
 {
   "version": 2,
   "name": "cardgpt-india",
-  "buildCommand": "REACT_APP_API_URL=https://cardgpt-india-production.up.railway.app npm ci && npm run build",
-  "outputDirectory": "build",
+  "framework": "create-react-app",
   "env": {
     "REACT_APP_API_URL": "https://cardgpt-india-production.up.railway.app"
   },
   "build": {
     "env": {
-      "REACT_APP_API_URL": "https://cardgpt-india-production.up.railway.app"
+      "REACT_APP_API_URL": "https://cardgpt-india-production.up.railway.app",
+      "CI": "false"
     }
   },
-  "routes": [
+  "rewrites": [
     {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }

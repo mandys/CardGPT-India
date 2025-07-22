@@ -24,33 +24,58 @@ const queryClient = new QueryClient({
 const GOOGLE_CLIENT_ID = "910315304252-im8oclg36n7dun7hjs2atkv8p2ln7ng7.apps.googleusercontent.com";
 
 const App: React.FC = () => {
-  return (
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <ThemeProvider>
-            <Router>
-              <div className="App">
-                <Routes>
-                  {/* Landing Page - Default Route */}
-                  <Route path="/" element={<LandingPage />} />
-                  
-                  {/* Chat Interface */}
-                  <Route path="/chat" element={<MainLayout />} />
-                  
-                  {/* Privacy Policy */}
-                  <Route path="/privacy" element={<PrivacyPolicy />} />
-                  
-                  {/* Redirect any unknown routes to landing page */}
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </div>
-            </Router>
-          </ThemeProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </GoogleOAuthProvider>
-  );
+  // Add error boundary and debugging
+  React.useEffect(() => {
+    console.log('🚀 App Component Mounted');
+    console.log('🌍 API URL:', process.env.REACT_APP_API_URL);
+    console.log('🔧 Environment:', process.env.NODE_ENV);
+  }, []);
+
+  try {
+    return (
+      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <ThemeProvider>
+              <Router>
+                <div className="App">
+                  <Routes>
+                    {/* Landing Page - Default Route */}
+                    <Route path="/" element={<LandingPage />} />
+                    
+                    {/* Chat Interface */}
+                    <Route path="/chat" element={<MainLayout />} />
+                    
+                    {/* Privacy Policy */}
+                    <Route path="/privacy" element={<PrivacyPolicy />} />
+                    
+                    {/* Redirect any unknown routes to landing page */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </div>
+              </Router>
+            </ThemeProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </GoogleOAuthProvider>
+    );
+  } catch (error) {
+    console.error('💥 App Error:', error);
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        flexDirection: 'column',
+        fontFamily: 'Arial, sans-serif'
+      }}>
+        <h1>⚠️ App Error</h1>
+        <p>Something went wrong. Check the console for details.</p>
+        <p>API URL: {process.env.REACT_APP_API_URL || 'Not Set'}</p>
+      </div>
+    );
+  }
 };
 
 const root = ReactDOM.createRoot(

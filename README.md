@@ -1,279 +1,411 @@
-# Credit Card Assistant
+# Credit Card Assistant - AI-Powered Indian Credit Card Advisor
 
-A modern full-stack AI assistant for querying Indian credit card terms and conditions. Get instant answers about rewards, fees, eligibility, and more using natural language queries with a professional React interface.
+A modern full-stack AI assistant for querying Indian credit card terms and conditions. Get instant answers about rewards, fees, eligibility, and spending optimization using natural language with ultra-low cost AI models.
 
-## Features
+**🚀 Live Demo**: [CardGPT India](https://card-gpt-india-vercel.app) | **📖 API Docs**: [Backend API](https://cardgpt-india-production.up.railway.app/docs)
 
-- **Modern Full-Stack**: React + TypeScript frontend with FastAPI backend
-- **Streaming Responses**: Real-time word-by-word text generation with Gemini streaming
-- **Responsive Design**: Mobile-first with collapsible sidebar and bottom navigation
-- **Multiple UI Options**: React (current), Streamlit (legacy), Gradio (legacy)
-- **Enterprise Search**: Google Vertex AI Search for fast, accurate document retrieval
-- **Google-Only AI**: Powered exclusively by Gemini 1.5 (Flash/Pro) models
-- **Ultra-Low Cost**: Gemini Flash costs only ₹0.02/query (20x cheaper than traditional models)
-- **Debug Transparency**: Collapsible cost breakdown and source documents with copy functionality
-- **Smart Calculations**: Automatically handles complex reward calculations with milestones
-- **Multi-Card Support**: Query individual cards or compare multiple cards
-- **Category-Aware**: Correctly handles hotel/flight vs general spending rates
-- **Real-Time Costs**: Live token usage and cost tracking in INR currency
-- **Professional UI**: Modern React interface with streaming indicators and complete UI control
+## Table of Contents
 
-## Supported Cards
+- [Quick Start (3 Minutes)](#quick-start-3-minutes)
+- [Architecture](#architecture)
+- [Supported Credit Cards](#supported-credit-cards)
+- [Features](#features)
+- [Data Pipeline Setup](#data-pipeline-setup)
+- [Development](#development)
+- [Deployment](#deployment)
+- [Usage Examples](#usage-examples)
+- [API Reference](#api-reference)
+- [Cost Optimization](#cost-optimization)
+- [Contributing](#contributing)
 
-- **Axis Atlas**: Premium miles card with accelerated earning rates
-- **ICICI EPM**: Reward points card with category-based earning
-- **HSBC Premier**: Miles card with comprehensive travel benefits
-
-## Quick Start
+## Quick Start (3 Minutes)
 
 ### Prerequisites
+- **Python 3.8+** and **Node.js 18+**
+- **Gemini API Key** (required - ultra-low cost model)
+- **Google Cloud Project** (for Vertex AI Search)
 
-- Python 3.8+
-- Gemini API key (required - Google-only architecture)
-- Google Cloud credentials (required for Vertex AI Search)
+### 1. Clone & Setup
+```bash
+git clone https://github.com/yourusername/credit-card-assistant.git
+cd credit-card-assistant
+```
 
-### Installation
+### 2. Backend Setup
+```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/credit-card-assistant.git
-   cd credit-card-assistant
-   ```
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your API keys (see Environment Variables section)
 
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+./start_backend.sh
+```
 
-3. **Set up environment variables**
-   ```bash
-   export GEMINI_API_KEY="your-gemini-key-here"  # Required for Google-only architecture
-   export GOOGLE_CLOUD_PROJECT="your-project-id"
-   export VERTEX_AI_LOCATION="global"
-   export VERTEX_AI_DATA_STORE_ID="your-data-store-id"
-   ```
+### 3. Frontend Setup
+```bash
+cd cardgpt-ui
+npm install
+./start_frontend.sh
+```
 
-4. **Set up data files (Required)**
-   ```bash
-   # The credit card data files are not included in the repository
-   # Contact project maintainers for access to the data files
-   # Place the following files in the data/ directory:
-   # - data/axis-atlas.json
-   # - data/hsbc-premier.json  
-   # - data/icici-epm.json
-   # See data/README.md for detailed instructions
-   ```
-
-5. **Authenticate with Google Cloud**
-   ```bash
-   gcloud auth application-default login
-   ```
-
-6. **Run the application**
-   
-   **Option A: React + FastAPI (Recommended)**
-   ```bash
-   # Terminal 1: Start backend
-   cd backend
-   ./start_backend.sh
-   
-   # Terminal 2: Start frontend
-   cd cardgpt-ui
-   ./start_frontend.sh
-   ```
-   Available at `http://localhost:3000` (React frontend)
-   API docs at `http://localhost:8000/docs` (FastAPI backend)
-   
-   **Option B: Streamlit (Legacy)**
-   ```bash
-   streamlit run app.py
-   ```
-   Available at `http://localhost:8501`
-   
-   **Option C: Gradio (Legacy)**
-   ```bash
-   python app_gradio.py
-   # Or use the start script
-   ./start_gradio.sh
-   ```
-   Available at `http://localhost:7860`
-
-## Usage
-
-### Query Examples
-
-**General Questions:**
-- "What are the annual fees for credit cards?"
-- "Compare reward rates between cards"
-- "What are the airport lounge access benefits?"
-
-**Calculations:**
-- "How many miles do I earn on ₹2 lakh flight spend with Axis Atlas?"
-- "What rewards for ₹50K utility spend on ICICI EPM?"
-- "Compare cash withdrawal fees between cards"
-
-**Specific Features:**
-- "What are the welcome benefits for Axis Atlas?"
-- "Are utilities capped for HSBC Premier card?"
-- "What are the joining benefits of HSBC Premier?"
-
-### Query Modes
-
-1. **General Query**: Ask questions about any credit card
-2. **Specific Card**: Focus on a particular card
-3. **Compare Cards**: Compare multiple cards side-by-side
+### 4. Access Application
+- **Main App**: http://localhost:3000
+- **API Docs**: http://localhost:8000/docs
+- **Health Check**: http://localhost:8000/api/health
 
 ## Architecture
 
-The application uses a modular architecture with the following components:
-
 ```
-├── backend/                    # FastAPI Backend
-│   ├── main.py                # FastAPI app entry point
-│   ├── models.py              # Pydantic schemas
-│   ├── api/                   # API endpoints
-│   │   ├── chat.py           # Chat endpoints
-│   │   ├── config.py         # Configuration
-│   │   └── health.py         # Health check
-│   ├── services/             # Business logic
-│   │   ├── llm.py           # Multi-model LLM service (GPT-4/3.5, Gemini)
-│   │   ├── vertex_retriever.py # Google Vertex AI Search integration
-│   │   ├── query_enhancer.py   # Smart query preprocessing
-│   │   └── calculator.py       # Precise reward calculations
-│   ├── requirements.txt      # Python dependencies
-│   └── start_backend.sh      # Backend startup script
-├── cardgpt-ui/               # React Frontend
-│   ├── src/
-│   │   ├── components/      # React components
-│   │   ├── services/        # API client
-│   │   ├── hooks/          # React hooks & state
-│   │   └── styles/         # Tailwind CSS
-│   ├── package.json        # Node.js dependencies
-│   └── start_frontend.sh   # Frontend startup script
-├── app.py                   # Streamlit application (legacy)
-├── app_gradio.py           # Gradio UI (legacy)
-├── data/                   # Credit card JSON files
-└── README_REACT_FASTAPI.md # Full documentation
+┌─────────────────────────────────────────────────────────────┐
+│                     Credit Card Assistant                    │
+├─────────────────────────────────────────────────────────────┤
+│ React Frontend (Vercel)     │ FastAPI Backend (Railway)     │
+│ • TypeScript + Tailwind     │ • Multi-model LLM service    │
+│ • Responsive design         │ • Vertex AI Search           │
+│ • Real-time streaming       │ • Smart query enhancement    │
+│ • Cost tracking            │ • Precise calculations       │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                    ┌─────────┴─────────┐
+                    │ Data Pipeline     │
+                    │ JSON → JSONL →    │
+                    │ Google Cloud →    │
+                    │ Vertex AI Search  │
+                    └───────────────────┘
 ```
 
-### Key Components
+### Core Components
 
 - **React Frontend**: Modern TypeScript React app with Tailwind CSS
 - **FastAPI Backend**: RESTful API with automatic documentation
 - **Vertex AI Search**: Enterprise-grade search with Google's managed infrastructure
-- **Multi-Model LLM**: Choose optimal model based on query complexity and cost
+- **Multi-Model LLM**: Gemini 2.5 Flash-Lite (ultra-low cost) + Pro models
 - **Query Enhancement**: Automatic category detection and preprocessing
 - **Smart Calculator**: Precise calculations for rewards, milestones, and fees
-- **Streaming Architecture**: Real-time responses with clean status indicators
-- **Debug Components**: Collapsible cost and sources display for transparency
-- **Responsive Design**: Mobile-first with collapsible sidebar and bottom navigation
 
-## Model Costs
+## Supported Credit Cards
 
-| Model | Cost per Query (INR) | Best For | Speed |
-|-------|---------------------|----------|-------|
-| **Gemini 1.5 Flash** | **₹0.02** | Simple queries | ⚡ Ultra Fast + Streaming |
-| **Gemini 1.5 Pro** | ₹0.43 | Complex calculations | ⚡ Fast + Streaming |
+| Card | Bank | Key Features | Best For |
+|------|------|--------------|----------|
+| **Atlas** | Axis Bank | 10X miles on travel, ₹1.5L milestone | Premium travel rewards |
+| **EPM** | ICICI Bank | 6 points per ₹200, category caps | Reward points system |
+| **Premier** | HSBC | Miles transfer, lounge access | Travel benefits |
 
-**💡 Google-Only Architecture**: Ultra-low cost with industry-leading streaming performance!
+## Features
 
-## Google Cloud Setup
+### 🤖 **AI-Powered Intelligence**
+- **Gemini 2.5 Flash-Lite**: Ultra-low cost model (₹0.02/query)
+- **Smart Comparisons**: AI-driven card recommendations
+- **Complex Calculations**: Automatic milestone and spending analysis
+- **Natural Language**: Ask questions in plain English
 
-### 1. Create Vertex AI Search Data Store
+### 🎨 **Modern Interface**
+- **Streaming Responses**: Real-time word-by-word generation
+- **Mobile Responsive**: Collapsible sidebar, bottom navigation
+- **Cost Transparency**: Live token usage and cost tracking
+- **Dark/Light Theme**: Automatic theme switching
 
+### 📊 **Advanced Analytics**
+- **Category Detection**: Automatic spending category identification
+- **Milestone Tracking**: Annual spend thresholds and bonuses
+- **Multi-Card Comparison**: Side-by-side analysis
+- **Optimization Suggestions**: Spending strategy recommendations
+
+## Data Pipeline Setup
+
+### 1. Prepare Credit Card Data
+Place JSON files in the `data/` directory:
+```
+data/
+├── axis-atlas.json      # Axis Bank Atlas card data
+├── icici-epm.json       # ICICI EPM card data
+└── hsbc-premier.json    # HSBC Premier card data
+```
+
+### 2. Transform to JSONL Format
+```bash
+python transform_to_jsonl.py
+# Creates: card_data.jsonl
+```
+
+### 3. Upload to Google Cloud Storage
+```bash
+gsutil cp card_data.jsonl gs://your-bucket/card_data.jsonl
+```
+
+### 4. Configure Vertex AI Search
 1. Go to [Vertex AI Search Console](https://console.cloud.google.com/ai/search)
 2. Create new data store
 3. Choose **Structured data (JSONL)** as data type
-4. Upload your credit card data in JSONL format
+4. Import from your Cloud Storage bucket
+5. Mark fields as **Filterable** (`cardName`) and **Retrievable** (`jsonData`)
 
-### 2. Configure Schema
-
-Mark the following fields in your data store:
-- `cardName`: **Filterable** (for card-specific queries)
-- `jsonData`: **Retrievable** (main content)
-- `section`: **Retrievable** (metadata)
-
-### 3. Environment Configuration
-
-Add to your `.streamlit/secrets.toml`:
-```toml
-GOOGLE_CLOUD_PROJECT = "your-project-id"
-VERTEX_AI_LOCATION = "global"
-VERTEX_AI_DATA_STORE_ID = "your-data-store-id"
-GEMINI_API_KEY = "your-gemini-key"
-```
-
-## Deployment
-
-### Streamlit Cloud
-
-1. Push your code to GitHub
-2. Go to [share.streamlit.io](https://share.streamlit.io)
-3. Connect your GitHub repository
-4. Add API keys to Streamlit secrets
-5. Deploy!
-
-### Local Development
-
+### 5. Update Environment Variables
 ```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Run Streamlit version
-streamlit run app.py
-
-# Run Gradio version (recommended)
-python app_gradio.py
-
-# Test different models
-# Both apps auto-detect available models and show cost comparisons
+GOOGLE_CLOUD_PROJECT="your-project-id"
+VERTEX_AI_DATA_STORE_ID="your-data-store-id"
 ```
-
-## Adding New Credit Cards
-
-1. Create a JSON file in the `/data` directory following the existing structure
-2. Include sections for:
-   - `common_terms`: Interest rates, fees, policies
-   - `card`: Specific rewards, milestones, benefits
-3. Upload the data to your Vertex AI Search data store
-4. Restart the application
 
 ## Development
 
+### Environment Variables
+
+Create `backend/.env`:
 ```bash
-# Install dependencies
-pip install -r requirements.txt
+# Required
+GEMINI_API_KEY="your-gemini-key-here"          # Ultra-low cost AI model
+GOOGLE_CLOUD_PROJECT="your-gcp-project-id"    # For Vertex AI Search
+VERTEX_AI_DATA_STORE_ID="your-data-store-id"  # Search data store
 
-# Run development server
-streamlit run app.py
-
-# Check code quality
-python -m py_compile app.py
+# Optional
+VERTEX_AI_LOCATION="global"                    # Default: global
 ```
 
-## Performance
+### Local Development Commands
 
-- **Search Response**: 2-5 seconds (enterprise-optimized)
-- **Model Response**: 1-10 seconds (depending on model choice)
-- **Zero Maintenance**: Google's managed infrastructure handles scaling
-- **High Availability**: Enterprise-grade reliability
+**Backend Development:**
+```bash
+cd backend
+source venv/bin/activate
+
+# Start with hot reload
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+
+# Run tests
+python test_api.py
+
+# Check models
+python check_gemini_models.py
+```
+
+**Frontend Development:**
+```bash
+cd cardgpt-ui
+
+# Development server
+npm start
+
+# Build for production
+npm run build
+
+# Type checking
+npx tsc --noEmit
+```
+
+### Adding New Credit Cards
+
+1. **Create JSON file** in `data/` directory following the structure:
+   ```json
+   {
+     "card": {
+       "name": "Card Name",
+       "bank": "Bank Name",
+       "rewards": { /* reward structure */ },
+       "milestones": { /* milestone benefits */ },
+       "fees": { /* fee structure */ }
+     }
+   }
+   ```
+
+2. **Transform and upload**:
+   ```bash
+   python transform_to_jsonl.py
+   gsutil cp card_data.jsonl gs://your-bucket/
+   ```
+
+3. **Update Vertex AI Search** data store with new JSONL file
+
+4. **Restart application** to recognize new card
+
+## Deployment
+
+### Production Deployment
+
+**Frontend (Vercel):**
+```bash
+cd cardgpt-ui
+npm run build
+
+# Deploy to Vercel
+vercel --prod
+```
+
+**Backend (Railway):**
+```bash
+# Push to main branch - Railway auto-deploys
+git push origin main
+```
+
+### Environment Variables (Production)
+
+**Vercel Environment Variables:**
+```
+REACT_APP_API_URL=https://your-backend-url.up.railway.app
+```
+
+**Railway Environment Variables:**
+```
+GEMINI_API_KEY=your-gemini-key
+GOOGLE_CLOUD_PROJECT=your-project-id
+VERTEX_AI_DATA_STORE_ID=your-data-store-id
+```
+
+## Usage Examples
+
+### Basic Queries
+```
+"What are the annual fees for credit cards?"
+"Compare reward rates between Atlas and EPM"
+"Which card has the best airport lounge access?"
+```
+
+### Calculation Queries
+```
+"How many miles for ₹2 lakh flight spend on Atlas?"
+"Calculate rewards for ₹50K monthly expenses on EPM"
+"Compare cash withdrawal fees across all cards"
+```
+
+### Complex Spending Analysis
+```
+"I spend ₹1L monthly: 20% rent, 30% groceries, 50% dining - which card is best?"
+"Split ₹5L annual spend across travel and utilities for maximum rewards"
+"What's the optimal card combination for ₹10L annual spend?"
+```
+
+### Expected Response Format
+```
+🧮 Detailed Calculation:
+
+For ₹2L flight spend on Axis Atlas:
+1. Base Rate: ₹2,00,000 ÷ ₹100 × 2 miles = 4,000 miles
+2. Travel Bonus: ₹2,00,000 ÷ ₹100 × 10 miles = 20,000 miles  
+3. Total: 24,000 EDGE Miles
+
+Cost: ₹0.02 | Time: 2.3s | Model: Gemini 2.5 Flash-Lite
+```
+
+## API Reference
+
+### Base URL
+- **Local**: http://localhost:8000
+- **Production**: https://cardgpt-india-production.up.railway.app
+
+### Key Endpoints
+
+```http
+POST /api/chat
+Content-Type: application/json
+
+{
+  "message": "How many miles for ₹1L spend?",
+  "model": "gemini-2.5-flash-lite",
+  "query_mode": "General Query",
+  "top_k": 7
+}
+```
+
+```http
+GET /api/config
+# Returns: Available models, supported cards, pricing
+
+GET /api/health
+# Returns: Service status, model availability
+```
+
+### Streaming API
+```http
+POST /api/chat/stream
+Content-Type: application/json
+
+# Returns: Server-Sent Events (SSE) stream
+```
+
+## Cost Optimization
+
+### Model Cost Comparison (per 1K tokens)
+
+| Model | Input Cost | Output Cost | Best For | Speed |
+|-------|------------|-------------|----------|-------|
+| **Gemini 2.5 Flash-Lite** | ₹0.008 | ₹0.03 | Simple queries | ⚡ Ultra Fast |
+| Gemini 1.5 Flash | ₹0.006 | ₹0.02 | General queries | ⚡ Fast |
+| Gemini 1.5 Pro | ₹0.10 | ₹0.40 | Complex analysis | 🚀 Powerful |
+
+### Optimization Tips
+- **Use Gemini 2.5 Flash-Lite** for 90% of queries (20x cheaper)
+- **Adjust `top_k`** parameter (fewer docs = lower cost)
+- **Batch similar questions** to reduce API calls
+- **Monitor costs** with built-in tracking dashboard
 
 ## Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+### Development Workflow
+```bash
+# 1. Fork repository
+git checkout -b feature/amazing-feature
 
-## License
+# 2. Make changes
+# Edit code, run tests, update docs
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+# 3. Test locally
+cd backend && python test_api.py
+cd cardgpt-ui && npm start
 
-## Credits**Built by:** [@maharajamandy](https://x.com/maharajamandy) & [@jockaayush](https://x.com/jockaayush)  
-**Powered by:** Google Gemini + Vertex AI Search  
-**Framework:** React + FastAPI + Python  
+# 4. Submit PR
+git commit -m "Add amazing feature"
+git push origin feature/amazing-feature
+```
+
+### Code Standards
+- **TypeScript**: Strict mode enabled
+- **Python**: Black formatting, type hints
+- **API**: OpenAPI documentation required
+- **Tests**: Add tests for new features
+
+## Troubleshooting
+
+### Common Issues
+
+**Backend not starting:**
+```bash
+# Check API keys
+python -c "import os; print('GEMINI_API_KEY:', os.getenv('GEMINI_API_KEY')[:10] + '...')"
+
+# Test Vertex AI connection
+python check_gemini_models.py
+```
+
+**Frontend build errors:**
+```bash
+# Clear cache and reinstall
+rm -rf node_modules package-lock.json
+npm install
+npm start
+```
+
+**Search returning 0 results:**
+```bash
+# Verify data store configuration
+echo $VERTEX_AI_DATA_STORE_ID
+
+# Check JSONL format
+head -n 1 card_data.jsonl | jq .
+```
 
 ---
 
-*Get instant answers about Indian credit card terms and conditions with the power of AI!*
+## Credits
+
+**Built by:** [@maharajamandy](https://x.com/maharajamandy) & [@jockaayush](https://x.com/jockaayush)  
+**Powered by:** Google Gemini + Vertex AI Search  
+**Framework:** React + FastAPI + Python  
+
+**🎯 Mission**: Experimenting with RAG and LLM technology for Indian fintech
+
+---
+
+*Get instant, AI-powered insights about Indian credit cards - compare, calculate, and optimize your spending strategy!*

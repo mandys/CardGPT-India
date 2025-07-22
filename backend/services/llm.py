@@ -369,7 +369,11 @@ For earning rate comparisons:
   * Axis Atlas: Uses "EDGE Miles" (e.g., "2 EDGE Miles/₹100", "5 EDGE Miles/₹100")
   * ICICI EPM: Uses "Reward Points" (e.g., "6 points per ₹200") 
   * HSBC Premier: Uses "Reward points" (e.g., "3 points per ₹100")
-- Travel categories may include hotels, flights, and general travel
+- CRITICAL CATEGORY MAPPINGS:
+  * Flight/airline spending = "Direct Airlines", "Airlines", "Air Travel", "Flight" categories
+  * Hotel spending = "Direct Hotels", "Hotels", "Hotel Booking" categories  
+  * Travel = encompasses flights, hotels, and general travel bookings
+- When user asks about "flight spend" or "airline spend", look for travel earning rates that include "Direct Airlines"
 - For insurance spending: Check "capping_per_statement_cycle" or "reward_capping" for limits, NOT "insurance" benefits section
 - Check for both general rates and category-specific rates
 - If a card mentions travel/hotel categories but shows same rate as general, that's the actual rate
@@ -419,16 +423,26 @@ Context:
 🧮 **CALCULATION MODE:**
 
 STEPS:
-1. **Amount**: Convert to actual numbers (₹1L = ₹1,00,000)
+1. **Amount**: Convert to actual numbers (₹1L = ₹1,00,000, ₹3L = ₹3,00,000, ₹7.5L = ₹7,50,000, ₹15L = ₹15,00,000)
 2. **Base Calculation**: Apply earning rate from context
 3. **Apply Caps**: Check monthly/cycle limits if any
-4. **Find Milestones**: Scan ALL context sections for ANY spend amounts (₹3L, ₹4L, ₹7.5L, ₹8L, etc.) - apply ALL where user spend ≥ threshold
-5. **Final Total**: Base + milestones + any fees
+4. **Find Milestones**: CRITICAL - Step-by-step milestone validation
+   - Convert user spend to numbers: ₹3,00,000 = 300000
+   - Convert each milestone to numbers: ₹3L = 300000, ₹7.5L = 750000, ₹15L = 1500000
+   - Check EACH milestone individually:
+     * IF 300000 ≥ 300000 (₹3L) → YES, apply ₹3L milestone bonus
+     * IF 300000 ≥ 750000 (₹7.5L) → NO, do not apply ₹7.5L milestone bonus
+     * IF 300000 ≥ 1500000 (₹15L) → NO, do not apply ₹15L milestone bonus
+   - NEVER assume spend exceeds higher milestones without explicit number comparison
+5. **Final Total**: Base + applicable milestones + any fees
 
 KEY RULES:
-- Milestones are cumulative (₹7.5L gets ₹3L + ₹7.5L bonuses)
+- MATHEMATICAL VALIDATION: Before applying any milestone, verify the numbers
+  * ₹3,00,000 spend can ONLY qualify for ₹3L milestone (300000 ≥ 300000 ✅)
+  * ₹3,00,000 spend CANNOT qualify for ₹7.5L milestone (300000 < 750000 ❌)
+- Compare actual numbers, not shorthand (₹3L = ₹3,00,000 = 300000)  
+- If you apply ₹7.5L bonus to ₹3L spend, that's a mathematical ERROR
 - Show math: (spend ÷ rate) × multiplier = result
-- Look for patterns: "₹X spend" → "Y benefit" in context
 
 FORMAT: "🧮 **Detailed Calculation:**" with clear steps"""
         else:

@@ -4,12 +4,17 @@ This folder contains historical documentation files that were consolidated into 
 
 ## Archived Files
 
+### Documentation Files
 - **README_REACT_FASTAPI.md** - Comprehensive React+FastAPI technical documentation
 - **REACT_FASTAPI_SUCCESS.md** - Implementation success story and migration details  
 - **QUICKSTART_REACT_FASTAPI.md** - Quick start guide for React+FastAPI setup
 - **RESPONSIVE_SIDEBAR_IMPLEMENTATION.md** - Mobile UI and responsive design implementation
 - **TYPESCRIPT_FIXES.md** - TypeScript error resolution and fixes applied
 - **homepage_design.md** - Landing page design specifications and requirements
+
+### Claude Context Files
+- **claude-context.md** - Historical project context and evolution timeline
+- **CLAUDE.local.md** - Local development notes and maintenance reminders
 
 ## Why Archived?
 

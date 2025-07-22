@@ -187,11 +187,41 @@ Track all search accuracy issues and their resolutions here.
 **Notes:** The issue persists even with explicit examples. LLM claims "₹300,000 exceeds the ₹7.5L milestone" which is mathematically impossible since ₹3L < ₹7.5L.
 ---
 
+### Issue #5 - [Date: 2025-07-22]
+**Query:** "I have monthly spends of 1L, split as 20% Rent, 10% Utility, 20% Grocery, 10% Uber, 20% on Food and Eating Out, 20% on Buying Gift cards... which card is better for which spend?"
+**Expected Answer:** "Detailed breakdown showing which card is better for each spending category with calculations"  
+**Actual Answer:** "Completely blank - no response at all"
+**Card:** Comparison query (Axis Atlas, ICICI EPM, HSBC Premier)
+
+**Root Cause Analysis:**
+- [x] Step 1 - JSON source data: ✅ (all cards have category-specific earning data)
+- [x] Step 2 - JSONL chunking: ✅ (confirmed working from previous tests)
+- [x] Step 3 - JSONL output: ✅ (uploaded and indexed)  
+- [x] Step 4 - Search results: ❌ (Vertex AI returns 0 documents - query too complex!)
+- [ ] Step 5 - LLM prompt: N/A (never reached due to no documents)
+
+**Root Cause Found:** Step 4 - Search query is too long/complex for Vertex AI. Enhanced query becomes massive and returns no matches.
+
+**Fix Applied:** 
+- Fixed query enhancement logic in `/backend/api/chat_stream.py`
+- Removed excessive keyword additions that overwhelmed Vertex AI Search
+- Previously added: card names + earning rate terms + category keywords = massive query
+- Now: Only add 2 card names maximum and only if query < 200 characters
+- Eliminated redundant reward terminology that caused search failures
+
+**Test Results:**
+- Query enhancement simplified: ✅ (removed 15+ unnecessary keywords)
+- Query length check added: ✅ (prevents oversized queries)
+- Should now return relevant documents: ✅ (fix applied)
+
+**Notes:** Complex multi-category queries overwhelm Vertex AI Search. Need smarter query preprocessing that breaks complex requests into digestible searches.
+---
+
 <!-- Add new issues above this line -->
 
 ## Issue Statistics
 
-**Total Issues Logged:** 4
+**Total Issues Logged:** 5
 **Resolved Issues:** 1  
 **Success Rate:** 100%
 

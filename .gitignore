@@ -101,7 +101,8 @@ exports/
 **/*key*.json
 **/*secret*.json
 **/*credentials*.json
-**/*config*.json
+**/*config.json
+!**/tsconfig.json
 *api_key*
 *secret*
 *token*

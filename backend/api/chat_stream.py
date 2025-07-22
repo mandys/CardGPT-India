@@ -159,24 +159,10 @@ def process_query_stream(
             if any(pattern in question_lower for pattern in ["hsbc", "premier"]):
                 card_names_to_boost.append("HSBC Premier Credit Card")
                 
-            # Add card names to search query for better retrieval
-            if card_names_to_boost:
-                question += f" {' '.join(card_names_to_boost)}"
-                
-            # Add card-specific reward terminology for better search targeting
-            question_lower = question.lower()
-            if any(pattern in question_lower for pattern in ["axis", "atlas"]):
-                question += " EDGE Miles earning rate"
-            if any(pattern in question_lower for pattern in ["icici", "epm"]):
-                question += " Reward Points earning rate"
-            if any(pattern in question_lower for pattern in ["hsbc", "premier"]):
-                question += " Reward points earning rate"
-            
-            # Enhance the search query with relevant keywords for better document retrieval
-            if any(keyword in question.lower() for keyword in ["hotel", "flight", "travel"]):
-                question += " rewards earning rate points miles travel hotel flight"
-            elif "insurance" in question.lower():
-                question += " capping per statement cycle 5000 reward points MCC 6300 5960"
+            # For complex comparison queries, use simple search without overwhelming keywords
+            # Just add minimal card names for targeting
+            if card_names_to_boost and len(question) < 200:  # Only if query isn't already too long
+                question += f" {' '.join(card_names_to_boost[:2])}"  # Limit to 2 cards max
         
         # Enhance search for calculation queries to include milestone data
         if metadata.get('is_calculation_query', False):

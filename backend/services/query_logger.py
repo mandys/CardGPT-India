@@ -179,6 +179,7 @@ class QueryLogger:
                 is_successful = response_data.response_status == 200
                 
                 # Model usage counters
+                gemini_flash_lite_increment = 1 if model_used == "gemini-2.5-flash-lite" else 0
                 gemini_flash_increment = 1 if model_used == "gemini-1.5-flash" else 0
                 gemini_pro_increment = 1 if model_used == "gemini-1.5-pro" else 0
                 
@@ -194,6 +195,7 @@ class QueryLogger:
                         SET total_queries = total_queries + 1,
                             successful_queries = successful_queries + ?,
                             failed_queries = failed_queries + ?,
+                            gemini_flash_lite_queries = gemini_flash_lite_queries + ?,
                             gemini_flash_queries = gemini_flash_queries + ?,
                             gemini_pro_queries = gemini_pro_queries + ?,
                             general_queries = general_queries + ?,
@@ -214,6 +216,7 @@ class QueryLogger:
                     """, (
                         1 if is_successful else 0,
                         1 if not is_successful else 0,
+                        gemini_flash_lite_increment,
                         gemini_flash_increment,
                         gemini_pro_increment,
                         general_increment,
@@ -233,14 +236,15 @@ class QueryLogger:
                     conn.execute("""
                         INSERT INTO query_stats (
                             date, total_queries, successful_queries, failed_queries,
-                            gemini_flash_queries, gemini_pro_queries,
+                            gemini_flash_lite_queries, gemini_flash_queries, gemini_pro_queries,
                             general_queries, specific_card_queries, comparison_queries,
                             avg_execution_time_ms, avg_tokens_used, total_cost
-                        ) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ) VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, (
                         today,
                         1 if is_successful else 0,
                         1 if not is_successful else 0,
+                        gemini_flash_lite_increment,
                         gemini_flash_increment,
                         gemini_pro_increment,
                         general_increment,

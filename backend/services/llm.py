@@ -38,6 +38,7 @@ class LLMService:
         
         # Google Gemini model pricing (per 1K tokens) - Ultra-low cost!
         self.model_pricing = {
+            "gemini-2.5-flash-lite": {"input": 0.0001, "output": 0.0004},  # NEW: Lowest latency & cost
             "gemini-1.5-flash": {"input": 0.000075, "output": 0.0003},   # Ultra fast & cheap
             "gemini-1.5-pro": {"input": 0.00125, "output": 0.005}       # Balanced performance
         }
@@ -157,6 +158,7 @@ class LLMService:
             
             # Map our model names to actual Gemini model names
             model_mapping = {
+                "gemini-2.5-flash-lite": "models/gemini-2.5-flash-lite",  # New 2.5 Flash-Lite (CORRECT)
                 "gemini-1.5-flash": "models/gemini-1.5-flash",
                 "gemini-1.5-pro": "models/gemini-1.5-pro"
             }
@@ -228,6 +230,7 @@ class LLMService:
             
             # Map our model names to actual Gemini model names
             model_mapping = {
+                "gemini-2.5-flash-lite": "models/gemini-2.5-flash-lite",  # New 2.5 Flash-Lite (CORRECT)
                 "gemini-1.5-flash": "models/gemini-1.5-flash",
                 "gemini-1.5-pro": "models/gemini-1.5-pro"
             }
@@ -488,6 +491,7 @@ For informational queries:
         
         # Gemini model specifications
         model_specs = {
+            "gemini-2.5-flash-lite": {"context_window": 1048576, "max_output_tokens": 8192},  # 1M context - NEW
             "gemini-1.5-flash": {"context_window": 1048576, "max_output_tokens": 8192},  # 1M context
             "gemini-1.5-pro": {"context_window": 2097152, "max_output_tokens": 8192}    # 2M context
         }

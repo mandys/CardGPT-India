@@ -165,8 +165,39 @@ def process_query_stream(
                 question += f" {' '.join(card_names_to_boost[:2])}"  # Limit to 2 cards max
         
         # Enhance search for calculation queries to include milestone data
-        if metadata.get('is_calculation_query', False):
+        # But skip for complex comparison queries to avoid overwhelming search
+        if (metadata.get('is_calculation_query', False) and 
+            not ("compare" in question.lower() and len(question) > 100)):
             question += " milestone spend threshold bonus benefits"
+        
+        # For ultra-complex queries (>200 chars), use simplified search terms
+        if len(question) > 200 and "compare" in question.lower():
+            # Extract just the card names and spending categories for search
+            simplified_query = "compare cards spending rewards "
+            question_lower = question.lower()
+            
+            # Add card names
+            if any(pattern in question_lower for pattern in ["axis", "atlas"]):
+                simplified_query += "Atlas "
+            if any(pattern in question_lower for pattern in ["icici", "epm"]):
+                simplified_query += "EPM "
+            if any(pattern in question_lower for pattern in ["hsbc", "premier"]):
+                simplified_query += "Premier "
+            
+            # Add key spending categories mentioned
+            if "rent" in question_lower:
+                simplified_query += "rent "
+            if "utility" in question_lower:
+                simplified_query += "utility "
+            if "grocery" in question_lower:
+                simplified_query += "grocery "
+            if "food" in question_lower:
+                simplified_query += "dining "
+            if "gift" in question_lower:
+                simplified_query += "gift "
+                
+            question = simplified_query.strip()
+            logger.info(f"Simplified ultra-complex query to: {question}")
         
         # Send search status
         search_status_chunk = StreamChunk(

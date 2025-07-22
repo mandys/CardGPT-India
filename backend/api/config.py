@@ -16,6 +16,14 @@ async def get_config(services=Depends(lambda: {})):
         # Google-only model selection (ultra-low cost architecture)
         available_models = [
             ModelInfo(
+                name="gemini-2.5-flash-lite",
+                provider="Google",
+                cost_per_1k_input=0.1,    # $0.0001 - NEW: Lowest cost!
+                cost_per_1k_output=0.4,   # $0.0004
+                available=True,
+                description="🚀 NEW: Lowest latency & cost in Gemini 2.5 family"
+            ),
+            ModelInfo(
                 name="gemini-1.5-flash",
                 provider="Google",
                 cost_per_1k_input=0.075,  # $0.000075
@@ -50,7 +58,7 @@ async def get_config(services=Depends(lambda: {})):
         return ConfigResponse(
             available_models=available_models,
             supported_cards=supported_cards,
-            default_model="gemini-1.5-flash",  # Ultra-fast default
+            default_model="gemini-2.5-flash-lite",  # NEW: Lowest latency & cost!
             max_top_k=15
         )
         
@@ -59,7 +67,7 @@ async def get_config(services=Depends(lambda: {})):
         return ConfigResponse(
             available_models=[],
             supported_cards=["Axis Atlas", "ICICI EPM", "HSBC Premier"],
-            default_model="gemini-1.5-flash",
+            default_model="gemini-2.5-flash-lite",
             max_top_k=15
         )
 

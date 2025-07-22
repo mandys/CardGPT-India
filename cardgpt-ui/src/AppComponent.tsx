@@ -22,7 +22,7 @@ const queryClient = new QueryClient({
 
 const GOOGLE_CLIENT_ID = "910315304252-im8oclg36n7dun7hjs2atkv8p2ln7ng7.apps.googleusercontent.com";
 
-const App: React.FC = () => {
+const AppComponent: React.FC = () => {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <QueryClientProvider client={queryClient}>
@@ -52,4 +52,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App;
+export default AppComponent;

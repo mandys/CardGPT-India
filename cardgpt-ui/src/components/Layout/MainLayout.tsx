@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Header from './Header';
+import MobileHeader from './MobileHeader';
 import Sidebar from './Sidebar';
 import MobileBottomNav from './MobileBottomNav';
 import ChatInterface from '../Chat/ChatInterface';
@@ -135,13 +136,22 @@ const MainLayout: React.FC = () => {
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <Header
-        isConnected={isConnected}
-        onRefresh={handleRefresh}
-        isLoading={isRefreshing}
-        onShowAuth={() => setIsAuthModalOpen(true)}
-      />
+      {/* Header - Responsive */}
+      {isMobile ? (
+        <MobileHeader
+          isConnected={isConnected}
+          onRefresh={handleRefresh}
+          isLoading={isRefreshing}
+          onShowAuth={() => setIsAuthModalOpen(true)}
+        />
+      ) : (
+        <Header
+          isConnected={isConnected}
+          onRefresh={handleRefresh}
+          isLoading={isRefreshing}
+          onShowAuth={() => setIsAuthModalOpen(true)}
+        />
+      )}
       
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden relative">

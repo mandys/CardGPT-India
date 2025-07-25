@@ -71,12 +71,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   const exampleQuestions = [
-    'What are the annual fees for credit cards?',
-    'Compare reward rates between cards',
-    'What are the welcome benefits for Axis Atlas?',
-    'How many miles do I earn on ₹2 lakh flight spend using Axis Atlas?',
-    'What are the cash withdrawal fees?',
-    'Are utilities capped for HSBC Premier card?',
+    '🔥 Which card is fire for travel rewards?',
+    '💰 Best cashback card that won\'t break me?',
+    '✈️ Atlas vs EPM - which one slaps harder?',
+    '🎯 Annual fees? We don\'t do those here',
+    '📱 UPI cashback cards that actually pay',
+    '🏠 Rent payments with max rewards?',
   ];
 
   return (
@@ -86,20 +86,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         {messages.length === 0 ? (
           <div className="text-center py-8">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
-                💳 Credit Card Assistant
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-3 text-center">
+                Ask me anything about Indian credit cards 💳
               </h2>
-              <p className="text-gray-600 dark:text-gray-300">
-                Ask me anything about Indian credit card terms and conditions
+              <p className="text-gray-600 dark:text-gray-400 text-center">
+                Get instant, personalized insights!
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
               {exampleQuestions.map((example, index) => (
                 <button
                   key={index}
                   onClick={() => onExampleClick(example)}
-                  className="p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-400 hover:shadow-md transition-all duration-200 text-left text-sm text-gray-700 dark:text-gray-300 hover:text-primary-600"
+                  className="glass-card p-4 text-left text-sm text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transform transition-all duration-300 hover:scale-105 hover:glow-purple"
                 >
                   {example}
                 </button>
@@ -148,7 +148,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
 
       {/* Input Area */}
-      <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
+      <div className="glass-card m-4 p-4 border-0">
         {inputDisabled && (
           <div className="mb-3 flex items-center justify-center">
             <div className="text-sm text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-3 py-2 rounded-lg border border-orange-200 dark:border-orange-800">
@@ -174,7 +174,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             placeholder={
               inputDisabled 
                 ? "Daily limit reached. Sign in for unlimited queries..." 
-                : "Type your question here..."
+                : "Ask about credit cards... 💳"
             }
             className={`flex-1 input-field ${
               inputDisabled 

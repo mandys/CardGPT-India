@@ -1,5 +1,5 @@
 import React from 'react';
-import { CreditCard, RefreshCw, AlertCircle, Menu, X } from 'lucide-react';
+import { RefreshCw, AlertCircle, Menu, X } from 'lucide-react';
 import { useSidebar } from '../../hooks/useSidebar';
 import UserButton from '../Auth/UserButton';
 
@@ -33,20 +33,21 @@ const Header: React.FC<HeaderProps> = ({ isConnected, onRefresh, isLoading = fal
           
           {/* Logo and Title */}
           <div className="flex items-center space-x-3">
-            <div className="flex items-center justify-center w-10 h-10 bg-primary-600 rounded-lg">
-              <CreditCard className="w-6 h-6 text-white" />
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg" style={{background: 'var(--gradient-primary)'}}>
+              <span className="text-xl">💳</span>
             </div>
             <div className="hidden sm:block">
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">Credit Card Assistant</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Smart AI for Indian credit card queries</p>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                CardGPT - Your pocket-sized credit card expert ✨
+              </h1>
             </div>
           </div>
         </div>
         
-        {/* Status and Actions */}
+        {/* Status and Actions - Desktop Only */}
         <div className="flex items-center space-x-4">
-          {/* Connection Status */}
-          <div className="flex items-center space-x-2">
+          {/* Connection Status - Debug Info */}
+          <div className="hidden md:flex items-center space-x-2">
             <div className={`w-2 h-2 rounded-full ${
               isConnected ? 'bg-green-500' : 'bg-red-500'
             }`}></div>
@@ -55,11 +56,11 @@ const Header: React.FC<HeaderProps> = ({ isConnected, onRefresh, isLoading = fal
             </span>
           </div>
           
-          {/* Refresh Button */}
+          {/* Refresh Button - Debug Info */}
           <button
             onClick={onRefresh}
             disabled={isLoading}
-            className="flex items-center space-x-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors duration-200 disabled:opacity-50"
+            className="hidden md:flex items-center space-x-2 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors duration-200 disabled:opacity-50"
             title="Refresh connection"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
@@ -69,9 +70,9 @@ const Header: React.FC<HeaderProps> = ({ isConnected, onRefresh, isLoading = fal
           {/* User Authentication */}
           <UserButton onShowAuth={onShowAuth} />
           
-          {/* Warning if disconnected */}
+          {/* Warning if disconnected - Desktop Only */}
           {!isConnected && (
-            <div className="flex items-center space-x-1 px-2 py-1 bg-yellow-100 text-yellow-800 rounded-lg">
+            <div className="hidden md:flex items-center space-x-1 px-2 py-1 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400 rounded-lg">
               <AlertCircle className="w-4 h-4" />
               <span className="text-sm">Backend offline</span>
             </div>

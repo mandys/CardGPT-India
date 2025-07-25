@@ -30,7 +30,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   error: null,
   
   settings: {
-    selectedModel: 'gemini-1.5-flash',  // Ultra-fast default
+    selectedModel: 'gemini-2.5-flash-lite',  // Fallback default, will be updated from API
     queryMode: 'General Query' as QueryMode,
     cardFilter: 'None' as CardFilter,
     topK: 7,
@@ -123,6 +123,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       const config = await apiClient.getConfig();
       set({ config });
+      
+      // Update selectedModel to use API default if not already set by user
+      const currentState = get();
+      if (config.default_model && currentState.settings.selectedModel === 'gemini-2.5-flash-lite') {
+        // Only update if still using the fallback default
+        set({
+          settings: {
+            ...currentState.settings,
+            selectedModel: config.default_model
+          }
+        });
+      }
     } catch (error) {
       console.error('Failed to load config:', error);
       set({ error: error as ApiError });

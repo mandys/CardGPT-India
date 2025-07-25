@@ -43,7 +43,7 @@ const Header: React.FC<HeaderProps> = ({ isConnected, onRefresh, isLoading = fal
           </div>
         </div>
         
-        {/* Status and Actions */}
+        {/* Status and Actions - Desktop Only */}
         <div className="flex items-center space-x-4">
           {/* Connection Status - Hidden on mobile */}
           <div className="hidden md:flex items-center space-x-2">

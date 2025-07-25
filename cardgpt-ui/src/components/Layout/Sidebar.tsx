@@ -71,10 +71,11 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
         <div className="h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
           {/* Mobile close button */}
           {isMobile && (
-            <div className="flex justify-end p-4 lg:hidden">
+            <div className="flex justify-between items-center p-4 lg:hidden border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Settings</h3>
               <button
                 onClick={closeSidebar}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg flex-shrink-0"
               >
                 <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
               </button>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Bot, ChevronDown, ChevronRight, Bug } from 'lucide-react';
+import { User, ChevronDown, ChevronRight, Bug } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { ChatMessage } from '../../types';
 import CardSelection from './CardSelection';
@@ -30,13 +30,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onCardSelection 
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in`}>
       <div className={`flex items-start space-x-3 max-w-4xl ${isUser ? 'flex-row-reverse space-x-reverse' : ''}`}>
         {/* Avatar */}
-        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-          isUser ? 'bg-primary-600' : 'bg-gray-200'
-        }`}>
+        <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
+          isUser ? 'glow-purple' : 'glass-card'
+        }`} style={isUser ? {background: 'var(--gradient-accent)'} : {}}>
           {isUser ? (
-            <User className="w-4 h-4 text-white" />
+            <User className="w-5 h-5 text-white" />
           ) : (
-            <Bot className="w-4 h-4 text-gray-600" />
+            <span className="text-xl">🤖</span>
           )}
         </div>
         
@@ -58,14 +58,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onCardSelection 
             </div>
           ) : (
             // Regular message bubble
-            <div className={`inline-block px-4 py-2 rounded-lg ${
+            <div className={`inline-block px-4 py-3 ${
               isUser 
-                ? 'bg-primary-600 text-white' 
-                : 'bg-white text-gray-800 shadow-sm border border-gray-200'
+                ? 'message-user' 
+                : 'message-assistant'
             }`}>
               {/* Message Text */}
               <div className={`prose prose-sm max-w-none ${
-                isUser ? 'prose-invert' : 'prose-gray'
+                isUser ? 'prose-invert' : 'prose-gray dark:prose-invert'
               }`}>
                 {isUser ? (
                   // For user messages, keep simple text rendering

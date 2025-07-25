@@ -1,4 +1,4 @@
-# Credit Card Assistant - AI-Powered Indian Credit Card Advisor
+# CardGPT - Your Pocket-Sized Credit Card Expert ✨
 
 A modern full-stack AI assistant for querying Indian credit card terms and conditions. Get instant answers about rewards, fees, eligibility, and spending optimization using natural language with ultra-low cost AI models.
 
@@ -61,7 +61,7 @@ npm install
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Credit Card Assistant                    │
+│                         CardGPT                              │
 ├─────────────────────────────────────────────────────────────┤
 │ React Frontend (Vercel)     │ FastAPI Backend (Railway)     │
 │ • TypeScript + Tailwind     │ • Multi-model LLM service    │

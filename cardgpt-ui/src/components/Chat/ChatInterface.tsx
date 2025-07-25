@@ -72,10 +72,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const exampleQuestions = [
     '💰 What are the annual fees for different cards?',
-    '🔥 Compare reward rates - which card wins?',
+    '🔥 Do I get rewards on government payments?',
     '🎁 What welcome benefits does Axis Atlas offer?',
     '✈️ Miles earned on ₹2L flight spend with Atlas?',
-    '💸 Any cash withdrawal fees I should know?',
+    '💸 Tell me which card is better for insurance spends?',
     '⚡ Are utilities capped on HSBC Premier?',
   ];
 

@@ -265,8 +265,8 @@ class AuthService:
             # Authenticated users have unlimited queries
             return True, current_count, -1  # -1 means unlimited
         else:
-            # Guest users have 5 query limit
-            limit = 5
+            # Guest users have configurable query limit (default 5)
+            limit = int(os.getenv('GUEST_DAILY_QUERY_LIMIT', '5'))
             return current_count < limit, current_count, limit
     
     async def get_user_stats(self, user_id: int) -> Dict[str, Any]:

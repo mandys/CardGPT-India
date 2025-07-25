@@ -163,6 +163,7 @@ VERTEX_AI_DATA_STORE_ID="your-data-store-id"  # Search data store
 
 # Optional
 VERTEX_AI_LOCATION="global"                    # Default: global
+GUEST_DAILY_QUERY_LIMIT=5                     # Free queries for guests (default: 5)
 ```
 
 ### Local Development Commands

@@ -33,7 +33,7 @@
 @layer components {
   /* Custom button styles */
   .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 hover:scale-105 hover:shadow-lg;
   }
   
   .btn-secondary {
@@ -85,6 +85,22 @@
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  
+  /* Fade in animation */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   
   .scrollbar-none {

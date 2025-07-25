@@ -71,12 +71,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   const exampleQuestions = [
-    'What are the annual fees for credit cards?',
-    'Compare reward rates between cards',
-    'What are the welcome benefits for Axis Atlas?',
-    'How many miles do I earn on ₹2 lakh flight spend using Axis Atlas?',
-    'What are the cash withdrawal fees?',
-    'Are utilities capped for HSBC Premier card?',
+    '💰 What are the annual fees for different cards?',
+    '🔥 Compare reward rates - which card wins?',
+    '🎁 What welcome benefits does Axis Atlas offer?',
+    '✈️ Miles earned on ₹2L flight spend with Atlas?',
+    '💸 Any cash withdrawal fees I should know?',
+    '⚡ Are utilities capped on HSBC Premier?',
   ];
 
   return (
@@ -87,10 +87,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           <div className="text-center py-8">
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
-                💳 Credit Card Assistant
+                💳 CardGPT
               </h2>
               <p className="text-gray-600 dark:text-gray-300">
-                Ask me anything about Indian credit card terms and conditions
+                Your pocket-sized credit card expert ✨
               </p>
             </div>
             
@@ -99,7 +99,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 <button
                   key={index}
                   onClick={() => onExampleClick(example)}
-                  className="p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-400 hover:shadow-md transition-all duration-200 text-left text-sm text-gray-700 dark:text-gray-300 hover:text-primary-600"
+                  className="p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-400 hover:shadow-md hover:scale-105 transition-all duration-200 text-left text-sm text-gray-700 dark:text-gray-300 hover:text-primary-600"
                 >
                   {example}
                 </button>

@@ -81,6 +81,11 @@ class VertexRetriever:
         else:
             enhanced_query = query_text
             
+        # Special enhancement for insurance spending queries
+        if "insurance" in query_text.lower() and any(word in query_text.lower() for word in ["spend", "spending", "spends", "earn", "points", "rewards"]):
+            enhanced_query += " earning rates reward capping others section insurance transactions"
+            logger.info(f"Enhanced insurance spending query: {enhanced_query}")
+            
         logger.info(f"Executing search with enhanced query: {enhanced_query}")
         
         request = discoveryengine.SearchRequest(

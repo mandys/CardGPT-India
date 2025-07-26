@@ -111,7 +111,39 @@ const MainLayout: React.FC = () => {
   const handleCardSelection = (selectedCards: string[], originalQuery: string) => {
     // Create a new query with selected cards
     const cardsList = selectedCards.join(', ');
-    const newQuery = `Compare ${cardsList} for: ${originalQuery}`;
+    
+    // Extract the core topic from the original query
+    // Remove common question words and extract the spending category or topic
+    let topic = originalQuery.toLowerCase()
+      .replace(/💸|💰|🎯|📊/g, '') // Remove emojis
+      .replace(/tell me|which card|which|what|how|card|is|better|best|for|spends?|spending|spend|the|\?/g, '') // Remove question words
+      .replace(/\s+/g, ' ') // Collapse multiple spaces
+      .trim();
+    
+    // If topic is too short or empty, use a generic format
+    if (!topic || topic.length < 3) {
+      topic = originalQuery.toLowerCase()
+        .replace(/💸|💰|🎯|📊/g, '') // Remove emojis
+        .replace(/tell me which card is better for|which card is better for|tell me|which card|which|what|how|the|\?/g, '')
+        .trim();
+    }
+    
+    // Clean up common patterns and create final topic
+    if (topic.includes('insurance')) {
+      topic = 'insurance spends';
+    } else if (topic.includes('hotel')) {
+      topic = 'hotel spends';
+    } else if (topic.includes('travel')) {
+      topic = 'travel spends';
+    } else if (topic.includes('utility') || topic.includes('utilities')) {
+      topic = 'utility spends';
+    } else if (topic.includes('fuel')) {
+      topic = 'fuel spends';
+    } else if (!topic) {
+      topic = 'general spending';
+    }
+    
+    const newQuery = `Compare ${cardsList} for ${topic}`;
     handleSendMessage(newQuery);
   };
 

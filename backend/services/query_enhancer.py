@@ -149,7 +149,7 @@ class QueryEnhancer:
             elif category == 'utility':
                 enhanced_query += f"\n\nIMPORTANT: This is about utility spending. Check BOTH rewards AND surcharges: Some cards exclude utilities (0 rewards), others have caps. Check for surcharge fees on amounts above monthly thresholds. Calculate: 1% × (spend - threshold) if spend exceeds threshold."
             elif category == 'insurance':
-                enhanced_query += f"\n\nIMPORTANT: This is about insurance spending rewards. Look for: 1) General earning rate (6 points per ₹200), 2) 'Capping Per Statement Cycle' section showing '5,000 Reward Points (MCC 6300, 5960)' for insurance. ICICI earns normal rate up to 5,000 points cap. Axis Atlas excludes insurance from rewards. Do NOT confuse with insurance benefits/coverage."
+                enhanced_query += f"\n\nIMPORTANT: This is about insurance spending rewards, NOT insurance coverage/benefits. Search for 'others', 'earning rates', 'reward capping', and 'capping per statement cycle' sections. Focus on earning rates when spending on insurance premiums. Key facts by card: HSBC Premier earns 3 points per ₹100 (up to ₹1,00,000 monthly cap), HDFC Infinia earns 5 points per ₹150 (capped at 5,000 RP/day), ICICI EPM earns 6 points per ₹200 (up to 5,000 points monthly cap), Axis Atlas EXCLUDES insurance from rewards (0 points). Do NOT confuse with air accident cover or travel insurance benefits."
             elif category in ['fuel', 'rent', 'government']:
                 enhanced_query += f"\n\nIMPORTANT: This is about {category} spending. Check exclusions first - this category may be excluded from earning rewards on some cards."
             elif category == 'education':
@@ -179,7 +179,7 @@ class QueryEnhancer:
             'utility': 'May be excluded or have earning caps. Check for surcharge fees above spending thresholds.',
             'rent': 'Commonly excluded from earning rewards on most cards. Check exclusion lists.',
             'government': 'Commonly excluded from earning rewards on most cards. Check exclusion lists.',
-            'insurance': 'May be excluded or have earning caps depending on the card.',
+            'insurance': 'HSBC Premier and HDFC Infinia earn rewards on insurance spending, ICICI EPM has caps, Axis Atlas excludes insurance completely.',
             'education': 'May have earning caps or be treated as general spending depending on the card.',
             'grocery': 'May have earning caps or accelerated rates depending on the card.',
             'dining': 'Often treated as general spending, but some cards may have accelerated rates.'

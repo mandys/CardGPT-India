@@ -381,7 +381,8 @@ For earning rate comparisons:
   * Hotel spending = "Direct Hotels", "Hotels", "Hotel Booking" categories  
   * Travel = encompasses flights, hotels, and general travel bookings
 - When user asks about "flight spend" or "airline spend", look for travel earning rates that include "Direct Airlines"
-- For insurance spending: Check "capping_per_statement_cycle" or "reward_capping" for limits, NOT "insurance" benefits section
+- For insurance spending: Check "capping_per_statement_cycle", "reward_capping", OR "others" section for limits, NOT "insurance" benefits section
+- CRITICAL INSURANCE LOGIC: If you see insurance caps (like "5,000 RP/day"), this means the card DOES earn rewards at the general rate UP TO that cap
 - Check for both general rates and category-specific rates
 - If a card mentions travel/hotel categories but shows same rate as general, that's the actual rate
 - CRITICAL: Insurance spending ≠ Insurance benefits/coverage. Look for earning caps, not coverage amounts.
@@ -402,10 +403,17 @@ CARD NAME RECOGNITION:
 - "Axis Bank Atlas Credit Card" = "Axis Atlas" (uses EDGE Miles as reward currency)
 - "ICICI Bank Emeralde Private Metal Credit Card" = "ICICI EPM" (uses Reward Points)
 - "HSBC Premier Credit Card" = "HSBC Premier" (uses Reward points)
+- "HDFC Infinia Credit Card" = "HDFC Infinia" (uses Reward Points)
 - When users ask about "Axis Atlas", look for documents labeled "Axis Bank Atlas Credit Card" and search for "EDGE Miles" rates
 - When users ask about "ICICI EPM", look for documents labeled "ICICI Bank Emeralde Private Metal Credit Card" 
 - NEVER claim a card's information is missing if there are documents for that card in the context
 - PAY SPECIAL ATTENTION: Axis Atlas reward information uses "EDGE Miles" terminology, not "points"
+
+INSURANCE SPENDING SPECIFIC GUIDANCE:
+- HDFC Infinia: Earns general rate (5 points per ₹150) with daily cap of 5,000 RP
+- HSBC Premier: Earns 3 points per ₹100 with monthly cap of ₹1,00,000 spending
+- ICICI EPM: Earns general rate (6 points per ₹200) with monthly cap of 5,000 points
+- Axis Atlas: EXCLUDES insurance completely (0 rewards)
 
 CALCULATION REQUIREMENTS:
 - Show step-by-step math with milestone bonuses

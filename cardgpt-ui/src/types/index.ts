@@ -87,4 +87,4 @@ export interface ChatState {
 }
 
 export type QueryMode = 'General Query' | 'Specific Card' | 'Compare Cards';
-export type CardFilter = 'None' | 'Axis Atlas' | 'ICICI EPM' | 'HSBC Premier';
+export type CardFilter = 'None' | 'Axis Atlas' | 'ICICI EPM' | 'HSBC Premier'| 'HDFC Infinia';

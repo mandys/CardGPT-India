@@ -41,8 +41,8 @@ async def chat_stream_endpoint(request: ChatStreamRequest, http_request: Request
         if query_logger and query_logger.config.enabled:
             session_id = await log_query_stream(query_logger, request, http_request)
         
-        # Check if this is a generic comparison query
-        if query_enhancer_service.is_generic_comparison_query(request.message):
+        # Check if this query needs card selector
+        if query_enhancer_service.needs_card_selector(request.message):
             available_cards = query_enhancer_service.get_available_cards()
             card_selection_prompt = f"""I noticed you're asking for a comparison without specifying which cards to compare. 
 

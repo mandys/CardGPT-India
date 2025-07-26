@@ -30,7 +30,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onTopKChange,
   isLoading = false,
 }) => {
-  const supportedCards: CardFilter[] = ['None', 'Axis Atlas', 'ICICI EPM', 'HSBC Premier'];
+  const supportedCards: CardFilter[] = ['None', 'Axis Atlas', 'ICICI EPM', 'HSBC Premier', 'HDFC Infinia'];
 
   return (
     <div className="h-full flex flex-col">

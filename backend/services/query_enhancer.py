@@ -13,10 +13,10 @@ class QueryEnhancer:
     def __init__(self):
         # Card name detection patterns
         self.card_patterns = {
-            'Axis Atlas': ['axis atlas', 'atlas'],
-            'ICICI EPM': ['icici epm', 'epm', 'emeralde private', 'icici bank emeralde'],
-            'HSBC Premier': ['hsbc premier', 'premier'],
-            'HDFC Infinia': ['hdfc infinia', 'infinia', 'hdfc bank infinia']
+            'Axis Atlas': ['axis atlas', 'atlas', 'axis', 'axis bank atlas'],
+            'ICICI EPM': ['icici epm', 'epm', 'emeralde private', 'icici bank emeralde', 'icici', 'emeralde'],
+            'HSBC Premier': ['hsbc premier', 'premier', 'hsbc'],
+            'HDFC Infinia': ['hdfc infinia', 'infinia', 'hdfc bank infinia', 'hdfc']
         }
         
         # Mapping from user-friendly names to actual card names in data
@@ -187,29 +187,44 @@ class QueryEnhancer:
         
         return guidance.get(category, 'Check the card-specific earning rates and exclusions for this category.')
     
-    def is_generic_comparison_query(self, query: str) -> bool:
+    def needs_card_selector(self, query: str) -> bool:
         """
-        Detect if this is a generic comparison question without specific cards mentioned.
-        Returns True if user is asking for comparison but no specific cards are mentioned.
+        Detect if query needs card selector.
+        Returns True if: No specific card detected AND query is about card topics
         """
+        # If specific card is mentioned, no selector needed
+        if self.detect_card_name(query) is not None:
+            return False
+        
         query_lower = query.lower()
         
-        # Comparison indicators
+        # Check if query is about card-related topics
+        card_topics = [
+            'points', 'rewards', 'cashback', 'miles', 'benefits',
+            'fees', 'charges', 'annual fee', 'interest rate',
+            'lounge', 'insurance', 'milestone', 'welcome bonus',
+            'credit card', 'card', 'spend', 'spends', 'spending',
+            'utility', 'hotel', 'flight', 'travel', 'fuel', 'grocery'
+        ]
+        has_card_topic = any(topic in query_lower for topic in card_topics)
+        
+        # Also include explicit comparison requests (preserve existing logic)
         comparison_keywords = [
             'which card', 'which credit card', 'best card', 'better card',
             'compare', 'comparison', 'vs', 'versus', 'difference',
             'recommend', 'recommendation', 'suggest', 'should i',
             'which one', 'what card', 'best for', 'better for'
         ]
-        
-        # Check if it's a comparison query
         has_comparison = any(keyword in query_lower for keyword in comparison_keywords)
         
-        # Check if specific cards are mentioned
-        has_specific_card = self.detect_card_name(query) is not None
-        
-        # It's generic if it's a comparison question but no specific cards are mentioned
-        return has_comparison and not has_specific_card
+        return has_card_topic or has_comparison
+    
+    def is_generic_comparison_query(self, query: str) -> bool:
+        """
+        DEPRECATED: Use needs_card_selector() instead.
+        Kept for backward compatibility.
+        """
+        return self.needs_card_selector(query)
     
     def get_available_cards(self) -> list[str]:
         """Get list of available cards from our data directory"""

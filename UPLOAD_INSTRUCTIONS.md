@@ -1,26 +1,32 @@
-# HDFC Infinia Upload Instructions
+# HDFC Infinia Upload Instructions - Modular Approach
 
 ## ✅ What's Been Completed
 
 1. **Validation Passed**: HDFC Infinia card data validated with 91% completeness score
-2. **Card Added**: Successfully added to `card_data.jsonl` with 29 chunks
-3. **JSONL Ready**: File contains 133 total chunks (all cards including HDFC Infinia)
+2. **Separate JSONL Created**: `hdfc-infinia-data.jsonl` with 42 chunks (20KB)
+3. **Modular Architecture**: Original `card_data.jsonl` preserved with existing cards only
 
-## 📤 Next Steps for You
+## 📤 Next Steps for You - Upload Separate Card File
 
-### Step 1: Upload to Google Cloud Storage
+### Step 1: Upload HDFC Infinia JSONL to Google Cloud Storage
 ```bash
 # Navigate to project directory
 cd /Users/mandiv/Downloads/cursor/supavec-clone
 
-# Upload the updated JSONL file to your bucket
-gsutil cp card_data.jsonl gs://your-bucket-name/card_data.jsonl
+# Upload the HDFC Infinia-specific JSONL file
+gsutil cp hdfc-infinia-data.jsonl gs://your-bucket-name/cards/
 
 # Verify upload
-gsutil ls -la gs://your-bucket-name/card_data.jsonl
+gsutil ls -la gs://your-bucket-name/cards/hdfc-infinia-data.jsonl
 ```
 
 **Note**: Replace `your-bucket-name` with your actual Google Cloud Storage bucket name.
+
+### Benefits of Separate Files:
+- ✅ **Faster Upload**: Only 20KB vs 128KB+ full file
+- ✅ **No Re-indexing**: Existing cards remain immediately searchable
+- ✅ **Modular Management**: Easy to add/remove individual cards
+- ✅ **Incremental Processing**: Google indexes only new chunks (~2-5 minutes)
 
 ### Step 2: Trigger Incremental Import in Vertex AI
 

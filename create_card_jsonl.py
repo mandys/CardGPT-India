@@ -6,65 +6,54 @@ Creates modular card-specific JSONL files for incremental Google Cloud uploads
 
 import json
 import base64
-import hashlib
 import logging
 import argparse
 from pathlib import Path
-from typing import Dict, Any, List
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-def create_chunks_from_node(data: Dict[str, Any], path: str, card_name: str, max_chunk_size: int = 1000) -> List[Dict[str, Any]]:
-    """Create chunks from a data node with card name context"""
+def _format_dict_to_text(data: dict) -> str:
+    """Recursively formats a dictionary into a readable indented string."""
+    parts = []
+    for key, value in data.items():
+        key_formatted = key.replace('_', ' ').title()
+        if isinstance(value, dict):
+            # For nested dictionaries, we'll format them recursively.
+            nested_text = _format_dict_to_text(value)
+            parts.append(f"{key_formatted}:\n{nested_text}")
+        elif isinstance(value, list):
+            # Format lists cleanly
+            list_items = ", ".join(map(str, value))
+            parts.append(f"{key_formatted}: {list_items}")
+        else:
+            parts.append(f"{key_formatted}: {value}")
+    return "\n".join(parts)
+
+def create_chunks_from_node(node: dict, path_prefix: str, card_name: str) -> list:
+    """Creates a chunk for a dictionary node and recurses for its children - EXACT COPY of transform_to_jsonl.py"""
     chunks = []
+    if not isinstance(node, dict):
+        return []
+
+    # Create a single, comprehensive chunk for the current dictionary node
+    chunk_id = f"{card_name.lower().replace(' ', '_')}_{path_prefix.replace('.', '_')}"
+    content = _format_dict_to_text(node)
     
-    def process_node(node: Any, current_path: str, current_section: str) -> None:
-        if isinstance(node, dict):
-            # Create section-level chunks for major sections
-            major_sections = ['fees', 'rewards', 'eligibility', 'welcome_benefits', 'lounge_access', 
-                            'insurance', 'dining_benefits', 'renewal_benefits', 'miles_transfer']
-            
-            if any(section in current_path for section in major_sections):
-                section_name = next((section for section in major_sections if section in current_path), current_section)
-                content = json.dumps(node, indent=2, ensure_ascii=False)
-                
-                if len(content) <= max_chunk_size:
-                    # Create single chunk for the section
-                    chunk_id = hashlib.md5(f"{card_name}_{current_path}".encode()).hexdigest()
-                    chunks.append({
-                        "id": chunk_id,
-                        "cardName": card_name,
-                        "section": section_name,
-                        "path": current_path,
-                        "content": content
-                    })
-                else:
-                    # Split large sections into smaller chunks
-                    for key, value in node.items():
-                        process_node(value, f"{current_path}.{key}", section_name)
-            else:
-                # Process nested objects
-                for key, value in node.items():
-                    section = key if current_path == path else current_section
-                    process_node(value, f"{current_path}.{key}", section)
-        
-        elif isinstance(node, (list, str, int, float, bool)) or node is None:
-            # Create chunk for leaf values
-            content = json.dumps({current_path.split('.')[-1]: node}, indent=2, ensure_ascii=False)
-            
-            if len(content) > 50:  # Only create chunks for meaningful content
-                chunk_id = hashlib.md5(f"{card_name}_{current_path}".encode()).hexdigest()
-                chunks.append({
-                    "id": chunk_id,
-                    "cardName": card_name,
-                    "section": current_section,
-                    "path": current_path,
-                    "content": content
-                })
+    chunks.append({
+        "id": chunk_id,
+        "content": content,
+        "cardName": card_name,
+        "section": path_prefix.split('.')[-1]
+    })
     
-    process_node(data, path, "general")
+    # Recurse into nested dictionaries to create more granular chunks
+    for key, value in node.items():
+        if isinstance(value, dict):
+            new_path = f"{path_prefix}.{key}"
+            chunks.extend(create_chunks_from_node(value, new_path, card_name))
+            
     return chunks
 
 def create_card_jsonl(card_file: Path, output_file: Path) -> bool:
@@ -79,7 +68,7 @@ def create_card_jsonl(card_file: Path, output_file: Path) -> bool:
         card_name = card_data.get("card", {}).get("name", "Unknown Card")
         logger.info(f"📋 Processing: {card_name}")
         
-        # Create chunks
+        # Create chunks using EXACT same logic as transform_to_jsonl.py
         chunks = create_chunks_from_node(card_data["card"], "card", card_name)
         logger.info(f"📦 Created {len(chunks)} chunks")
         

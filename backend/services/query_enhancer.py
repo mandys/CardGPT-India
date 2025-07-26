@@ -15,14 +15,16 @@ class QueryEnhancer:
         self.card_patterns = {
             'Axis Atlas': ['axis atlas', 'atlas'],
             'ICICI EPM': ['icici epm', 'epm', 'emeralde private', 'icici bank emeralde'],
-            'HSBC Premier': ['hsbc premier', 'premier']
+            'HSBC Premier': ['hsbc premier', 'premier'],
+            'HDFC Infinia': ['hdfc infinia', 'infinia', 'hdfc bank infinia']
         }
         
         # Mapping from user-friendly names to actual card names in data
         self.card_name_mapping = {
             'ICICI EPM': 'ICICI Bank Emeralde Private Metal Credit Card',
             'Axis Atlas': 'Axis Bank Atlas Credit Card',
-            'HSBC Premier': 'HSBC Premier Credit Card'
+            'HSBC Premier': 'HSBC Premier Credit Card',
+            'HDFC Infinia': 'HDFC Infinia Credit Card'
         }
         
         # Category detection patterns

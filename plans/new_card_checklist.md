@@ -269,7 +269,18 @@ This checklist guides you through the entire process of adding a new credit card
   - [ ] Note any new patterns or requirements
   - [ ] Update troubleshooting sections
 
-### 6.2 Create Card Documentation ✅
+### 6.2 Update Frontend Display ✅
+- [ ] **Update Landing Page**
+  - [ ] Add card to supportedCards array in `cardgpt-ui/src/components/Landing/LandingPage.tsx`
+  - [ ] Include: name, shortName, bank, features, welcomeBonus, annualFee, styling
+  - [ ] Test responsive layout works with new card count
+  - [ ] Verify card image path and fallback display
+
+- [ ] **Update Sample Queries** (if needed)
+  - [ ] Add card-specific sample query to sampleQueries array
+  - [ ] Test query navigation works correctly
+
+### 6.3 Create Card Documentation ✅
 - [ ] **Document card-specific features**
   - [ ] Unique benefits or restrictions
   - [ ] Special calculation logic
@@ -279,7 +290,7 @@ This checklist guides you through the entire process of adding a new credit card
   - [ ] Add card-specific test cases
   - [ ] Update comparison baselines
 
-### 6.3 Final Verification ✅
+### 6.4 Final Verification ✅
 - [ ] **End-to-end test**
   - [ ] Complete user journey test
   - [ ] Verify all major features work

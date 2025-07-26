@@ -74,6 +74,22 @@ const LandingPage: React.FC = () => {
       networkBg: 'from-yellow-400 to-yellow-500',
       networkText: 'text-slate-900',
       query: 'Calculate ICICI EPM metal card rewards and insurance benefits'
+    },
+    {
+      name: 'HDFC Infinia',
+      shortName: 'Infinia',
+      bank: 'HDFC Bank',
+      image: '/images/hdfc-infinia-card.jpg',
+      features: ['5 Points per ₹150 (3.3% Return)', 'Daily Cap 5,000 Points Insurance', 'Unlimited Golf + Concierge'],
+      welcomeBonus: 'Welcome Benefits Package',
+      annualFee: '₹12,500 + GST',
+      bgGradient: 'from-blue-900 to-indigo-800',
+      badge: 'Ultra Premium',
+      badgeColor: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+      network: 'VISA',
+      networkBg: 'from-yellow-400 to-yellow-500',
+      networkText: 'text-slate-900',
+      query: 'Tell me about HDFC Infinia insurance benefits and milestone rewards'
     }
   ];
 
@@ -219,7 +235,7 @@ const LandingPage: React.FC = () => {
       {/* Hero Section - Compact */}
       <section className="relative pt-4 sm:pt-8 pb-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-4xl mx-auto">
+          <div className="text-center max-w-4xl mx-auto pb-5">
             <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium mb-4 ${
               isDarkMode 
                 ? 'bg-violet-900/50 text-violet-300 border border-violet-700/50' 
@@ -317,11 +333,18 @@ const LandingPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Dynamic layout: Grid for ≤4 cards, Horizontal scroll for 5+ cards */}
+          <div className={
+            supportedCards.length > 4 
+              ? "flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide" 
+              : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          }>
             {supportedCards.map((card, index) => (
               <div 
                 key={index} 
-                className={`overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 bg-gradient-to-br ${card.bgGradient}`}
+                className={`overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 bg-gradient-to-br ${card.bgGradient} ${
+                  supportedCards.length > 4 ? 'min-w-[320px] snap-start flex-shrink-0' : ''
+                }`}
               >
                 <div className="p-6">
                   {/* Card Header */}
@@ -477,7 +500,7 @@ const LandingPage: React.FC = () => {
                 @jockaayush
               </h3>
               <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-slate-600'}`}>
-                Frontend expert with a passion for creating intuitive user experiences
+                Data researcher, testing specialist, and the human LLM who gets it right when GPT gets it wrong
               </p>
             </div>
           </div>

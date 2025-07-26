@@ -71,7 +71,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   const exampleQuestions = [
-    '💰 What are the annual fees for different cards?',
+    '💰 What is the annual fees waiver condition of hdfc infinia?',
     '🔥 Do I get rewards on government payments?',
     '🎁 What welcome benefits does Axis Atlas offer?',
     '✈️ Miles earned on ₹2L flight spend with Atlas?',

@@ -94,6 +94,7 @@ npm install
 | **Atlas** | Axis Bank | 10X miles on travel, ₹1.5L milestone | Premium travel rewards |
 | **EPM** | ICICI Bank | 6 points per ₹200, category caps | Reward points system |
 | **Premier** | HSBC | Miles transfer, lounge access | Travel benefits |
+| **Infinia** | HDFC Bank | 5 points per ₹150, luxury benefits | High-value spenders |
 
 ## Features
 
@@ -123,7 +124,8 @@ Place JSON files in the `data/` directory:
 data/
 ├── axis-atlas.json      # Axis Bank Atlas card data
 ├── icici-epm.json       # ICICI EPM card data
-└── hsbc-premier.json    # HSBC Premier card data
+├── hsbc-premier.json    # HSBC Premier card data
+└── hdfc-infinia.json    # HDFC Infinia card data
 ```
 
 ### 2. Transform to JSONL Format

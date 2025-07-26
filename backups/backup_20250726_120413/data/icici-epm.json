@@ -1,0 +1,313 @@
+{
+  "common_terms": {
+    "interest_free_grace_period": {
+      "duration": "18 to 48 days",
+      "condition_for_loss": "Lost if Total Amount Due is not paid by Payment Due Date + 3 days grace period"
+    },
+    "minimum_amount_due_logic": {
+      "base": "5% of outstanding amount or such other amount as may be determined by ICICI Bank. Includes installment amount due, amount by which credit or cash limit has been exceeded, double fee charged over credit limit, and fees, charges, and taxes (post Oct 26, 2023) and unpaid Minimum Amount Due of previous statements, if any",
+      "reference_sources": "[1-3]"
+    },
+    "finance_charges": {
+      "rate_per_month": "3.75%",
+      "rate_per_annum": "45%",
+      "cash_withdrawal_start": "Interest from date of transaction",
+      "applicability": "If Total Amount Due is not paid by the payment due date",
+      "interest_accrual_on_fees_charges_gst": false,
+      "interest_accrual_on_customer_spends_levied_interest_emis": true,
+      "reference_sources": "[4-8]"
+    },
+    "surcharge_fees": {
+      "dcc_markup": "1% dynamic currency conversion fee on all transactions conducted in Indian currency at international locations or with merchants located in India but registered in a foreign nation (w.e.f. Mar 01, 2024)",
+      "rent": "1% fee on transaction amount (MCC 6513)",
+      "fuel": "1% fee on transaction amount for fuel transactions exceeding ₹10,000 (w.e.f. Nov 15, 2024)",
+      "utilities": "1% fee on transaction amount for utility payment transactions exceeding ₹50,000 (w.e.f. Nov 15, 2024)",
+      "education": "1% fee on transaction amount for education payments made through third-party apps (w.e.f. Nov 15, 2024)",
+      "railway_booking": "1.80% of transaction value for Internet transactions and 2.50% for other bookings (or ₹10 whichever is higher for American Express network)",
+      "reference_sources": "[9-14]"
+    },
+    "cash_withdrawal": {
+      "fee": "2.5% on advanced amount, subject to minimum of ₹500 (with exceptions for Emeralde Private Metal, Emeralde, Times Black cards)",
+      "limit": "10% of the credit limit up to a maximum of ₹20,000 for the first 180 days from the date of issuance; thereafter at ICICI Bank's discretion",
+      "reference_sources": "[11, 15]"
+    },
+    "fuel_surcharge_waiver": {
+      "rate": "1% of transaction value",
+      "details": "Surcharge waiver on HPCL petrol pumps on select cards (max transaction of ₹4,000, on ICICI Merchant Services swipe machines). Also 1% on all petrol pumps on select cards. Reversal for Offus terminals and non-HPCL outlets will not include GST. (Card-specific limits and applicability apply)",
+      "reference_sources": "[13, 16]"
+    },
+    "other_fees": {
+      "cheque_bounce": "2% of Total Amount Due (Min. ₹500)",
+      "auto_debit_return": "2% of Total Amount Due (Min. ₹500)",
+      "overlimit": "2.50% on the over-limit amount (subject to a minimum of ₹550) (excluding Emeralde Private Metal and Emeralde Credit Cards)",
+      "replacement_card": "₹200 for all cards (w.e.f. July 1, 2024), (with exceptions for Emeralde Private Metal and Times Black ICICI Bank Credit Card at ₹3500)",
+      "cash_payment": "₹100 per payment transaction at branches",
+      "reward_redemption_fee": "₹99 for Hand-picked Rewards, ICICI Bank Rewards, Catalogue Based Redemptions; ₹25 for Mine Cash Catalogue Based Redemptions, Online & in-store redemptions at Online Partner Brands (Nil for Emeralde Private Metal Credit/Times Black ICICI Bank Credit Card Redemptions)",
+      "emi_processing_fee": "₹199+GST for Instant EMI (w.e.f. Sep 15, 2021); up to 2% of transaction value for EMI on Call transactions",
+      "emi_preclosure_charges": "Up to 3% on the principal outstanding amount at the time of prepayment/termination along with interest of upcoming unbilled EMI",
+      "lounge_card_validation_charges": "₹2 on VISA, MASTERCARD & RUPAY variants and Re. 1 on AMEX variants for authentication at domestic lounges",
+      "reference_sources": "[4, 11, 12, 17-25]"
+    },
+    "card_management_policies": {
+      "activation_period": "New card must be activated within 30 days of card issuance; if not, it will be closed in next 7 working days (by 37th day from issuance date) unless explicit OTP-based consent/activation is received.",
+      "inactivity_closure": "If all credit cards have not been used for a period of 12 months, the Bank will initiate the process to close the card after intimating the cardholder. Explicit consent within 30 days is required to continue.",
+      "reference_sources": "[26, 27]"
+    },
+    "reward_points_policy": {
+      "reversal_on_emi_conversion": "Reward Points accrued on the original transaction will be reversed upon EMI conversion. Not re-credited if EMI cancelled.",
+      "forfeiture_on_termination_or_delinquency": "Reward points accrued will lapse upon card cancellation.",
+      "reference_sources": "[28, 29]"
+    }
+  },
+  "card": {
+    "id": "icici_epm",
+    "name": "ICICI Bank Emeralde Private Metal Credit Card",
+    "bank": "ICICI Bank",
+    "category": "Luxury / High-End",
+    "network": "Not explicitly stated for EPM, but general ICICI cards support Visa, Mastercard, AMEX, RuPay",
+    "launch_date": null,
+    "fees": {
+      "joining_fee": "₹12,499",
+      "annual_fee": "Nil for 1st year, ₹12,499 from 2nd year onwards",
+      "add_on_card_fee": "Nil",
+      "foreign_currency_markup": "2% (w.e.f. Nov 15, 2024)",
+      "replacement_card_fee": "₹3,500",
+      "reference_sources": "[17, 30]",
+      "dcc_markup": "1% dynamic currency conversion fee on all transactions conducted in Indian currency at international locations or with merchants located in India but registered in a foreign nation (w.e.f. Mar 01, 2024)"
+    },
+    "fee_waiver": {
+      "spend_threshold": "₹10,00,000 in an anniversary year (spends through EMI, rent, government, and education payments are excluded from total spends calculation)",
+      "notes": "Annual fee reversal condition"
+    },
+    "welcome_benefits": {
+      "taj_epicure_membership": {
+        "details": "Complimentary 1-year Taj Epicure Membership with exclusive benefits like complimentary night stay, discounts, perks.",
+        "redemption_steps": "Visit tajhotels.com/en-in/epicureprogram/bank/icicibank, click 'ENROL NOW', fill details, enter Voucher Code and Voucher PIN received from ICICI Bank through SMS/e-mail, and click 'SUBMIT'.",
+        "terms": "Applicable for Primary Cardmembers only, with a 1-year validity from the date of issuance. Redeemable within the validity period mentioned in the voucher code SMS/e-mail.",
+        "reference_sources": "[33-35]"
+      },
+      "joining_annual_bonus_reward_points": {
+        "points": "12,500 ICICI Bank Reward Points as Joining and Annual Bonus",
+        "credit_time": "Credited in Reward Account once every year upon 45 days of fee realisation and card activation",
+        "value_per_point": "₹1",
+        "reference_sources": "[35]"
+      },
+      "eazydiner_prime_membership": {
+        "details": "Complimentary 12-month EazyDiner Prime Membership. Membership renewed subject to receipt of joining and annual fees for a year-on-year basis.",
+        "activation_steps": "Download EazyDiner application, sign up/login, select 12-month EazyDiner Prime Membership plan, click 'Pay Now', apply unique coupon code received from ICICI Bank via SMS/e-mail, complete purchase.",
+        "terms": "Applicable for Primary Cardmember only, with 1-year validity from issuance. Vouchers valid within validity period from SMS/e-mail. Offer valid for registered EazyDiner users only. Membership cannot be refunded/claimed in cash. Prime deals have a minimum of 25% discount. Not all restaurants have Prime deals or are available for PayEazy. 1+1 deals valid with a minimum of 2 guests. Restaurants and offers are dynamic. Inform restaurant about reservation/deal upon arrival. EazyDiner not liable for restaurant experience or temporary/permanent closure. Report issues during dining time to EazyDiner concierge at +91 7861004400.",
+        "reference_sources": "[36-41]"
+      }
+    },
+    "renewal_benefits": {
+      "description": "Comprehensive renewal benefits for ICICI Bank Emeralde Private Metal Credit Card upon annual fee payment",
+      "fee_requirement": "₹12,499 annual fee (from 2nd year onwards)",
+      "credit_time": "Benefits credited within 45 days of fee realisation",
+      "bonus_reward_points": {
+        "points": "12,500 ICICI Bank Reward Points",
+        "description": "Annual bonus reward points upon card renewal",
+        "value": "₹12,500 (at ₹1 per point)",
+        "frequency": "Once every year upon renewal"
+      },
+      "milestone_benefits": {
+        "easemytrip_vouchers": {
+          "spend_4_lakh": {
+            "threshold": "₹4,00,000",
+            "benefit": "₹3,000 EaseMyTrip vouchers"
+          },
+          "spend_8_lakh": {
+            "threshold": "₹8,00,000", 
+            "benefit": "₹3,000 EaseMyTrip vouchers"
+          }
+        }
+      },
+      "movie_benefits": {
+        "bookmyshow_offer": {
+          "offer": "Buy 1 Get 1 free movie ticket",
+          "discount": "Up to ₹750 off on the second ticket",
+          "frequency": "Twice a month",
+          "description": "Movie benefits on BookMyShow platform"
+        }
+      },
+      "golf_privileges": {
+        "access": "Unlimited golf lessons or rounds",
+        "booking": "Through Golftripz platform",
+        "description": "Complimentary golf access at partner courses"
+      },
+      "notes": "All renewal benefits are subject to annual fee payment and card activation"
+    },
+    "rewards": {
+      "rate_general": "6 ICICI Bank Reward Points on every ₹200 spent at all eligible retail transactions",
+      "value_per_point": "Up to ₹1",
+      "accrual_exclusions": [
+        "government services (MCC 9405, 9222, 9399, 9402, 9211, 9313, 9311)",
+        "tax (MCC 7276, 9311)",
+        "rent (MCC 6513, 7014, 7407, 5271)",
+        "fuel payments (MCC 5541, 5542, 1361, 3851, 5172, 5983, 9752, 5555)",
+        "EMI conversions"
+      ],
+      "earning_rate": "6 points per ₹200",
+      "travel": {
+        "rate": "6 points per ₹200",
+        "categories": [
+          "Travel",
+          "Airlines",
+          "Hotels"
+        ],
+        "note": "Uses general rate - no special travel category rate"
+      },
+      "capping_per_statement_cycle": {
+        "insurance": "5,000 Reward Points (MCC 6300, 5960)",
+        "grocery": "1,000 Reward Points (MCC 5331, 5499, 5411)",
+        "utility": "1,000 Reward Points (MCC 4900, 4899, 4901, 3887, 4897, 5416, 5417, 4812, 4813, 4814, 4815, 4821, 4896, 4902, 3886)",
+        "education": "1,000 Reward Points (MCC 8220, 8241, 8249, 8211, 8299, 8244, 8493, 8494, 7911)"
+      },
+      "redemption": {
+        "platforms": [
+          "iMobile application",
+          "Internet Banking"
+        ],
+        "options": [
+          "movie vouchers",
+          "travel vouchers",
+          "lifestyle products",
+          "mobiles",
+          "appliances",
+          "statement balance (cashback)"
+        ],
+        "value_flights_hotel_vouchers": "₹1 per Reward Point",
+        "value_premium_brands_vouchers": "₹1 per Reward Point (Apple, Tanishq, Tumi, Coach, Brooks Brothers, Emporio Armani, Jimmy Choo, G-Star Raw, Canali and Mother Care)",
+        "value_other_products": "₹0.6 per Reward Point",
+        "value_statement_credit": "₹0.4 per Reward Point",
+        "cashback_redemption_cap": "50,000 Reward Points per Statement cycle",
+        "ishop_earning_rates": {
+          "flight": "Up to 18% with 6X Reward Points",
+          "hotel": "Up to 36% with 12X Reward Points",
+          "shopping_vouchers": "Up to 18% with 6X Reward Points"
+        },
+        "ishop_monthly_capping": "18,000 points",
+        "ishop_daily_capping": "10,000 points",
+        "ishop_redemption_values": {
+          "flight": "100% transaction value can be paid by Reward Points",
+          "hotels": "90% transaction value can be paid by Reward Points",
+          "shopping_vouchers": "50% transaction value can be paid by Reward Points"
+        }
+      },
+      "reference_sources": "[14, 28, 35, 36, 42-50]"
+    },
+    "reward_capping": {
+      "insurance": "5,000 Reward Points (MCC 6300, 5960)",
+      "grocery": "1,000 Reward Points (MCC 5331, 5499, 5411)",
+      "utility": "1,000 Reward Points (MCC 4900, 4899, 4901, 3887, 4897, 5416, 5417, 4812, 4813, 4814, 4815, 4821, 4896, 4902, 3886)",
+      "education": "1,000 Reward Points (MCC 8220, 8241, 8249, 8211, 8299, 8244, 8493, 8494, 7911)"
+    },
+    "milestones": {
+      "easemytrip_air_travel_vouchers": {
+        "value": "₹6,000 (Two vouchers worth ₹3,000 each)",
+        "spend_threshold_1st_voucher": "₹4 lakh annual spend",
+        "spend_threshold_2nd_voucher": "₹8 lakh annual spend",
+        "redemption_steps": "Go to www.easemytrip.com (website/app), select flight, 'Book Now', enter voucher code in 'Have a coupon code' (website) / 'Promo Code' (app), proceed for payment.",
+        "terms": "Applicable for Primary Cardmembers only, valid within validity period from SMS/e-mail. Valid for Easemytrip.com flight bookings only, one-time transaction, non-cumulative. User must apply unique voucher number. Convenience fee/processing fee/excess tour cost/government taxes payable if package cost exceeds voucher value. Lost/stolen vouchers not liable for replacement. Cannot be clubbed with other offers. If purchase less than voucher value, balance forfeited (pay ₹1 to complete). If purchase equals voucher, pay ₹1 to complete. If purchase more than voucher, balance payable via Net Banking/Card/Mobile Wallet. Confirmation subject to availability and EaseMyTrip T&Cs. No difference in fare/tariff liability. No cash exchange. Voucher amount not refunded on cancellations.",
+        "reference_sources": "[51-55]"
+      }
+    },
+    "tier_structure": null,
+    "miles_transfer": {
+      "airline_partners": "No direct airline transfer partners available",
+      "redemption_method": "Points can be redeemed for flight bookings through iShop platform",
+      "flight_redemption": {
+        "coverage": "100% transaction value can be paid by Reward Points",
+        "value": "₹1 per Reward Point",
+        "platforms": [
+          "iMobile application",
+          "Internet Banking"
+        ],
+        "additional_earning": "Up to 18% with 6X Reward Points on flight bookings"
+      },
+      "limitations": "No traditional airline transfer partnerships, but full flight purchase capability through redemption"
+    },
+    "redemption": null,
+    "lounge_access": {
+      "international_lounge_priority_pass": {
+        "access": "Unlimited complimentary access for Primary and Add-on Cardmembers",
+        "guest_charges": "USD 29 + GST per visit per guest",
+        "mandate": "Presentation of the Priority Pass Card at the participating airport lounge is mandatory.",
+        "details": "Cardmembers may utilise refreshment and business centre facilities. Lounge staff will scan/imprint card and issue 'Record of Visit' or log entry. Cardmember must sign, reflecting own/guest usage. Cardmember responsible for retaining copy.",
+        "list_of_lounges": "www.prioritypass.com",
+        "reference_sources": "[56-58]"
+      },
+      "domestic_lounge": {
+        "access": "Unlimited complimentary lounge access for Primary and Add-on Cardmembers by swiping Emeralde Private Metal Credit Card.",
+        "reference_sources": "[59]"
+      },
+      "eligibility_override": "Exempt from the general criterion of spending ₹75,000 in the preceding calendar quarter for complimentary domestic lounge access.",
+      "reference_sources": "[60]"
+    },
+    "dining_benefits": {
+      "eazydiner_prime_membership": "Covered under Welcome Benefits.",
+      "eazydiner_offer": {
+        "discount": "Additional ₹300 off on dining at select restaurants",
+        "min_order": "₹4,000",
+        "validity_period": "Every Friday to Sunday from Jun 1, 2025 to Mar 31, 2026",
+        "coupon_code": "CULINARYTREATS",
+        "limit": "Once a month per Card for every customer",
+        "how_to_avail": "Visit EazyDiner App / Website. Minimum bill value should be INR 4000 (post platform discounts). Applicable on ICICI Bank Credit Cards (except Amazon Pay ICICI Bank Credit Card). Valid only on dining at select restaurants partnered with EazyDiner where Payeazy has been enabled. Valid over and above any existing offer on EazyDiner. Make booking and settle bill via Payeazy.",
+        "reference_sources": "[61-64]"
+      }
+    },
+    "insurance": {
+      "personal_accident_due_to_air_accident_death_only": "₹3,00,00,000",
+      "purchase_protection": "₹1,40,000",
+      "credit_shield": "₹1,00,000",
+      "loss_of_checked_in_baggage": "₹84,000",
+      "plane_hijacking": "₹75,000",
+      "card_liability_cover": "₹50,000 (Lost Card Liability, Counterfeit/Skimming/Phishing and Online Fraud Protection)",
+      "medical_expenses_for_bodily_injury_caused_by_rail_road_accident": "₹50,000",
+      "loss_of_passport_and_travel_related_documents": "₹35,000",
+      "baggage_insurance": "₹25,000",
+      "delay_of_checked_in_baggage": "₹21,000",
+      "missing_connecting_international_flight_during_transit": "₹21,000",
+      "delay_in_flight": "₹17,500",
+      "conditions": "All insurance benefits are applicable for International travel only (except Purchase Protection, Credit Shield, Card Liability Cover, Medical expenses for bodily injury caused by and arising out of Rail/Road accident), and only when tickets are purchased on the ICICI Bank Emeralde Private Metal Credit Card. The card must have been used at least once in the last 60 days prior to the event. Benefits apply to Primary Card only; no cover on Supplementary Cards. Minimum amount due on Credit Card must be paid.",
+      "claim_process": "Lodge claim through Call Centre (1800-2666) or E-mail (ihealthcare@icicilombard.com). Claim No. generated, CRM sends Letter of Requirement. ICICI LOMBARD confirms eligibility from ICICI Bank. Cardmember shares all documents. Claims team will contact for further documents. ICICI Lombard takes 14 days to process claim (including payment) once all documents received. Policy number for these claims is 4049/318159411/00/000. Claimant needs to provide Insured Name, DOL, NOL (with description), Nominee address with Pin Code, Email ID and mobile number.",
+      "reference_sources": "[65-70]"
+    },
+    "concierge": {
+      "availability": "24x7 (i-Assist)",
+      "services": [
+        "Restaurant referral and reservation",
+        "Flower and gift assistance",
+        "Flight referral and reservation",
+        "Hotel referral and reservation",
+        "Car rental and Limousine service",
+        "Booking and delivery of movie tickets (available in New Delhi, Mumbai, Bengaluru, Chennai)",
+        "Medical concierge privileges (arrange air/surface transportation to medical care, connect with physicians/hospitals/clinics/dentists, set appointments)",
+        "Emergency auto assistance (available in New Delhi, Mumbai, Kolkata, Hyderabad, Bengaluru, Chennai, including towing, repair and alternative travel assistance)"
+      ],
+      "contact": "1800 26 70731 (Toll-free for MTNL/BSNL) or 022 6787 2016 (Standard call charges applicable)",
+      "reference_sources": "[79-81]"
+    },
+    "bookmyshow": {
+      "offer": "Buy one ticket and get up to ₹750 off on the second ticket",
+      "limit": "Up to 2 times in a month",
+      "applicable_on": "Movies, sport events, theatre, concert tickets",
+      "reference_sources": "[82]"
+    },
+    "golf_benefits": {
+      "access": "Unlimited complimentary golf games for primary Cardmembers",
+      "booking_platform": "https://teetimes.golftripz.com/",
+      "booking_process": "Create a Golftripz Account using the same e-mail ID as registered with ICICI Bank Credit Cards. Complimentary round visible after the 10th day of the next month, available for play anytime in the next 2 months. Explore available tee time slots and make preferred booking online. Can also call i-Assist (1800 26 70731 / 022 6787 2016) for assistance.",
+      "booking_window": "Bookings for a specific tee-off date open 15 days prior and close 5 days prior to the actual tee-off date.",
+      "booking_limit": "Cardmembers can hold only one open booking request (pending/confirmed) at any point in time. Successful booking is on a first come first serve basis and subject to weekly stock availability.",
+      "guest_policy": "Cardmembers can invite friends/guests, but their charges must be borne by the Cardmember. Golf courses reserve the right to not allow bookings for guests based on availability. Payment for guests is to be made online on https://teetimes.golftripz.com/.",
+      "additional_charges": "Green fee is complimentary. Charges for caddy and buggy (if mandatory) and golf set hire must be borne by the Cardmember.",
+      "cancellation_policy": "Cancellations need to be made at least 6 days prior to tee time. Cancellation charges of ₹500 will be applicable. Some golf courses do not allow cancellation (communicated at booking). In case of cancellation after stipulated time, one slot will be deducted from complimentary slots. Payments made for guests/self will not be reversed.",
+      "handicap_certificate": "Most golf courses have mandatory requirement of a handicap certificate.",
+      "reference_sources": "[65, 82-88]"
+    },
+    "eligibility": null,
+    "documentation": null,
+    "inherits": null,
+    "last_updated": null
+  }
+}

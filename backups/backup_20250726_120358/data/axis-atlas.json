@@ -1,0 +1,362 @@
+{
+  "common_terms": {
+    "interest_free_grace_period": {
+      "duration": "20 to 50 days depending on transaction date",
+      "condition_for_loss": "Lost if Total Amount Due of previous month's bill is not paid by Payment Due Date"
+    },
+    "minimum_amount_due_logic": {
+      "base": "100% of Fees, Interest, Taxes, Overlimit amount, EMIs + 2% of remaining outstanding (Purchases/Cash Withdrawals)",
+      "floor": "₹100"
+    },
+    "finance_charges": {
+      "rate_per_month": "3.75%",
+      "rate_per_annum": "55.55%",
+      "cash_withdrawal_start": "Interest from date of withdrawal",
+      "applicability": "If full payment not made by due date",
+      "interest_accrual_on_fees_charges_gst": false,
+      "interest_accrual_on_customer_spends_levied_interest_emis": true
+    },
+    "surcharge_fees": {
+      "dcc_markup": "1.5%",
+      "rent": "1%",
+      "wallet": "1% beyond ₹10,000/month",
+      "fuel": "1% beyond ₹50,000/month",
+      "utilities": "1% beyond ₹25,000/month",
+      "education": "1% via third-party apps",
+      "gaming": "1% beyond ₹10,000/month"
+    },
+    "cash_withdrawal": {
+      "fee": "2.5% (min ₹500)",
+      "limit": "30% of credit limit"
+    },
+    "fuel_surcharge_waiver": {
+      "rate": "1%",
+      "waiver_band": "₹400–₹4,000",
+      "monthly_cap": "₹400"
+    },
+    "other_fees": {
+      "cheque_bounce": "2% (min ₹500)",
+      "overlimit": "2.5% (min ₹500)",
+      "replacement_card": "Free",
+      "cash_payment": "₹175",
+      "reward_redemption_fee_edge_rewards": "₹99",
+      "miles_transfer_fee_edge_miles": "₹199"
+    },
+    "card_management_policies": {
+      "activation_period": "Card must be activated within 30 days from issuance, else deactivated in 7 days",
+      "inactivity_closure": "Card not used for >1 year, Bank initiates closure after intimation (30 days response time)",
+      "welcome_benefit_one_time": "Applicable only once per card variant, not on re-opening same variant after cancellation"
+    },
+    "reward_points_policy": {
+      "reversal_on_emi_conversion": "EDGE REWARD Points/EDGE Miles/cashback accrued on original transaction will be reversed upon EMI conversion. Not re-credited if EMI cancelled.",
+      "forfeiture_on_termination_or_delinquency": "No accumulation or redemption if card withdrawn/cancelled or account delinquent. All unused points/cashback forfeited immediately upon voluntary/involuntary cancellation."
+    }
+  },
+  "card": {
+    "id": "axis_atlas",
+    "name": "Axis Bank Atlas Credit Card",
+    "bank": "Axis Bank",
+    "category": "Travel",
+    "network": "Visa Infinite",
+    "launch_date": "2022-12",
+    "fees": {
+      "joining_fee": "₹5,000 + GST",
+      "annual_fee": "₹5,000 + GST",
+      "add_on_card_fee": "Nil",
+      "foreign_currency_markup": "3.5%",
+      "dcc_markup": "1.5%"
+    },
+    "fee_waiver": null,
+    "welcome_benefits": {
+      "notes": "Applicable only for paid cards. EDGE Miles credited cannot be en-cashed.",
+      "credit_time_days": 7,
+      "view_location": "ATLAS MILES section of the Axis Bank Mobile Application",
+      "one_time_per_variant_policy": "A cardholder is entitled to avail the welcome benefit for Axis Bank Credit Card only once. In case of card cancellation and subsequent re-opening of the same card variant, the welcome benefit will not be applicable.",
+      "tiers": {
+        "post_apr_20_2024": {
+          "edge_miles": 2500,
+          "condition": "1 txn within 37 days"
+        },
+        "dec_2022_to_apr_2024": {
+          "edge_miles": 5000,
+          "condition": "1 txn within 30 days"
+        },
+        "pre_dec_2022": {
+          "edge_miles": 5000,
+          "condition": "3 txns within 60 days"
+        }
+      }
+    },
+    "rewards": {
+      "non_encashable": true,
+      "view_location": "Atlas Miles section of the Axis Bank Mobile Application",
+      "rate_general": "2 EDGE Miles/₹100",
+      "value_per_point": "₹1 per EDGE Mile",
+      "accrual_exclusions": [
+        "Gold/ Jewellery",
+        "Rent",
+        "Wallet",
+        "Insurance",
+        "Fuel",
+        "Government Institution",
+        "Utilities",
+        "Telecom"
+      ],
+      "travel": {
+        "rate": "5 EDGE Miles/₹100",
+        "categories": [
+          "Travel EDGE",
+          "Direct Airlines",
+          "Direct Hotels"
+        ],
+        "monthly_cap": "₹2L",
+        "above_cap_rate": "2 EDGE Miles/₹100"
+      },
+      "others": {
+        "rate": "2 EDGE Miles/₹100",
+        "effective_from": "2022-12-20"
+      },
+      "earning_rate": "2 EDGE Miles/₹100",
+      "credit_time": "Within 12 days",
+      "spend_exclusion_policy": {
+        "categories": [
+          "Gold/ Jewellery",
+          "Rent",
+          "Wallet",
+          "Insurance",
+          "Fuel",
+          "Government Institution",
+          "Utilities",
+          "Telecom"
+        ],
+        "effective_date": "2024-04-20",
+        "future_change_note": "Effective 20th June 2025, spend categories for exclusion will be identified by category (e.g., Utility & Telecom, Rent, Wallet) rather than assigned 4-digit Merchant Category Codes (MCC)."
+      }
+    },
+    "reward_capping": {
+      "travel_monthly_cap": "₹2L"
+    },
+    "milestones": [
+      {
+        "spend": "₹3L",
+        "miles": 2500
+      },
+      {
+        "spend": "₹7.5L",
+        "miles": 2500
+      },
+      {
+        "spend": "₹15L",
+        "miles": 5000
+      }
+    ],
+    "tier_structure": {
+      "initial_tier": "Silver",
+      "review_cycle": "Every card anniversary year",
+      "downgrade_policy": "Downgrade by 1 tier if threshold not met",
+      "spend_exclusion_policy": {
+        "categories": [
+          "Gold/ Jewellery",
+          "Rent",
+          "Wallet",
+          "Insurance",
+          "Fuel",
+          "Government Institution",
+          "Utilities",
+          "Telecom"
+        ],
+        "effective_date": "2024-04-20",
+        "future_change_note": "Effective 20th June 2025, spend categories for exclusion will be identified by category (e.g., Utility & Telecom, Rent, Wallet) rather than assigned 4-digit Merchant Category Codes (MCC)."
+      },
+      "tiers": {
+        "Silver": {
+          "spend_threshold": null,
+          "milestone_miles": 2500,
+          "annual_bonus": 0,
+          "domestic_lounge": 8,
+          "international_lounge": 4
+        },
+        "Gold": {
+          "spend_threshold": "₹7.5L",
+          "milestone_miles": 2500,
+          "annual_bonus": 2500,
+          "domestic_lounge": 12,
+          "international_lounge": 6
+        },
+        "Platinum": {
+          "spend_threshold": "₹15L",
+          "milestone_miles": 5000,
+          "annual_bonus": 5000,
+          "domestic_lounge": 18,
+          "international_lounge": 12
+        }
+      }
+    },
+    "renewal_benefits": {
+      "description": "EDGE Miles awarded upon renewal fee payment, varies by membership tier",
+      "fee_requirement": "₹5,000 + GST annual fee payment",
+      "credit_time": "Miles credited to EDGE Miles account after successful annual fee payment",
+      "tier_benefits": {
+        "Silver": {
+          "edge_miles": 0,
+          "description": "No renewal bonus"
+        },
+        "Gold": {
+          "edge_miles": 2500,
+          "description": "2,500 EDGE Miles upon renewal"
+        },
+        "Platinum": {
+          "edge_miles": 5000,
+          "description": "5,000 EDGE Miles upon renewal"
+        }
+      },
+      "tier_determination": "Tier is determined by spending within the anniversary year",
+      "notes": "Renewal benefits are in addition to the annual bonus mentioned in tier structure"
+    },
+    "miles_transfer": {
+      "conversion": {
+        "default": "1 EDGE Mile = 2 Partner Points",
+        "marriott": "2 EDGE Miles = 1 Bonvoy Point"
+      },
+      "limit_per_year": 150000,
+      "limit_details": "For the year 2024, customer can convert 1,50,000 EDGE Miles from 20th April 2024 – 31st December 2024. From next year onwards, capping will be applicable from 1st Jan'25 to 31st Dec'25.",
+      "group_a_limit": 30000,
+      "group_b_limit": 120000,
+      "group_a": [
+        "Accor",
+        "Air Canada",
+        "Ethiopian",
+        "Etihad",
+        "JAL",
+        "Marriott",
+        "Qatar",
+        "Singapore Airlines",
+        "Turkish Airlines",
+        "Thai Airways",
+        "United",
+        "Wyndham"
+      ],
+      "group_b": [
+        "Air France-KLM",
+        "Air India",
+        "AirAsia",
+        "ITC",
+        "IHG",
+        "Qantas",
+        "SpiceJet",
+        "Vistara"
+      ]
+    },
+    "redemption": {
+      "platforms": [
+        "Axis Bank Mobile App",
+        "https://traveledge.axisbank.co.in/"
+      ],
+      "options": [
+        "Flights",
+        "Hotels",
+        "Experiences",
+        "Partner Miles"
+      ],
+      "value": "₹1 = 1 EDGE Mile",
+      "expiry_policy": {
+        "effective_oct_1_2025": true,
+        "forfeit_after": "30 days post card closure",
+        "overdue_policy": "EDGE Miles may be forfeited if MAD unpaid for 90+ days"
+      },
+      "partner_miles_redemption_platforms": [
+        "Axis Bank Mobile App",
+        "https://traveledge.axisbank.co.in/"
+      ]
+    },
+    "lounge_access": {
+      "provider": "Dreamfolks",
+      "booking_methods": [
+        "Axis Bank Mobile App QR",
+        "Card swipe (Domestic lounges only, INR 2/- non-refundable transaction for authentication)"
+      ],
+      "silver": {
+        "domestic": 8,
+        "international": 4
+      },
+      "gold": {
+        "domestic": 12,
+        "international": 6
+      },
+      "platinum": {
+        "domestic": 18,
+        "international": 12
+      },
+      "notes": [
+        "Guests count toward quota",
+        "First come, first served",
+        "QR code valid for 48 hours",
+        "When booking via app, check airport name (Domestic/International) and terminal carefully"
+      ]
+    },
+    "dining_benefits": {
+      "provider": "EazyDiner",
+      "discount": "25% up to ₹800",
+      "min_order": "₹2,500",
+      "limit": "Once per month",
+      "how_to_avail": "Make a booking via the EazyDiner mobile application or website. Inform the restaurant staff before billing process about the offer and pay the bill with ATLAS credit card on the app to avail the discount."
+    },
+    "insurance": {
+      "air_accident": {
+        "cover": "₹1 Cr",
+        "status": "Discontinued w.e.f. 2022-10-31",
+        "conditions_prior_discontinuation": "Card used at Merchant Establishment or ATM for cash withdrawal at least 90 days preceding incident and air ticket purchased on Axis Bank credit card. Nominee not entitled unless all dues settled. Bank has first charge/lien."
+      },
+      "lost_card_liability": {
+        "cover": "₹3L",
+        "details": "Protection against fraudulent purchase transactions, covers 30 days prior to reporting loss. Requires FIR. Not valid for ATM, PIN, Password, OTP, or CVV based transactions."
+      },
+      "travel_insurance": [
+        {
+          "type": "Lost Passport",
+          "details": "Covers costs incurred in procuring a passport (including application fee) while travelling overseas. Valid only if flight ticket purchased with Axis Bank credit card."
+        },
+        {
+          "type": "Trip Cancellation"
+        },
+        {
+          "type": "Baggage Delay",
+          "details": "Reimburses cost of necessary items for basic needs in case of checked-in baggage delay of more than 6 hours while travelling overseas. Valid only if flight ticket purchased with Axis Bank credit card."
+        },
+        {
+          "type": "Loss of Checked-in Baggage",
+          "details": "Covers loss or damage to checked-in baggage while travelling overseas. Valid only if flight ticket purchased with Axis Bank credit card."
+        }
+      ]
+    },
+    "concierge": {
+      "availability": "24×7",
+      "booking_support": [
+        "Flights",
+        "Hotels",
+        "Dining",
+        "Lounge access"
+      ]
+    },
+    "bookmyshow": null,
+    "golf_benefits": null,
+    "eligibility": {
+      "age": "18–70 years",
+      "residency": "Indian resident",
+      "income": {
+        "salaried": "₹12L+",
+        "self_employed": "₹15L+"
+      },
+      "add_on_card_age": "18+"
+    },
+    "documentation": [
+      "PAN or Form 60",
+      "Address Proof (passport, utility bill, DL)",
+      "Income Proof (payslip, Form 16, ITR)"
+    ],
+    "inherits": [
+      "common_terms"
+    ],
+    "last_updated": "2025-06-29"
+  }
+}

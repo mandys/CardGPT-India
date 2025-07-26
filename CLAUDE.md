@@ -46,6 +46,7 @@ A modern full-stack RAG (Retrieval-Augmented Generation) application for queryin
 - **Axis Atlas**: Premium miles card (10X travel, ₹1.5L milestone)
 - **ICICI EPM**: Emeralde Private Metal (6 points per ₹200, category caps)
 - **HSBC Premier**: Miles transfer and comprehensive travel benefits
+- **HDFC Infinia**: Ultra-premium card (5 points per ₹150, luxury benefits)
 
 ## Key Features Implemented
 

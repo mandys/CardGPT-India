@@ -1,0 +1,409 @@
+# CardGPT Credit Card Data Schema v1.0
+# Comprehensive schema definition for standardizing credit card data structure
+
+version: "1.0"
+description: "Schema for validating credit card JSON data in CardGPT system"
+last_updated: "2025-07-25"
+
+card_data_schema:
+  # Top-level structure requirements
+  structure:
+    common_terms:
+      required: true
+      description: "Standard banking terms and policies shared across cards"
+      sections:
+        interest_free_grace_period:
+          required: true
+          fields:
+            - duration: {type: string, required: true, description: "Grace period duration"}
+            - condition_for_loss: {type: string, required: true, description: "Conditions when grace period is lost"}
+        
+        minimum_amount_due_logic:
+          required: true
+          fields:
+            - base: {type: string, required: true, description: "Base calculation method"}
+            - floor: {type: string, required: true, pattern: "₹[0-9,]+", description: "Minimum amount floor"}
+        
+        finance_charges:
+          required: true
+          fields:
+            - rate_per_month: {type: string, required: true, pattern: "[0-9.]+%", description: "Monthly interest rate"}
+            - rate_per_annum: {type: string, required: true, pattern: "[0-9.]+%", description: "Annual interest rate"}
+            - cash_withdrawal_start: {type: string, required: true, description: "When interest starts for cash withdrawals"}
+            - applicability: {type: string, required: true, description: "When finance charges apply"}
+        
+        surcharge_fees:
+          required: true
+          fields:
+            - dcc_markup: {type: string, required: false, description: "Dynamic currency conversion markup"}
+            - rent: {type: string, required: false, description: "Rent payment surcharge"}
+            - wallet: {type: string, required: false, description: "Wallet load surcharge"}
+            - fuel: {type: string, required: false, description: "Fuel transaction surcharge"}
+            - utilities: {type: string, required: false, description: "Utility payment surcharge"}
+            - education: {type: string, required: false, description: "Education payment surcharge"}
+            - gaming: {type: string, required: false, description: "Gaming transaction surcharge"}
+        
+        cash_withdrawal:
+          required: true
+          fields:
+            - fee: {type: string, required: true, pattern: "[0-9.]+% \\(min ₹[0-9,]+\\)|₹[0-9,]+", description: "Cash withdrawal fee"}
+            - limit: {type: string, required: true, description: "Cash withdrawal limit"}
+        
+        fuel_surcharge_waiver:
+          required: true
+          fields:
+            - rate: {type: string, required: false, description: "Surcharge rate"}
+            - waiver_band: {type: string, required: false, description: "Transaction range for waiver"}
+            - monthly_cap: {type: string, required: false, description: "Monthly waiver limit"}
+        
+        other_fees:
+          required: true
+          fields:
+            - cheque_bounce: {type: string, required: true, description: "Bounced payment fee"}
+            - overlimit: {type: string, required: true, description: "Over-limit fee"}
+            - replacement_card: {type: string, required: true, description: "Card replacement fee"}
+            - cash_payment: {type: string, required: false, description: "Cash payment processing fee"}
+        
+        card_management_policies:
+          required: true
+          description: "General card management and policy information"
+        
+        reward_points_policy:
+          required: true
+          description: "General reward points terms and conditions"
+    
+    card:
+      required: true
+      description: "Card-specific information and benefits"
+      mandatory_fields:
+        identification:
+          id: 
+            type: string
+            required: true
+            pattern: "^[a-z_]+$"
+            description: "Unique card identifier (lowercase, underscores only)"
+            example: "axis_atlas"
+          
+          name:
+            type: string
+            required: true
+            description: "Full official card name"
+            example: "Axis Bank Atlas Credit Card"
+          
+          bank:
+            type: string
+            required: true
+            description: "Issuing bank name"
+            example: "Axis Bank"
+          
+          category:
+            type: string
+            required: true
+            enum: [Travel, Cashback, Rewards, Premium, Entry-level, Co-branded]
+            description: "Primary card category"
+          
+          network:
+            type: string
+            required: true
+            enum: [Visa, Mastercard, American Express, RuPay, Diners Club]
+            description: "Card network"
+          
+          launch_date:
+            type: string
+            required: false
+            pattern: "^[0-9]{4}-[0-9]{2}$"
+            description: "Launch date in YYYY-MM format"
+        
+        fees:
+          joining_fee:
+            type: string
+            required: true
+            pattern: "^(₹[0-9,]+ \\+ GST|₹[0-9,]+|Nil|Free)$"
+            description: "One-time joining fee"
+            examples: ["₹5,000 + GST", "Nil", "Free"]
+          
+          annual_fee:
+            type: string
+            required: true
+            pattern: "^(₹[0-9,]+ \\+ GST|₹[0-9,]+|Nil|Free)$"
+            description: "Annual maintenance fee"
+            examples: ["₹5,000 + GST", "Nil", "Free"]
+          
+          add_on_card_fee:
+            type: string
+            required: true
+            pattern: "^(₹[0-9,]+ \\+ GST|₹[0-9,]+|Nil|Free)$"
+            description: "Additional card fee"
+          
+          foreign_currency_markup:
+            type: string
+            required: true
+            pattern: "^[0-9.]+%$"
+            description: "Foreign transaction markup percentage"
+            example: "3.5%"
+          
+          dcc_markup:
+            type: string
+            required: false
+            pattern: "^[0-9.]+%$"
+            description: "Dynamic currency conversion markup"
+        
+        fee_waiver:
+          type: [string, "null"]
+          required: false
+          description: "Annual fee waiver conditions (null if not available)"
+        
+        welcome_benefits:
+          type: object
+          required: false
+          description: "Welcome bonus details"
+          recommended_fields:
+            - notes
+            - credit_time_days
+            - one_time_per_variant_policy
+        
+        rewards:
+          rate_general:
+            type: string
+            required: true
+            description: "Default reward rate"
+            examples: ["2 EDGE Miles/₹100", "1% cashback", "4 points/₹100"]
+          
+          value_per_point:
+            type: string
+            required: true
+            description: "Point/mile value"
+            examples: ["₹1 per EDGE Mile", "₹0.25 per point"]
+          
+          non_encashable:
+            type: boolean
+            required: false
+            description: "Whether rewards can be converted to cash"
+          
+          view_location:
+            type: string
+            required: false
+            description: "Where to view rewards balance"
+          
+          accrual_exclusions:
+            type: array
+            required: false
+            description: "Categories excluded from earning rewards"
+        
+        eligibility:
+          age:
+            type: string
+            required: true
+            pattern: "^[0-9]+[–\\-][0-9]+ years$"
+            description: "Age eligibility range"
+            example: "18–70 years"
+          
+          residency:
+            type: string
+            required: true
+            description: "Residency requirement"
+            example: "Indian resident"
+          
+          income:
+            type: object
+            required: true
+            fields:
+              salaried:
+                type: string
+                required: true
+                pattern: "^₹[0-9.]+[LM]\\+?$"
+                description: "Minimum income for salaried individuals"
+                example: "₹12L+"
+              
+              self_employed:
+                type: string
+                required: true
+                pattern: "^₹[0-9.]+[LM]\\+?$"
+                description: "Minimum income for self-employed"
+                example: "₹15L+"
+        
+        # Optional but recommended sections
+        recommended_sections:
+          - tier_structure
+          - lounge_access
+          - insurance
+          - dining_benefits
+          - renewal_benefits
+          - miles_transfer
+          - redemption
+          - expiry_policy
+
+# Data validation rules
+validation_rules:
+  # Standard handling for missing information
+  missing_data_handling:
+    standard_placeholder: "Information not available"
+    null_allowed_fields:
+      - fee_waiver
+      - welcome_benefits
+      - golf_benefits
+      - bookmyshow
+    
+    conditional_requirements:
+      - "If rewards.non_encashable is true, redemption section should be present"
+      - "If category is 'Travel', lounge_access should be present"
+      - "If network is 'American Express', concierge section recommended"
+  
+  # Data format consistency
+  format_standards:
+    currency:
+      pattern: "₹[0-9,]+"
+      examples: ["₹5,000", "₹1,50,000"]
+      notes: "Use Indian numbering system with commas"
+    
+    percentages:
+      pattern: "[0-9.]+%"
+      examples: ["3.5%", "25%", "1.5%"]
+      notes: "No spaces between number and percentage sign"
+    
+    fee_structures:
+      joining_annual_fees: "Use '+ GST' suffix when applicable"
+      percentage_fees: "Use 'min ₹XXX' for minimum charges when applicable"
+      waiver_conditions: "Be specific about spend thresholds and timeframes"
+    
+    dates:
+      format: "YYYY-MM-DD or YYYY-MM for month-only dates"
+      effective_dates: "Include 'w.e.f.' prefix for policy changes"
+  
+  # Cross-reference validation
+  consistency_checks:
+    fee_alignment:
+      description: "Ensure card.fees align with common_terms.surcharge_fees"
+      rules:
+        - "Card-specific fees should override common_terms when different"
+        - "Common terms provide defaults, card section provides specifics"
+    
+    reward_category_validation:
+      description: "Ensure reward categories match eligibility exclusions"
+      rules:
+        - "Excluded categories in rewards.accrual_exclusions should be consistent"
+        - "Special category rates should not conflict with exclusions"
+    
+    network_benefit_alignment:
+      description: "Validate benefits align with card network capabilities"
+      rules:
+        - "Visa Infinite cards should have premium lounge access"
+        - "American Express cards should have concierge services"
+        - "RuPay cards may have limited international acceptance"
+
+# Completeness scoring system
+completeness_requirements:
+  critical_priority:
+    weight: 40
+    fields:
+      - card.fees.joining_fee
+      - card.fees.annual_fee
+      - card.fees.foreign_currency_markup
+      - card.rewards.rate_general
+      - card.rewards.value_per_point
+      - card.eligibility.age
+      - card.eligibility.income
+    minimum_score: 100  # All critical fields must be present
+  
+  high_priority:
+    weight: 30
+    fields:
+      - card.welcome_benefits
+      - card.rewards.accrual_exclusions
+      - card.lounge_access
+      - common_terms.cash_withdrawal
+      - common_terms.fuel_surcharge_waiver
+    minimum_score: 80  # 80% of high priority fields
+  
+  medium_priority:
+    weight: 20
+    fields:
+      - card.insurance
+      - card.dining_benefits
+      - card.tier_structure
+      - card.renewal_benefits
+      - card.miles_transfer
+    minimum_score: 60  # 60% of medium priority fields
+  
+  low_priority:
+    weight: 10
+    fields:
+      - card.golf_benefits
+      - card.bookmyshow
+      - card.concierge
+      - card.purchase_protection
+    minimum_score: 40  # 40% of low priority fields
+
+# Overall scoring calculation:
+# Total Score = (Critical × 0.4) + (High × 0.3) + (Medium × 0.2) + (Low × 0.1)
+# Minimum acceptable score: 85%
+
+# Quality assurance guidelines
+quality_guidelines:
+  accuracy_requirements:
+    - "All fee information must be current (within 6 months)"
+    - "Reward rates must specify earning mechanism clearly"
+    - "Eligibility criteria must be precise and verifiable"
+    - "Use bank's official terminology and naming conventions"
+  
+  clarity_standards:
+    - "Avoid ambiguous terms like 'nominal fee' - use specific amounts"
+    - "Include GST implications clearly for all fees"
+    - "Specify time periods for all rate-based charges"
+    - "Clarify any conditions or caps on benefits"
+  
+  source_attribution:
+    - "Reference official bank documents when possible"
+    - "Include effective dates for policy changes"
+    - "Note any promotional or limited-time offers separately"
+    - "Specify T&C version or document reference if available"
+
+# Testing requirements
+test_coverage:
+  mandatory_test_queries:
+    basic_information:
+      - "What are the annual fees for [CARD_NAME]?"
+      - "What joining fee does [CARD_NAME] charge?"
+      - "What is the foreign transaction fee for [CARD_NAME]?"
+    
+    rewards_queries:
+      - "What rewards do I get with [CARD_NAME]?"
+      - "How much cashback on [CARD_NAME]?"
+      - "Travel rewards rate for [CARD_NAME]?"
+    
+    comparison_queries:
+      - "Compare [CARD_NAME] vs Axis Atlas"
+      - "Which has better rewards [CARD_NAME] or HSBC Premier?"
+      - "Annual fee comparison [CARD_NAME] vs ICICI EPM"
+    
+    specific_scenarios:
+      - "Cash withdrawal charges [CARD_NAME]"
+      - "Fuel surcharge waiver [CARD_NAME]"
+      - "Welcome bonus [CARD_NAME]"
+      - "Lounge access with [CARD_NAME]"
+  
+  expected_response_quality:
+    accuracy: "Response must mention correct card name and accurate information"
+    completeness: "Should cover the queried topic comprehensively"
+    clarity: "Should be easily understandable to users"
+    consistency: "Should not contradict other cards' information"
+
+# Migration and versioning
+schema_evolution:
+  backward_compatibility:
+    - "New required fields should have sensible defaults"
+    - "Existing data should validate against new schema versions"
+    - "Deprecation warnings for outdated field structures"
+  
+  version_migration:
+    - "Document all schema changes with version numbers"
+    - "Provide migration scripts for existing data"
+    - "Test existing cards against new schema versions"
+  
+  future_enhancements:
+    planned_additions:
+      - "EMI conversion terms and charges"
+      - "Co-branded partner benefits"
+      - "Digital wallet integration details"
+      - "Cryptocurrency transaction policies"
+      - "Environmental/sustainable benefits"

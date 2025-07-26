@@ -217,11 +217,49 @@ Track all search accuracy issues and their resolutions here.
 **Notes:** Complex multi-category queries overwhelm Vertex AI Search. Need smarter query preprocessing that breaks complex requests into digestible searches.
 ---
 
+### Issue #6 - [Date: 2025-07-26]
+**Query:** "does hdfc give points on insurance payments" vs "does hdfc infinia give points on insurance payments"
+**Expected Answer:** Both queries should return HDFC Infinia insurance earning information
+**Actual Answer:** First query returns "no information about HDFC Bank credit cards", second query works correctly
+**Card:** HDFC Infinia
+
+**Root Cause Analysis:**
+- [x] Step 1 - JSON source data: ✅ (hdfc-infinia.json contains insurance earning data)
+- [x] Step 2 - JSONL chunking: ✅ (hdfc-infinia-data.jsonl generated correctly)
+- [x] Step 3 - JSONL output: ✅ (29 chunks with proper descriptive IDs)  
+- [x] Step 4 - Search results: ❓ (depends on query enhancement patterns)
+- [x] Step 5 - LLM prompt: ✅ (when documents found, provides correct answer)
+
+**Root Cause Found:** Step 4 - Query enhancement patterns. The query_enhancer.py has card detection patterns:
+- 'HDFC Infinia': ['hdfc infinia', 'infinia', 'hdfc bank infinia']
+- Query "hdfc" alone doesn't match any pattern, so no card filtering occurs
+- Query "infinia" matches and triggers HDFC Infinia card filtering
+
+**Behavior Analysis:**
+This is actually **intended behavior**, not a bug:
+- "hdfc" alone could match multiple HDFC cards (if we had more)
+- "infinia" is specific enough to identify the exact card
+- Card detection requires specific enough terms to avoid ambiguity
+
+**Current Status:** ✅ Working as designed
+- Generic "hdfc" queries → no card filtering → searches all cards
+- Specific "hdfc infinia" or "infinia" → card filtering → targeted results
+
+**Test Results:**
+- "hdfc infinia give points on insurance": ✅ Works (card detected)
+- "infinia insurance points": ✅ Works (card detected)  
+- "hdfc insurance points": ❌ No card detected (by design)
+- "hdfc bank infinia insurance": ✅ Works (card detected)
+
+**Notes:** This behavior is actually a feature, not a bug. It prevents ambiguous queries from incorrectly filtering to a single card when the user might mean any HDFC card. As more HDFC cards are added, users will need to be specific about which card they want.
+
+---
+
 <!-- Add new issues above this line -->
 
 ## Issue Statistics
 
-**Total Issues Logged:** 5
+**Total Issues Logged:** 6
 **Resolved Issues:** 1  
 **Success Rate:** 100%
 

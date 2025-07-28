@@ -1,0 +1,135 @@
+{
+  "categories": {
+    "welcome": {
+      "title": "Welcome Benefits",
+      "tips": [
+        "💡 Try: 'What welcome benefits does Axis Atlas offer for new cardholders?'",
+        "🎁 Ask: 'Compare welcome bonuses between HDFC Infinia and ICICI EPM'",
+        "✨ Explore: 'How much do I need to spend to get welcome miles on HSBC Premier?'",
+        "🎯 Discover: 'Which card has the best signup bonus for ₹1L spend?'"
+      ]
+    },
+    "dining": {
+      "title": "Dining Rewards",
+      "tips": [
+        "🍽️ Try: 'If I spend ₹50,000 on dining monthly, which card gives better rewards?'",
+        "🍕 Ask: 'Are there dining caps on ICICI EPM vs Axis Atlas?'",
+        "🥘 Compare: 'Dining rewards rate: HDFC Infinia vs HSBC Premier'",
+        "🍜 Calculate: 'How many points for ₹25,000 dining spend on each card?'"
+      ]
+    },
+    "travel": {
+      "title": "Travel Benefits",
+      "tips": [
+        "✈️ Try: 'Miles earned on ₹2L flight booking with Atlas vs Premier?'",
+        "🏨 Ask: 'Hotel booking rewards comparison between all cards'",
+        "🧳 Explore: 'Which card offers better travel insurance coverage?'",
+        "🛫 Calculate: 'Annual travel spend ₹5L - best card for maximum miles?'"
+      ]
+    },
+    "utility": {
+      "title": "Utility & Bills",
+      "tips": [
+        "⚡ Try: 'Utility bill rewards: Are there caps on HSBC Premier?'",
+        "💡 Ask: 'Best card for ₹30,000 monthly electricity bills?'",
+        "🏠 Compare: 'Rent payment rewards across all credit cards'",
+        "📱 Calculate: 'Telecom bill rewards: which card gives more points?'"
+      ]
+    },
+    "insurance": {
+      "title": "Insurance Payments",
+      "tips": [
+        "🛡️ Try: 'Which card gives rewards on insurance premium payments?'",
+        "💸 Ask: 'Compare insurance payment rewards between Atlas and Infinia'",
+        "🏥 Explore: 'Health insurance premium: best card for maximum benefits?'",
+        "🚗 Calculate: 'Car insurance ₹50,000 - which card gives better returns?'"
+      ]
+    },
+    "fuel": {
+      "title": "Fuel & Transportation",
+      "tips": [
+        "⛽ Try: 'Fuel surcharge waiver comparison across all cards'",
+        "🚗 Ask: 'Monthly fuel spend ₹15,000 - best rewards card?'",
+        "🚕 Compare: 'Uber/Ola payments: which card gives better cashback?'",
+        "🚌 Calculate: 'Transportation spend ₹20,000 - reward rates comparison?'"
+      ]
+    },
+    "fees": {
+      "title": "Fees & Charges",
+      "tips": [
+        "💰 Try: 'Annual fee waiver conditions for HDFC Infinia vs Atlas'",
+        "🏧 Ask: 'Cash withdrawal charges comparison between all cards'",
+        "💳 Compare: 'Foreign transaction fees: which card is cheapest?'",
+        "📊 Explore: 'Overlimit charges and late payment fees across cards'"
+      ]
+    },
+    "spending": {
+      "title": "Spending Analysis",
+      "tips": [
+        "📈 Try: 'Split ₹2L across dining, travel, shopping - best card strategy?'",
+        "💰 Ask: 'Monthly spend ₹1.5L mixed categories - optimal card choice?'",
+        "🎯 Calculate: 'To reach ₹4L milestone on Atlas, how should I spend?'",
+        "📊 Compare: 'High-value purchases ₹5L+ - which card maximizes rewards?'"
+      ]
+    },
+    "limits": {
+      "title": "Caps & Limits",
+      "tips": [
+        "🔒 Try: 'Monthly reward caps comparison: Atlas vs EPM vs Premier'",
+        "📊 Ask: 'Annual point earning limits on HDFC Infinia?'",
+        "⚖️ Compare: 'Category-wise spending caps across all cards'",
+        "🎯 Calculate: 'How to maximize rewards within spending limits?'"
+      ]
+    },
+    "redemption": {
+      "title": "Reward Redemption",
+      "tips": [
+        "🎁 Try: 'Best redemption options for Atlas Edge miles?'",
+        "✈️ Ask: 'How to transfer ICICI points to airline partners?'",
+        "💎 Compare: 'Reward redemption value: cash vs travel vs shopping'",
+        "🏆 Explore: 'Which card offers highest redemption value per point?'"
+      ]
+    },
+    "international": {
+      "title": "International Usage",
+      "tips": [
+        "🌍 Try: 'Foreign transaction fees comparison for overseas spending'",
+        "💱 Ask: 'Currency conversion charges: which card is most economical?'",
+        "🏖️ Compare: 'International travel: Atlas vs Premier for rewards?'",
+        "✈️ Calculate: 'Overseas spend ₹3L annually - best card choice?'"
+      ]
+    },
+    "milestones": {
+      "title": "Milestone Benefits",
+      "tips": [
+        "🎯 Try: 'Milestone rewards for ₹4L annual spend on each card'",
+        "🏆 Ask: 'How to achieve milestone benefits on HDFC Infinia?'",
+        "📈 Compare: 'Annual spending targets for bonus rewards'",
+        "💎 Calculate: 'Worth reaching ₹15L milestone on Atlas vs regular rewards?'"
+      ]
+    },
+    "general": {
+      "title": "General Queries",
+      "tips": [
+        "🤔 Try asking about specific spending amounts: 'For ₹50K monthly spend...'",
+        "💡 Compare multiple scenarios: 'Dining ₹30K vs Travel ₹30K rewards'",
+        "📊 Ask about category combinations: 'Mixed spending across categories'",
+        "🎯 Explore edge cases: 'Government payments', 'Wallet loads', 'EMI charges'"
+      ]
+    }
+  },
+  "contextual_mapping": {
+    "welcome": ["welcome", "signup", "bonus", "new card", "joining"],
+    "dining": ["dining", "restaurant", "food", "swiggy", "zomato", "eat", "meal"],
+    "travel": ["travel", "flight", "hotel", "booking", "miles", "airline", "vacation"],
+    "utility": ["utility", "electricity", "gas", "water", "broadband", "internet", "bill"],
+    "insurance": ["insurance", "premium", "health", "car", "life", "policy"],
+    "fuel": ["fuel", "petrol", "diesel", "gas", "station", "pump"],
+    "fees": ["fee", "annual", "charge", "cost", "waiver", "cash", "withdrawal"],
+    "spending": ["spend", "monthly", "annual", "budget", "split", "optimize"],
+    "limits": ["cap", "limit", "maximum", "threshold", "monthly", "annual"],
+    "redemption": ["redeem", "points", "miles", "transfer", "value", "cash"],
+    "international": ["international", "foreign", "overseas", "abroad", "currency"],
+    "milestones": ["milestone", "target", "achievement", "bonus", "threshold"]
+  }
+}

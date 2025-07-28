@@ -5,13 +5,15 @@ import { ChatMessage } from '../../types';
 import CardSelection from './CardSelection';
 import CostDisplay from './CostDisplay';
 import SourcesDisplay from './SourcesDisplay';
+import TipsContainer from './TipsContainer';
 
 interface MessageBubbleProps {
   message: ChatMessage;
   onCardSelection?: (selectedCards: string[], originalQuery: string) => void;
+  onTipClick?: (tip: string) => void;
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onCardSelection }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onCardSelection, onTipClick }) => {
   const [showDebugInfo, setShowDebugInfo] = useState(false);
   const isUser = message.role === 'user';
   const requiresCardSelection = message.metadata?.requires_card_selection;
@@ -141,6 +143,16 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onCardSelection 
                 </div>
               )}
             </div>
+          )}
+          
+          {/* Tips Container - only show for completed assistant messages */}
+          {!isUser && isComplete && !requiresCardSelection && onTipClick && (
+            <TipsContainer
+              userQuery={message.metadata?.original_query || message.content}
+              onTipClick={onTipClick}
+              showTip={true}
+              className="max-w-4xl"
+            />
           )}
           
           {/* Timestamp */}

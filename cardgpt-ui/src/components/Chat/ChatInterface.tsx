@@ -119,6 +119,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 key={message.id} 
                 message={message} 
                 onCardSelection={onCardSelection}
+                onTipClick={onExampleClick}
               />
             ))}
             {/* Status Indicator - Compact style like typing indicator */}

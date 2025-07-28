@@ -116,6 +116,15 @@ npm install
 - **Multi-Card Comparison**: Side-by-side analysis
 - **Optimization Suggestions**: Spending strategy recommendations
 
+### 💡 **Smart Tips System**
+- **Contextual Intelligence**: AI-powered tip suggestions based on user query context
+- **12 Tip Categories**: Welcome, dining, travel, utility, insurance, rent, education, fuel, groceries, shopping, milestones, comparisons
+- **Click-to-Query**: One-click tip activation - instantly turn suggestions into new queries
+- **Smart Context Detection**: Advanced NLP analysis matches tips to user intent and interests
+- **50+ Curated Tips**: Expert-crafted suggestions to help discover hidden features and optimization strategies
+- **Beautiful UI**: Yellow gradient design with lightbulb icons for intuitive user experience
+- **Responsive Design**: Seamlessly integrated with existing mobile-first interface
+
 ## Data Pipeline Setup
 
 ### 1. Prepare Credit Card Data
@@ -197,6 +206,46 @@ npm run build
 
 # Type checking
 npx tsc --noEmit
+```
+
+### File Structure
+
+```
+├── backend/                          # FastAPI Backend
+│   ├── main.py                      # Application entry point
+│   ├── api/                         # API endpoints
+│   │   ├── chat.py                  # Chat endpoint with streaming
+│   │   ├── config.py                # Configuration endpoint
+│   │   └── health.py                # Health check endpoint
+│   ├── services/                    # Business logic services
+│   │   ├── llm_service.py          # Multi-model LLM integration
+│   │   ├── search_service.py       # Vertex AI Search service
+│   │   ├── query_enhancement.py    # Smart query preprocessing
+│   │   └── calculator_service.py   # Precise calculation engine
+│   └── requirements.txt             # Python dependencies
+├── cardgpt-ui/                      # React Frontend
+│   ├── src/
+│   │   ├── components/             # React components
+│   │   │   ├── ChatInterface.tsx   # Main chat interface
+│   │   │   ├── MessageBubble.tsx   # Chat message display
+│   │   │   ├── TipDisplay.tsx      # Individual tip component
+│   │   │   └── TipsContainer.tsx   # Smart tips container
+│   │   ├── services/               # API and service layer
+│   │   │   └── api.ts             # Backend API client
+│   │   ├── hooks/                  # Custom React hooks
+│   │   │   ├── useChat.ts         # Chat state management
+│   │   │   └── useTips.ts         # Tips logic and state
+│   │   ├── data/
+│   │   │   └── tips.json          # Tips database (50+ contextual tips)
+│   │   └── types/                  # TypeScript type definitions
+│   └── package.json                # Node.js dependencies
+├── data/                           # Credit card data (NOT committed)
+│   ├── axis-atlas.json            # Axis Bank Atlas card data
+│   ├── icici-epm.json             # ICICI EPM card data
+│   ├── hsbc-premier.json          # HSBC Premier card data
+│   └── hdfc-infinia.json          # HDFC Infinia card data
+├── transform_to_jsonl.py           # Data pipeline transformation
+└── README.md                       # Project documentation
 ```
 
 ### Adding New Credit Cards
@@ -399,6 +448,32 @@ echo $VERTEX_AI_DATA_STORE_ID
 head -n 1 card_data.jsonl | jq .
 ```
 
+## Recent Major Improvements
+
+### 🎯 **Smart Tips System (Latest)**
+- **Contextual Intelligence**: Advanced NLP-powered tip suggestions that analyze user queries for relevant follow-up questions
+- **12 Tip Categories**: Comprehensive coverage across all credit card usage scenarios (dining, travel, utility, insurance, rent, education, fuel, groceries, shopping, milestones, comparisons, welcome)
+- **Interactive UX**: Beautiful yellow gradient design with lightbulb icons and click-to-query functionality
+- **Smart Integration**: Tips appear contextually after LLM responses with 50+ expert-curated suggestions
+- **Performance Optimized**: Lightweight React components with efficient context detection algorithms
+
+### 🚀 **Previous Updates (2025)**
+- **Gemini 2.5 Flash-Lite Integration**: Ultra-low cost model with increased token limits
+- **Streaming Architecture**: Real-time word-by-word responses with status indicators
+- **Token Limit Increases**: Enhanced capacity for complex multi-card comparisons
+- **Query Simplification**: Optimized complex query processing for Vertex AI Search
+- **Mobile-First Design**: Responsive interface with collapsible sidebar and bottom navigation
+
+### 📊 **Evolution Timeline**
+- **Started**: Supavec clone with Node.js backend
+- **Phase 1**: Pure Python with Streamlit frontend
+- **Phase 2**: Added Gemini models (20x cost reduction)
+- **Phase 3**: Vertex AI Search integration (enterprise-grade)
+- **Phase 4**: React + TypeScript frontend migration
+- **Phase 5**: FastAPI backend with streaming responses
+- **Phase 6**: Smart Tips System with contextual intelligence
+- **Current**: Production-ready full-stack with ultra-low cost AI and intelligent user guidance
+
 ---
 
 ## Credits
@@ -411,4 +486,4 @@ head -n 1 card_data.jsonl | jq .
 
 ---
 
-*Get instant, AI-powered insights about Indian credit cards - compare, calculate, and optimize your spending strategy!*
+*Get instant, AI-powered insights about Indian credit cards - compare, calculate, and optimize your spending strategy with intelligent contextual guidance!*

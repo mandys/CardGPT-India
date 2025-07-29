@@ -31,7 +31,22 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 Starting Credit Card Assistant API...")
     
     try:
-        # Initialize services here
+        # Initialize database first (for Railway PostgreSQL)
+        logger.info("🗄️ Initializing database...")
+        from services.auth_service import AuthService
+        
+        try:
+            # Initialize auth service (this creates tables automatically)
+            auth_service = AuthService()
+            if auth_service.test_database_connection():
+                logger.info("✅ Database initialized successfully")
+            else:
+                logger.warning("⚠️ Database connection test failed")
+        except Exception as e:
+            logger.error(f"❌ Database initialization error: {e}")
+            # Continue startup anyway, so auth issues don't break the entire app
+        
+        # Initialize other services
         from services.llm import LLMService
         from services.vertex_retriever import VertexRetriever
         from services.query_enhancer import QueryEnhancer

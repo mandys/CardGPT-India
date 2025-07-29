@@ -94,6 +94,13 @@ data/*.json
 backend/exports/
 exports/
 
+# Database files (contains user data - privacy protection)
+*.db
+*.sqlite
+*.sqlite3
+backend/auth.db
+backend/logs/query_logs.db
+
 # SECURITY: API Keys, Secrets, and Credentials
 # Never commit any files containing API keys or secrets
 **/client_secret*.json

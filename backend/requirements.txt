@@ -27,7 +27,8 @@ passlib[bcrypt]>=1.7.4
 google-auth>=2.23.0
 google-auth-oauthlib>=1.0.0
 google-auth-httplib2>=0.1.0
-# sqlite3 is built-in to Python
+# PostgreSQL database driver
+psycopg2-binary>=2.9.7
 
 # Development (optional)
 pytest>=7.4.0

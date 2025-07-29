@@ -87,7 +87,12 @@ async def lifespan(app: FastAPI):
         from services.auth_service import AuthService
         auth_service = AuthService()
         app_state["auth_service"] = auth_service
-        logger.info(f"🔑 Auth service initialized with database at: {auth_service.db_path}")
+        
+        # Log appropriate database info based on type
+        if auth_service.use_postgres:
+            logger.info(f"🔑 Auth service initialized with PostgreSQL database")
+        else:
+            logger.info(f"🔑 Auth service initialized with SQLite database at: {auth_service.db_path}")
         
         logger.info("✅ All services initialized successfully")
         

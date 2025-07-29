@@ -112,15 +112,35 @@ const MainLayout: React.FC = () => {
     // Create a new query with selected cards
     const cardsList = selectedCards.join(', ');
     
+    // First, extract and preserve spending amounts using Indian currency patterns
+    const amountPatterns = [
+      /₹\s*(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:lakh|l\b)/gi,
+      /₹\s*(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:crore|cr\b)/gi,
+      /₹\s*(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:thousand|k\b)/gi,
+      /₹\s*(\d+(?:,\d+)*(?:\.\d+)?)/gi,
+      /(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:lakh|l\b)/gi,
+      /(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:crore|cr\b)/gi,
+      /(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:thousand|k\b)/gi,
+    ];
+    
+    let detectedAmount = '';
+    for (const pattern of amountPatterns) {
+      const match = originalQuery.match(pattern);
+      if (match) {
+        detectedAmount = match[0].trim();
+        break;
+      }
+    }
+    
     // Extract the core topic from the original query
-    // Remove common question words and extract the spending category or topic
+    // Remove common question words but preserve amounts and key context
     let topic = originalQuery.toLowerCase()
       .replace(/💸|💰|🎯|📊/g, '') // Remove emojis
-      .replace(/tell me|which card|which|what|how|card|is|better|best|for|spends?|spending|spend|the|\?/g, '') // Remove question words
+      .replace(/tell me|which card|which|what|how|card|is|better|best|for|the|\?/g, '') // Remove question words only
       .replace(/\s+/g, ' ') // Collapse multiple spaces
       .trim();
     
-    // If topic is too short or empty, use a generic format
+    // If topic is too short or empty, use a more conservative approach
     if (!topic || topic.length < 3) {
       topic = originalQuery.toLowerCase()
         .replace(/💸|💰|🎯|📊/g, '') // Remove emojis
@@ -128,17 +148,20 @@ const MainLayout: React.FC = () => {
         .trim();
     }
     
-    // Clean up common patterns and create final topic
+    // Clean up common patterns while preserving amounts and create final topic
     if (topic.includes('insurance')) {
-      topic = 'insurance spends';
+      topic = detectedAmount ? `${detectedAmount} insurance spends` : 'insurance spends';
     } else if (topic.includes('hotel')) {
-      topic = 'hotel spends';
+      topic = detectedAmount ? `${detectedAmount} hotel spends` : 'hotel spends';
     } else if (topic.includes('travel')) {
-      topic = 'travel spends';
+      topic = detectedAmount ? `${detectedAmount} travel spends` : 'travel spends';
     } else if (topic.includes('utility') || topic.includes('utilities')) {
-      topic = 'utility spends';
+      topic = detectedAmount ? `${detectedAmount} utility spends` : 'utility spends';
     } else if (topic.includes('fuel')) {
-      topic = 'fuel spends';
+      topic = detectedAmount ? `${detectedAmount} fuel spends` : 'fuel spends';
+    } else if (detectedAmount) {
+      // If we have an amount but no specific category, preserve the original context
+      topic = topic || `${detectedAmount} spends`;
     } else if (!topic) {
       topic = 'general spending';
     }

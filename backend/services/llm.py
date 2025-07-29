@@ -415,6 +415,12 @@ INSURANCE SPENDING SPECIFIC GUIDANCE:
 - ICICI EPM: Earns general rate (6 points per ₹200) with monthly cap of 5,000 points
 - Axis Atlas: EXCLUDES insurance completely (0 rewards)
 
+CRITICAL MILESTONE IDENTIFICATION FOR AXIS ATLAS:
+- **Annual Spend Milestones**: Look for "Milestones:" section with spend thresholds (₹3L=2500 miles, ₹7.5L=2500 miles, ₹15L=5000 miles)
+- **Tier-based Milestone Miles**: These are different - found in tier structure sections (Silver/Gold/Platinum milestone miles)
+- For calculations, use ANNUAL SPEND MILESTONES only: ₹3L→2500, ₹7.5L→2500, ₹15L→5000
+- Do NOT confuse tier "Milestone Miles" with annual spending milestone bonuses
+
 CALCULATION REQUIREMENTS:
 - Show step-by-step math with milestone bonuses
 - Double-check arithmetic
@@ -442,10 +448,12 @@ STEPS:
 2. **Base Calculation**: Apply earning rate from context
 3. **Apply Caps**: Check monthly/cycle limits if any
 4. **Find Milestones**: CRITICAL - Step-by-step milestone validation
+   - **SEARCH FOR**: Look for "Milestones:" in context (format: {'spend': '₹3L', 'miles': 2500})
+   - **FOR AXIS ATLAS**: Annual milestones are ₹3L=2500, ₹7.5L=2500, ₹15L=5000 miles
    - Convert user spend to numbers: ₹3,00,000 = 300000
    - Convert each milestone to numbers: ₹3L = 300000, ₹7.5L = 750000, ₹15L = 1500000
    - Check EACH milestone individually:
-     * IF 300000 ≥ 300000 (₹3L) → YES, apply ₹3L milestone bonus
+     * IF 300000 ≥ 300000 (₹3L) → YES, apply ₹3L milestone bonus (+2500 miles)
      * IF 300000 ≥ 750000 (₹7.5L) → NO, do not apply ₹7.5L milestone bonus
      * IF 300000 ≥ 1500000 (₹15L) → NO, do not apply ₹15L milestone bonus
    - NEVER assume spend exceeds higher milestones without explicit number comparison
@@ -459,7 +467,14 @@ KEY RULES:
 - If you apply ₹7.5L bonus to ₹3L spend, that's a mathematical ERROR
 - Show math: (spend ÷ rate) × multiplier = result
 
-FORMAT: "🧮 **Detailed Calculation:**" with clear steps"""
+FORMAT: "🧮 **Detailed Calculation:**" with clear steps
+
+AXIS ATLAS MILESTONE EXAMPLE:
+For ₹3L hotel spend:
+1. Base calculation: ₹2L at 5 EDGE Miles/₹100 = 10,000 miles
+2. Excess: ₹1L at 2 EDGE Miles/₹100 = 2,000 miles 
+3. Milestone check: ₹3,00,000 ≥ ₹3L threshold → +2,500 milestone bonus
+4. Total: 10,000 + 2,000 + 2,500 = 14,500 EDGE Miles"""
         else:
             base_prompt += """
 
@@ -488,6 +503,10 @@ For informational queries:
             r'\d+.*lakh',
             r'₹\d+.*L',
             r'₹\d+K',
+            r'\d+l.*spend',  # Matches "3l spend" (lowercase)
+            r'spend.*\d+l',  # Matches "spend 3l" (lowercase)
+            r'\d+l.*hotel',  # Matches "3l hotel" (lowercase)
+            r'\d+l.*flight', # Matches "3l flight" (lowercase)  
             r'milestone',
             r'surcharge'
         ]

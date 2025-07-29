@@ -145,7 +145,7 @@ class QueryEnhancer:
         if category and spend_amount:
             # Make category explicit in the query with generic guidance
             if category in ['hotel', 'flight']:
-                enhanced_query += f"\n\nIMPORTANT: This is specifically about {category} spending. Check for accelerated earning rates for {category} category. Look for any monthly caps on accelerated rates - if spend exceeds cap, use base rate for excess amount."
+                enhanced_query += f"\n\nIMPORTANT: This is specifically about {category} spending. Check for accelerated earning rates for {category} category. Look for any monthly caps on accelerated rates - if spend exceeds cap, use base rate for excess amount. CRITICAL: Also check for annual spending milestones - look for 'Milestones:' section with spend thresholds like ₹3L, ₹7.5L, ₹15L and apply milestone bonuses if user spend qualifies."
             elif category == 'utility':
                 enhanced_query += f"\n\nIMPORTANT: This is about utility spending. Check BOTH rewards AND surcharges: Some cards exclude utilities (0 rewards), others have caps. Check for surcharge fees on amounts above monthly thresholds. Calculate: 1% × (spend - threshold) if spend exceeds threshold."
             elif category == 'insurance':
@@ -159,14 +159,14 @@ class QueryEnhancer:
             enhanced_query += f"\n\nIMPORTANT: This is about {category} rewards comparison. For each card, find: 1) Base earning rate (general rate), 2) Travel/Hotel specific rates if any, 3) Monthly caps on accelerated rates, 4) Any exclusions. Look in 'rewards', 'travel', and 'rate_general' sections."
         elif category == 'milestone':
             # Handle milestone queries separately (they often don't have spend amounts)
-            enhanced_query += f"\n\nIMPORTANT: This is about milestone benefits. Check both the dedicated 'milestones' section AND the 'renewal_benefits' section which may contain milestone-related vouchers and benefits."
+            enhanced_query += f"\n\nIMPORTANT: This is about milestone benefits. For Axis Atlas, look for annual spending milestones in 'Milestones:' section (₹3L=2500 miles, ₹7.5L=2500 miles, ₹15L=5000 miles). Also check 'renewal_benefits' and tier structure for other types of milestone rewards. Do NOT confuse tier-based 'Milestone Miles' with annual spending milestones."
         elif category == 'utility' and any(keyword in query.lower() for keyword in ['surcharge', 'fee', 'charge', 'cost']):
             # Handle utility fee/surcharge queries separately
             enhanced_query += f"\n\nIMPORTANT: This is about utility fees/surcharges. Calculate surcharges on amount ABOVE threshold if mentioned. Show surcharge calculation: percentage × (spend - threshold)."
         elif is_distribution_query:
             enhanced_query += f"\n\nIMPORTANT: This is a spend distribution query. For each category, calculate separately using the appropriate rate (base rate for most categories, accelerated for hotels/flights, zero for excluded categories). Do NOT add base + category rates."
         elif spend_amount and not category:
-            enhanced_query += f"\n\nNote: No specific category mentioned, so use BASE RATE for calculation."
+            enhanced_query += f"\n\nNote: No specific category mentioned, so use BASE RATE for calculation. CRITICAL: Check for annual spending milestones - look for 'Milestones:' section and apply milestone bonuses if user spend qualifies."
         
         return enhanced_query, metadata
     

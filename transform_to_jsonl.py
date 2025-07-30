@@ -65,8 +65,15 @@ def transform_data():
                 data = json.load(f_in)
                 card_name = data.get("card", {}).get("name", "Unknown Card")
 
+                # Process both card and common_terms sections
+                sections_to_process = []
                 if "card" in data:
-                    chunks = create_chunks_from_node(data["card"], "card", card_name)
+                    sections_to_process.append(("card", data["card"]))
+                if "common_terms" in data:
+                    sections_to_process.append(("common_terms", data["common_terms"]))
+                
+                for section_name, section_data in sections_to_process:
+                    chunks = create_chunks_from_node(section_data, section_name, card_name)
                     for chunk in chunks:
                         # --- THIS IS THE CRITICAL FIX ---
                         # Encode the text content to bytes, then to a Base64 string

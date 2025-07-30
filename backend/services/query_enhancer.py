@@ -171,6 +171,11 @@ class QueryEnhancer:
         elif spend_amount and not category:
             enhanced_query += f"\n\nNote: No specific category mentioned, so use BASE RATE for calculation. CRITICAL: Check for annual spending milestones - look for 'Milestones:' section and apply milestone bonuses if user spend qualifies."
         
+        # Check for fee-related queries
+        fee_keywords = ['fee', 'fees', 'charge', 'charges', 'overlimit', 'late payment', 'annual fee', 'interest']
+        if any(keyword in query.lower() for keyword in fee_keywords):
+            enhanced_query += f"\n\nIMPORTANT: This is about fees and charges. Look for 'other_fees', 'overlimit', 'late_payment', 'annual_fee', and 'finance_charges' sections in the context."
+        
         return enhanced_query, metadata
     
     def get_category_guidance(self, category: str) -> str:

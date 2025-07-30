@@ -32,14 +32,15 @@ A modern full-stack RAG (Retrieval-Augmented Generation) application for queryin
 - **Location**: `backend/` directory  
 - **Deployment**: Railway (https://cardgpt-india-production.up.railway.app)
 - **API Docs**: `/docs` endpoint with OpenAPI documentation
-- **Services**: LLM, Vertex AI Search, Query Enhancement, Calculator
+- **Database**: Hybrid system - SQLite (local) + PostgreSQL (production)
+- **Services**: LLM, Vertex AI Search, Query Enhancement, Calculator, Authentication
 
 ### Data Pipeline
 1. **Source**: JSON files in `data/` directory (not committed)
-2. **Transform**: `transform_to_jsonl.py` creates `card_data.jsonl`
+2. **Transform**: `transform_to_jsonl.py` creates `card_data.jsonl` (173 chunks with complete data)
 3. **Upload**: Google Cloud Storage bucket
 4. **Index**: Vertex AI Search data store
-5. **Query**: Enterprise-grade search with auto-chunking
+5. **Query**: Enterprise-grade search with enhanced context retrieval (top_k=10)
 
 ## Supported Credit Cards
 
@@ -65,9 +66,12 @@ A modern full-stack RAG (Retrieval-Augmented Generation) application for queryin
 - **Production Deployment**: Vercel + Railway with CI/CD
 
 ### ✅ Advanced Features
+- **Hybrid Database System**: Auto-detects environment (SQLite local, PostgreSQL production)
+- **Enhanced Query Processing**: Fixed education fee queries, improved context retrieval
 - **Cost Optimization**: 60% token reduction, 20x cheaper than traditional models
 - **Calculation Accuracy**: Step-by-step math with milestone logic
-- **Category Detection**: Hotel, utility, education, rent spending
+- **Category Detection**: Hotel, utility, education, rent spending (with improved education handling)
+- **Authentication System**: Google OAuth with session management and query limits
 - **Responsive Design**: Collapsible sidebar, bottom navigation
 - **Debug Transparency**: Cost breakdown and source documents
 
@@ -88,12 +92,21 @@ cd cardgpt-ui && npm install && ./start_frontend.sh
 GEMINI_API_KEY="your-gemini-key-here"
 GOOGLE_CLOUD_PROJECT="your-gcp-project-id"
 VERTEX_AI_DATA_STORE_ID="your-data-store-id"
+
+# Database (Auto-configured)
+# DATABASE_URL="postgresql://..."  # Railway auto-sets for production
+# AUTH_DB_PATH="backend/auth.db"   # Local SQLite path (auto-created)
+
+# Authentication (Production only)
+# JWT_SECRET="secure-secret-here"
+# GOOGLE_CLIENT_ID="your-google-client-id"
 ```
 
 ### Data Pipeline Setup
 ```bash
-# Transform data
+# Transform data (now processes both card and common_terms sections)
 python transform_to_jsonl.py
+# Creates ~173 chunks with complete fee and surcharge information
 
 # Upload to Google Cloud
 gsutil cp card_data.jsonl gs://your-bucket/
@@ -107,6 +120,7 @@ gsutil cp card_data.jsonl gs://your-bucket/
 ### Smart Category Detection
 - "What rewards for ₹50K utility spend?" → detects utility category
 - "For ₹1L hotel spend on Atlas?" → enhanced LLM with step-by-step math
+- "Do education fees earn rewards on Atlas?" → correctly identifies education category (FIXED)
 - "Split ₹1L across rent, food, travel - which card better?" → category-wise analysis
 
 ### Complex Calculations  
@@ -123,18 +137,26 @@ gsutil cp card_data.jsonl gs://your-bucket/
 
 ```
 ├── backend/                    # FastAPI Backend
-│   ├── main.py                # Entry point
-│   ├── api/                   # Endpoints (chat, config, health)
-│   ├── services/              # Business logic (LLM, search, calculator)
+│   ├── main.py                # Entry point with hybrid database initialization
+│   ├── auth.db                # SQLite database (local development)
+│   ├── api/                   # Endpoints (chat, config, health, auth)
+│   │   ├── auth.py            # Authentication endpoints
+│   │   ├── chat.py            # Enhanced chat with education fee fixes
+│   │   └── ...
+│   ├── services/              # Business logic services
+│   │   ├── auth_service.py    # Hybrid database auth service
+│   │   ├── llm.py             # Enhanced system prompts
+│   │   ├── vertex_retriever.py # Enhanced search (top_k=10)
+│   │   └── query_enhancer.py  # Education category enhancements
 │   └── requirements.txt       # Python dependencies
 ├── cardgpt-ui/                # React Frontend
 │   ├── src/components/        # React components
 │   ├── src/services/          # API client
 │   ├── src/hooks/            # State management
 │   └── package.json          # Node.js dependencies
-├── data/                     # Credit card JSON files (NOT committed)
-├── transform_to_jsonl.py     # Data pipeline script
-└── README.md                 # Main documentation (KEEP UPDATED)
+├── data/                      # Credit card JSON files (NOT committed)
+├── transform_to_jsonl.py      # Enhanced data pipeline (card + common_terms)
+└── README.md                  # Main documentation (KEEP UPDATED)
 ```
 
 ## Data Security & Privacy
@@ -184,7 +206,10 @@ gsutil cp card_data.jsonl gs://your-bucket/
 ## Troubleshooting
 
 ### Common Issues
-- **Search returns 0 results**: Check VERTEX_AI_DATA_STORE_ID configuration
+- **Database initialization errors**: Check if Railway PostgreSQL is properly configured or SQLite permissions for local dev
+- **Education fee queries incorrect**: System now properly handles education spending (2 EDGE Miles per ₹100 with 1% surcharge on Atlas)
+- **Search returns 0 results**: Check VERTEX_AI_DATA_STORE_ID configuration and verify JSONL has ~173 chunks
+- **Authentication failures**: Verify JWT_SECRET and GOOGLE_CLIENT_ID are set in production
 - **Frontend build errors**: Clear node_modules, reinstall dependencies
 - **Backend not starting**: Verify GEMINI_API_KEY is set correctly
 - **CORS errors**: Ensure backend is running before frontend
@@ -196,6 +221,14 @@ python backend/check_gemini_models.py
 
 # Test API connectivity  
 curl http://localhost:8000/api/health
+
+# Test database connection
+cd backend && python -c "from services.auth_service import AuthService; print(f'Database type: {AuthService().database_type}'); print(f'Tables exist: {AuthService().test_database_connection()}')"
+
+# Test education fee query accuracy
+curl -X POST http://localhost:8000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Do education fees earn rewards on Axis Atlas?", "model": "gemini-2.5-flash-lite"}'
 
 # Verify environment
 echo $GEMINI_API_KEY | head -c 10
@@ -219,11 +252,31 @@ echo $GEMINI_API_KEY | head -c 10
 
 ## Recent Major Improvements Archive
 
-### 🚀 Latest Updates (July 2025)
-- **Gemini 2.5 Flash-Lite Integration**: Ultra-low cost model with increased token limits
+### 🗄️ **Hybrid Database System (CRITICAL - July 2025)**
+- **Local Development**: SQLite database (`backend/auth.db`) - zero configuration required
+- **Production (Railway)**: Automatic PostgreSQL detection and connection pooling
+- **Auto-Detection**: Environment detection based on `DATABASE_URL` presence
+- **Backward Compatibility**: Existing local setups continue working unchanged
+- **Migration Path**: Seamless transition from SQLite-only to hybrid system
+
+### 🎓 **Education Fee Query Fixes (CRITICAL)**
+- **Root Cause Fixed**: LLM no longer incorrectly assumes education fees are excluded
+- **Axis Atlas Accuracy**: 2 EDGE Miles per ₹100 with 1% surcharge properly documented
+- **Enhanced System Prompt**: Added `AXIS ATLAS EDUCATION SPENDING` section with specific guidance
+- **Query Enhancement**: Education category detection and enhancement rules
+
+### 🔍 **Enhanced Search & Data Processing**
+- **Increased Context**: Default `top_k` increased from 7 to 10 for better search results
+- **Complete Data Pipeline**: `transform_to_jsonl.py` now processes both "card" and "common_terms" sections
+- **Enhanced JSONL**: 173 chunks (up from ~90) with complete fee and surcharge information
+- **Fee Query Enhancement**: Better detection and retrieval of overlimit/late payment fees
+- **System Prompt Updates**: Added `FEE AND CHARGE INFORMATION` section
+
+### 🚀 **Previous Updates (July 2025)**
+- **Gemini 2.5 Flash-Lite Integration**: Ultra-low cost model with increased token limits (1200-1800)
 - **Documentation Consolidation**: Single comprehensive README.md
-- **Token Limit Increases**: 1800 tokens for complex comparisons
-- **Query Simplification**: Fixed complex query processing for Vertex AI
+- **Token Limit Increases**: Enhanced capacity for complex multi-card comparisons
+- **Query Enhancement Simplification**: Removed complex enhancements, focus on system prompt guidance
 - **Streaming Architecture**: Real-time responses with status indicators
 
 ### 📊 Evolution Timeline  
@@ -233,6 +286,9 @@ echo $GEMINI_API_KEY | head -c 10
 - **Phase 3**: Vertex AI Search integration (enterprise-grade)
 - **Phase 4**: React + TypeScript frontend migration
 - **Phase 5**: FastAPI backend with streaming responses
-- **Current**: Production-ready full-stack with ultra-low cost AI
+- **Phase 6**: Smart Tips System with contextual intelligence
+- **Phase 7**: Hybrid database system with authentication
+- **Phase 8**: Enhanced query processing and education fee fixes
+- **Current**: Production-ready full-stack with hybrid database, enhanced AI accuracy, and intelligent user guidance
 
 This project demonstrates successful implementation of modern RAG architecture with enterprise reliability and ultra-low operational costs.

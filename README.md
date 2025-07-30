@@ -24,6 +24,7 @@ A modern full-stack AI assistant for querying Indian credit card terms and condi
 - **Python 3.8+** and **Node.js 18+**
 - **Gemini API Key** (required - ultra-low cost model)
 - **Google Cloud Project** (for Vertex AI Search)
+- **Database**: Auto-configured (SQLite locally, PostgreSQL in production)
 
 ### 1. Clone & Setup
 ```bash
@@ -67,7 +68,7 @@ npm install
 │ • TypeScript + Tailwind     │ • Multi-model LLM service    │
 │ • Responsive design         │ • Vertex AI Search           │
 │ • Real-time streaming       │ • Smart query enhancement    │
-│ • Cost tracking            │ • Precise calculations       │
+│ • Cost tracking            │ • Hybrid database system     │
 └─────────────────────────────────────────────────────────────┘
                               │
                     ┌─────────┴─────────┐
@@ -76,16 +77,24 @@ npm install
                     │ Google Cloud →    │
                     │ Vertex AI Search  │
                     └───────────────────┘
+                              │
+                    ┌─────────┴─────────┐
+                    │ Database Layer    │
+                    │ SQLite (Local) +  │
+                    │ PostgreSQL (Prod) │
+                    └───────────────────┘
 ```
 
 ### Core Components
 
 - **React Frontend**: Modern TypeScript React app with Tailwind CSS
 - **FastAPI Backend**: RESTful API with automatic documentation
+- **Hybrid Database System**: SQLite for local development, PostgreSQL for production
 - **Vertex AI Search**: Enterprise-grade search with Google's managed infrastructure
 - **Multi-Model LLM**: Gemini 2.5 Flash-Lite (ultra-low cost) + Pro models
-- **Query Enhancement**: Automatic category detection and preprocessing
+- **Enhanced Query Processing**: Category detection, education fee fixes, improved context retrieval
 - **Smart Calculator**: Precise calculations for rewards, milestones, and fees
+- **Authentication System**: Google OAuth with session management and query limits
 
 ## Supported Credit Cards
 
@@ -140,7 +149,8 @@ data/
 ### 2. Transform to JSONL Format
 ```bash
 python transform_to_jsonl.py
-# Creates: card_data.jsonl
+# Creates: card_data.jsonl with complete data (card + common_terms sections)
+# Enhanced with ~173 chunks (increased from ~90 chunks)
 ```
 
 ### 3. Upload to Google Cloud Storage
@@ -171,6 +181,14 @@ Create `backend/.env`:
 GEMINI_API_KEY="your-gemini-key-here"          # Ultra-low cost AI model
 GOOGLE_CLOUD_PROJECT="your-gcp-project-id"    # For Vertex AI Search
 VERTEX_AI_DATA_STORE_ID="your-data-store-id"  # Search data store
+
+# Database (Auto-configured)
+# DATABASE_URL="postgresql://..."               # Railway auto-sets for production
+# AUTH_DB_PATH="backend/auth.db"               # SQLite path for local dev
+
+# Authentication (Production)
+# JWT_SECRET="your-secure-jwt-secret"          # Required for production
+# GOOGLE_CLIENT_ID="your-google-client-id"     # Required for Google OAuth
 
 # Optional
 VERTEX_AI_LOCATION="global"                    # Default: global
@@ -213,15 +231,18 @@ npx tsc --noEmit
 ```
 ├── backend/                          # FastAPI Backend
 │   ├── main.py                      # Application entry point
+│   ├── auth.db                      # SQLite database (local development)
 │   ├── api/                         # API endpoints
+│   │   ├── auth.py                  # Authentication endpoints
 │   │   ├── chat.py                  # Chat endpoint with streaming
 │   │   ├── config.py                # Configuration endpoint
 │   │   └── health.py                # Health check endpoint
 │   ├── services/                    # Business logic services
-│   │   ├── llm_service.py          # Multi-model LLM integration
-│   │   ├── search_service.py       # Vertex AI Search service
-│   │   ├── query_enhancement.py    # Smart query preprocessing
-│   │   └── calculator_service.py   # Precise calculation engine
+│   │   ├── auth_service.py          # Hybrid database auth service
+│   │   ├── llm.py                   # Multi-model LLM with enhanced prompts
+│   │   ├── vertex_retriever.py      # Vertex AI Search service
+│   │   ├── query_enhancer.py        # Enhanced query preprocessing
+│   │   └── calculator.py            # Precise calculation engine
 │   └── requirements.txt             # Python dependencies
 ├── cardgpt-ui/                      # React Frontend
 │   ├── src/
@@ -429,6 +450,27 @@ python -c "import os; print('GEMINI_API_KEY:', os.getenv('GEMINI_API_KEY')[:10] 
 
 # Test Vertex AI connection
 python check_gemini_models.py
+
+# Check database initialization
+ls -la backend/auth.db  # Should exist after first run
+```
+
+**Database issues:**
+```bash
+# Local development - SQLite database missing
+cd backend && python -c "from services.auth_service import AuthService; AuthService().test_database_connection()"
+
+# Production - PostgreSQL connection issues
+# Check Railway environment variables: DATABASE_URL, JWT_SECRET, GOOGLE_CLIENT_ID
+```
+
+**Education fee queries:**
+```bash
+# Test education fee accuracy
+curl -X POST http://localhost:8000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Do education fees earn rewards on Axis Atlas?", "model": "gemini-2.5-flash-lite"}'
+# Should return: "2 EDGE Miles per ₹100 with 1% surcharge"
 ```
 
 **Frontend build errors:**
@@ -444,13 +486,34 @@ npm start
 # Verify data store configuration
 echo $VERTEX_AI_DATA_STORE_ID
 
-# Check JSONL format
+# Check JSONL format and chunk count
+wc -l card_data.jsonl  # Should show ~173 lines
 head -n 1 card_data.jsonl | jq .
 ```
 
 ## Recent Major Improvements
 
-### 🎯 **Smart Tips System (Latest)**
+### 🗄️ **Hybrid Database System (CRITICAL)**
+- **Local Development**: Uses SQLite (`backend/auth.db`) - no PostgreSQL installation required
+- **Production (Railway)**: Automatically uses PostgreSQL with connection pooling
+- **Auto-Detection**: Environment automatically detected based on `DATABASE_URL` presence
+- **Seamless Migration**: Zero-configuration transition from SQLite-only to hybrid system
+- **Backward Compatibility**: Existing local development setups continue working unchanged
+
+### 🎓 **Education Fee Query Fixes**
+- **Critical Fix**: LLM no longer incorrectly assumes education fees are excluded
+- **Axis Atlas Education**: 2 EDGE Miles per ₹100 with 1% surcharge (properly documented)
+- **Enhanced System Prompt**: Added specific `AXIS ATLAS EDUCATION SPENDING` guidance
+- **Query Enhancement**: Added education spending detection and enhancement rules
+
+### 🔍 **Enhanced Search & Query Processing**
+- **Increased Context**: Default `top_k` increased from 7 to 10 for better search retrieval
+- **Complete Data Processing**: `transform_to_jsonl.py` now processes both "card" and "common_terms" sections
+- **Improved JSONL**: 173 chunks (up from ~90) with complete fee and surcharge information
+- **Fee Query Enhancement**: Better detection and retrieval of overlimit/late payment fees
+- **System Prompt Strengthening**: Added `FEE AND CHARGE INFORMATION` section with explicit search instructions
+
+### 🎯 **Smart Tips System**
 - **Contextual Intelligence**: Advanced NLP-powered tip suggestions that analyze user queries for relevant follow-up questions
 - **12 Tip Categories**: Comprehensive coverage across all credit card usage scenarios (dining, travel, utility, insurance, rent, education, fuel, groceries, shopping, milestones, comparisons, welcome)
 - **Interactive UX**: Beautiful yellow gradient design with lightbulb icons and click-to-query functionality
@@ -458,10 +521,10 @@ head -n 1 card_data.jsonl | jq .
 - **Performance Optimized**: Lightweight React components with efficient context detection algorithms
 
 ### 🚀 **Previous Updates (2025)**
-- **Gemini 2.5 Flash-Lite Integration**: Ultra-low cost model with increased token limits
+- **Gemini 2.5 Flash-Lite Integration**: Ultra-low cost model with increased token limits (1200-1800 tokens)
 - **Streaming Architecture**: Real-time word-by-word responses with status indicators
 - **Token Limit Increases**: Enhanced capacity for complex multi-card comparisons
-- **Query Simplification**: Optimized complex query processing for Vertex AI Search
+- **Query Enhancement Improvements**: Simplified approach focusing on system prompt guidance
 - **Mobile-First Design**: Responsive interface with collapsible sidebar and bottom navigation
 
 ### 📊 **Evolution Timeline**
@@ -472,7 +535,9 @@ head -n 1 card_data.jsonl | jq .
 - **Phase 4**: React + TypeScript frontend migration
 - **Phase 5**: FastAPI backend with streaming responses
 - **Phase 6**: Smart Tips System with contextual intelligence
-- **Current**: Production-ready full-stack with ultra-low cost AI and intelligent user guidance
+- **Phase 7**: Hybrid database system with authentication
+- **Phase 8**: Enhanced query processing and education fee fixes
+- **Current**: Production-ready full-stack with hybrid database, enhanced AI accuracy, and intelligent user guidance
 
 ---
 

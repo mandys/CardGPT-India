@@ -415,12 +415,9 @@ INSURANCE SPENDING SPECIFIC GUIDANCE:
 - ICICI EPM: Earns general rate (6 points per ₹200) with monthly cap of 5,000 points
 - Axis Atlas: EXCLUDES insurance completely (0 rewards)
 
-EXCLUSION INTERPRETATION RULES:
-- ONLY items explicitly listed in exclusion policies are excluded
-- Do NOT infer that categories are subsets of other categories unless explicitly stated
-- Example: "Government Institution" in exclusions does NOT include education unless education is separately listed
-- Education fees are NOT excluded unless explicitly listed in exclusion policy
-- Always check surcharge_fees section for category-specific fees (e.g., education: 1% surcharge)
+AXIS ATLAS EDUCATION SPENDING:
+- Education fees earn 2 EDGE Miles per ₹100 (base rate) with 1% surcharge via third-party apps
+- Education is NOT excluded from rewards (not listed in exclusion policy)
 
 CRITICAL MILESTONE IDENTIFICATION FOR AXIS ATLAS:
 - **Annual Spend Milestones**: Look for "Milestones:" section with spend thresholds (₹3L=2500 miles, ₹7.5L=2500 miles, ₹15L=5000 miles)

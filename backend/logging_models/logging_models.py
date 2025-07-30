@@ -18,7 +18,7 @@ class QueryLogData(BaseModel):
     selected_model: str = Field(..., description="AI model selected (gemini-1.5-flash, etc.)")
     query_mode: str = Field(..., description="Query mode (General Query, Specific Card, etc.)")
     card_filter: Optional[str] = Field(None, description="Card filter if specified")
-    top_k: int = Field(7, description="Number of search results requested")
+    top_k: int = Field(10, description="Number of search results requested")
     
     # User Context (will be hashed for privacy)
     user_ip: Optional[str] = Field(None, description="User IP address (will be hashed)")

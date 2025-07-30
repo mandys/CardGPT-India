@@ -86,7 +86,7 @@ class QueryLoggingMiddleware:
                 selected_model=request_data.get("model", "gemini-1.5-pro"),
                 query_mode=request_data.get("query_mode", "General Query"),
                 card_filter=request_data.get("card_filter"),
-                top_k=request_data.get("top_k", 7),
+                top_k=request_data.get("top_k", 10),
                 user_ip=user_ip,
                 user_agent=user_agent
             )

@@ -147,7 +147,7 @@ class QueryEnhancer:
             if category in ['hotel', 'flight']:
                 enhanced_query += f"\n\nIMPORTANT: This is specifically about {category} spending. Check for accelerated earning rates for {category} category. Look for any monthly caps on accelerated rates - if spend exceeds cap, use base rate for excess amount. CRITICAL: Also check for annual spending milestones - look for 'Milestones:' section with spend thresholds like ₹3L, ₹7.5L, ₹15L and apply milestone bonuses if user spend qualifies."
             elif category == 'utility':
-                enhanced_query += f"\n\nIMPORTANT: This is about utility spending. Check BOTH rewards AND surcharges: Some cards exclude utilities (0 rewards), others have caps. Check for surcharge fees on amounts above monthly thresholds. Calculate: 1% × (spend - threshold) if spend exceeds threshold."
+                enhanced_query += f"\n\nIMPORTANT: This is about utility spending. Check earning rates and surcharge_fees sections for utility category."
             elif category == 'insurance':
                 enhanced_query += f"\n\nIMPORTANT: This is about insurance spending rewards, NOT insurance coverage/benefits. Search for 'others', 'earning rates', 'reward capping', and 'capping per statement cycle' sections. Focus on earning rates when spending on insurance premiums. Key facts by card: HSBC Premier earns 3 points per ₹100 (up to ₹1,00,000 monthly cap), HDFC Infinia earns 5 points per ₹150 (capped at 5,000 RP/day), ICICI EPM earns 6 points per ₹200 (up to 5,000 points monthly cap), Axis Atlas EXCLUDES insurance from rewards (0 points). Do NOT confuse with air accident cover or travel insurance benefits."
             elif category in ['fuel', 'rent', 'government']:

@@ -68,7 +68,7 @@ class VertexRetriever:
             # Return None to let the client try default auth
             return None
 
-    def search_similar_documents(self, query_text: str, card_filter: Optional[str] = None, top_k: int = 7, use_mmr: bool = False) -> List[Dict]:
+    def search_similar_documents(self, query_text: str, card_filter: Optional[str] = None, top_k: int = 10, use_mmr: bool = False) -> List[Dict]:
         """Performs a search with precise metadata filtering."""
         # Note: use_mmr is ignored for Vertex AI Search (ChromaDB-specific parameter)
         

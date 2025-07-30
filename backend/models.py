@@ -13,7 +13,7 @@ class ChatRequest(BaseModel):
     model: str = Field("gemini-1.5-pro", description="AI model to use")
     query_mode: str = Field("General Query", description="Query mode (General Query, Specific Card, Compare Cards)")
     card_filter: Optional[str] = Field(None, description="Card filter for specific card queries")
-    top_k: int = Field(7, ge=1, le=15, description="Number of search results to retrieve")
+    top_k: int = Field(10, ge=1, le=15, description="Number of search results to retrieve")
 
 class QueryEnhanceRequest(BaseModel):
     """Request model for query enhancement endpoint"""
@@ -99,7 +99,7 @@ class ChatStreamRequest(BaseModel):
     model: str = Field("gemini-1.5-pro", description="AI model to use")
     query_mode: str = Field("General Query", description="Query mode (General Query, Specific Card, Compare Cards)")
     card_filter: Optional[str] = Field(None, description="Card filter for specific card queries")
-    top_k: int = Field(7, ge=1, le=15, description="Number of search results to retrieve")
+    top_k: int = Field(10, ge=1, le=15, description="Number of search results to retrieve")
 
 # Authentication Models
 class GoogleAuthRequest(BaseModel):

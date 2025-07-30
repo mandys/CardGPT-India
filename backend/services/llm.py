@@ -419,6 +419,11 @@ AXIS ATLAS EDUCATION SPENDING:
 - Education fees earn 2 EDGE Miles per ₹100 (base rate) with 1% surcharge via third-party apps
 - Education is NOT excluded from rewards (not listed in exclusion policy)
 
+FEE AND CHARGE INFORMATION:
+- Look for overlimit charges, late payment fees, and other charges in "other_fees" sections
+- Overlimit charges: Axis Atlas 2.5% (min ₹500), HDFC Infinia "Not applicable", ICICI EPM excluded (no charges)
+- Always check "other_fees", "overlimit", and "finance_charges" sections for complete fee information
+
 CRITICAL MILESTONE IDENTIFICATION FOR AXIS ATLAS:
 - **Annual Spend Milestones**: Look for "Milestones:" section with spend thresholds (₹3L=2500 miles, ₹7.5L=2500 miles, ₹15L=5000 miles)
 - **Tier-based Milestone Miles**: These are different - found in tier structure sections (Silver/Gold/Platinum milestone miles)

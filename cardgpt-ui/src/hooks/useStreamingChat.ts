@@ -37,7 +37,7 @@ export const useStreamingChatStore = create<StreamingChatState>((set, get) => ({
     selectedModel: 'gemini-2.5-flash-lite',  // Fallback default, will be updated from API
     queryMode: 'General Query' as QueryMode,
     cardFilter: 'None' as CardFilter,
-    topK: 7,
+    topK: 8,
     darkMode: false,
   },
   

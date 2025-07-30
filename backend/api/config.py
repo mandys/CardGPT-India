@@ -52,7 +52,8 @@ async def get_config(services=Depends(lambda: {})):
         supported_cards = [
             "Axis Atlas",
             "ICICI EPM", 
-            "HSBC Premier"
+            "HSBC Premier",
+            "HDFC Infinia"
         ]
         
         return ConfigResponse(
@@ -84,6 +85,7 @@ async def get_cards():
         "cards": [
             "Axis Atlas",
             "ICICI EPM",
-            "HSBC Premier"
+            "HSBC Premier",
+            "HDFC Infinia"
         ]
     }

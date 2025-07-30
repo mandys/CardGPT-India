@@ -153,13 +153,13 @@ class QueryEnhancer:
             elif category in ['fuel', 'rent', 'government']:
                 enhanced_query += f"\n\nIMPORTANT: This is about {category} spending. Check exclusions first - this category may be excluded from earning rewards on some cards."
             elif category == 'education':
-                enhanced_query += f"\n\nIMPORTANT: This is about education spending rewards, NOT education benefits/scholarships. Search for 'others', 'earning rates', 'surcharge_fees', and 'capping per statement cycle' sections. Focus on earning rates when spending on education fees. Key facts by card: HSBC Premier earns 3 points per ₹100 on education, HDFC Infinia EXCLUDES education from rewards (0 points), ICICI EPM earns 6 points per ₹200 with caps, Axis Atlas earns 2 EDGE Miles per ₹100 with 1% surcharge via third-party apps. Do NOT confuse with education insurance or scholarship benefits."
+                enhanced_query += f"\n\nIMPORTANT: This is about education spending rewards. Check earning rates and surcharge_fees sections for education category."
         elif category in ['hotel', 'flight'] and not spend_amount:
             # Handle category queries without spend amounts (like comparisons)
             enhanced_query += f"\n\nIMPORTANT: This is about {category} rewards comparison. For each card, find: 1) Base earning rate (general rate), 2) Travel/Hotel specific rates if any, 3) Monthly caps on accelerated rates, 4) Any exclusions. Look in 'rewards', 'travel', and 'rate_general' sections."
         elif category == 'education' and not spend_amount:
             # Handle education category comparisons
-            enhanced_query += f"\n\nIMPORTANT: This is about education spending rewards comparison, NOT education benefits/scholarships. Search for 'others', 'earning rates', 'surcharge_fees', and 'capping per statement cycle' sections. Key facts by card: HSBC Premier earns 3 points per ₹100 on education, HDFC Infinia EXCLUDES education from rewards (0 points), ICICI EPM earns 6 points per ₹200 with caps, Axis Atlas earns 2 EDGE Miles per ₹100 with 1% surcharge via third-party apps. Do NOT confuse with education insurance or scholarship benefits."
+            enhanced_query += f"\n\nIMPORTANT: This is about education spending rewards comparison. Check earning rates and surcharge_fees sections for each card."
         elif category == 'milestone':
             # Handle milestone queries separately (they often don't have spend amounts)
             enhanced_query += f"\n\nIMPORTANT: This is about milestone benefits. For Axis Atlas, look for annual spending milestones in 'Milestones:' section (₹3L=2500 miles, ₹7.5L=2500 miles, ₹15L=5000 miles). Also check 'renewal_benefits' and tier structure for other types of milestone rewards. Do NOT confuse tier-based 'Milestone Miles' with annual spending milestones."

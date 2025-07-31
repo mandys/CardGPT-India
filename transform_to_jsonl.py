@@ -26,6 +26,20 @@ def _format_dict_to_text(data: dict) -> str:
     return "\n".join(parts)
 
 
+def _clean_id(text: str) -> str:
+    """Clean text to create valid Vertex AI document IDs"""
+    import re
+    # Replace spaces and special characters with underscores
+    cleaned = re.sub(r'[^a-zA-Z0-9_-]', '_', text)
+    # Remove multiple consecutive underscores
+    cleaned = re.sub(r'_+', '_', cleaned)
+    # Remove leading/trailing underscores
+    cleaned = cleaned.strip('_')
+    # Truncate to 120 chars to leave room for prefixes
+    if len(cleaned) > 120:
+        cleaned = cleaned[:120]
+    return cleaned
+
 def create_chunks_from_node(node: dict, path_prefix: str, card_name: str) -> list:
     """Creates a chunk for a dictionary node and recurses for its children."""
     chunks = []
@@ -33,7 +47,19 @@ def create_chunks_from_node(node: dict, path_prefix: str, card_name: str) -> lis
         return []
 
     # Create a single, comprehensive chunk for the current dictionary node
-    chunk_id = f"{card_name.lower().replace(' ', '_')}_{path_prefix.replace('.', '_')}"
+    clean_card_name = _clean_id(card_name.lower())
+    clean_path = _clean_id(path_prefix.replace('.', '_'))
+    chunk_id = f"{clean_card_name}_{clean_path}"
+    
+    # Ensure ID is under 128 characters
+    if len(chunk_id) > 127:
+        # Truncate while keeping the most important parts
+        max_card_len = 40
+        max_path_len = 80
+        truncated_card = clean_card_name[:max_card_len] if len(clean_card_name) > max_card_len else clean_card_name
+        truncated_path = clean_path[:max_path_len] if len(clean_path) > max_path_len else clean_path
+        chunk_id = f"{truncated_card}_{truncated_path}"
+    
     content = _format_dict_to_text(node)
     
     chunks.append({
@@ -43,11 +69,41 @@ def create_chunks_from_node(node: dict, path_prefix: str, card_name: str) -> lis
         "section": path_prefix.split('.')[-1]
     })
     
-    # Recurse into nested dictionaries to create more granular chunks
+    # Process both nested dictionaries AND important string fields
     for key, value in node.items():
         if isinstance(value, dict):
-            new_path = f"{path_prefix}.{key}"
+            clean_key = _clean_id(key)
+            new_path = f"{path_prefix}.{clean_key}"
             chunks.extend(create_chunks_from_node(value, new_path, card_name))
+        elif isinstance(value, (str, int, float)) or value is None:
+            # Create dedicated chunks for ALL simple value fields (string, number, null)
+            clean_key = _clean_id(key)
+            string_chunk_id = f"{clean_card_name}_{clean_path}_{clean_key}"
+            
+            # Ensure string chunk ID is under 128 characters
+            if len(string_chunk_id) > 127:
+                # Truncate keeping the most important parts
+                max_card_len = 30
+                max_path_len = 50
+                max_key_len = 40
+                truncated_card = clean_card_name[:max_card_len] if len(clean_card_name) > max_card_len else clean_card_name
+                truncated_path = clean_path[:max_path_len] if len(clean_path) > max_path_len else clean_path
+                truncated_key = clean_key[:max_key_len] if len(clean_key) > max_key_len else clean_key
+                string_chunk_id = f"{truncated_card}_{truncated_path}_{truncated_key}"
+            
+            if isinstance(value, str):
+                string_content = f"{key.replace('_', ' ').title()}: {value}"
+            elif value is None:
+                string_content = f"{key.replace('_', ' ').title()}: Not available"
+            else:
+                string_content = f"{key.replace('_', ' ').title()}: {str(value)}"
+            
+            chunks.append({
+                "id": string_chunk_id,
+                "content": string_content,
+                "cardName": card_name,
+                "section": key
+            })
             
     return chunks
 

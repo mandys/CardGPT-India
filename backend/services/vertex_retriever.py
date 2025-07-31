@@ -72,19 +72,51 @@ class VertexRetriever:
         """Performs a search with precise metadata filtering."""
         # Note: use_mmr is ignored for Vertex AI Search (ChromaDB-specific parameter)
         
+        # Map user-friendly card names to actual card names in data
+        card_name_mapping = {
+            'axis atlas': 'Axis Bank Atlas Credit Card',
+            'atlas': 'Axis Bank Atlas Credit Card', 
+            'icici epm': 'ICICI Bank Emeralde Private Metal Credit Card',
+            'epm': 'ICICI Bank Emeralde Private Metal Credit Card',
+            'hsbc premier': 'HSBC Premier Credit Card',
+            'premier': 'HSBC Premier Credit Card',
+            'hdfc infinia': 'HDFC Infinia Credit Card',
+            'infinia': 'HDFC Infinia Credit Card'
+        }
+        
+        # Enhance query with proper card names (case-insensitive replacement)
+        enhanced_query = query_text
+        import re
+        for user_name, actual_name in card_name_mapping.items():
+            # Use word boundary regex for accurate replacement
+            pattern = r'\b' + re.escape(user_name) + r'\b'
+            enhanced_query = re.sub(pattern, actual_name, enhanced_query, flags=re.IGNORECASE)
+        
         # For now, disable filtering since the data store schema needs to be updated
         # TODO: Re-enable filtering once the data store is updated with new JSONL format
         if card_filter:
             logger.info(f"Card filter '{card_filter}' requested but filtering disabled (data store needs update)")
             # Enhance query with card name instead of using filter
-            enhanced_query = f"{card_filter} {query_text}"
-        else:
-            enhanced_query = query_text
+            if card_filter.lower() in card_name_mapping:
+                actual_card_name = card_name_mapping[card_filter.lower()]
+                enhanced_query = f"{actual_card_name} {enhanced_query}"
+            else:
+                enhanced_query = f"{card_filter} {enhanced_query}"
             
         # Special enhancement for insurance spending queries
         if "insurance" in query_text.lower() and any(word in query_text.lower() for word in ["spend", "spending", "spends", "earn", "points", "rewards"]):
             enhanced_query += " earning rates reward capping others section insurance transactions"
             logger.info(f"Enhanced insurance spending query: {enhanced_query}")
+        
+        # Special enhancement for fee waiver queries
+        if any(term in query_text.lower() for term in ["fee waiver", "waiver", "annual fee waiver"]):
+            enhanced_query += " fee_waiver annual fee spend threshold spend condition"
+            logger.info(f"Enhanced fee waiver query: {enhanced_query}")
+        
+        # Special enhancement for education spending queries
+        if "education" in query_text.lower() and any(word in query_text.lower() for word in ["points", "rewards", "earn", "spending", "fee", "payment"]):
+            enhanced_query += " education education_government rewards rate points MCC"
+            logger.info(f"Enhanced education spending query: {enhanced_query}")
             
         logger.info(f"Executing search with enhanced query: {enhanced_query}")
         

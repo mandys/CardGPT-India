@@ -89,6 +89,30 @@ class QueryEnhancer:
             r'(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:crore|cr\b)',
             r'(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:thousand|k\b)',
         ]
+        
+        # Travel query patterns for enhanced handling
+        self.travel_query_patterns = [
+            'travel', 'trip', 'vacation', 'holiday', 'journey',
+            'flight', 'hotel', 'booking', 'miles', 'points for travel',
+            'best card for travel', 'travel benefits', 'travel rewards',
+            'domestic travel', 'international travel', 'business travel',
+            'frequent travel', 'upcoming travel', 'lot of travel'
+        ]
+        
+        # Generic recommendation patterns
+        self.generic_recommendation_patterns = [
+            'which card should i', 'best card for', 'recommend',
+            'suggest', 'better card', 'good card', 'right card',
+            'should i get', 'which one', 'what card'
+        ]
+        
+        # Generic comparison patterns (questions asking about ALL cards)
+        self.generic_comparison_patterns = [
+            'which card gives', 'which card earns', 'which card offers',
+            'which card has', 'which card provides', 'which cards give',
+            'which cards earn', 'which cards offer', 'which cards have',
+            'what card gives', 'what card earns', 'what card offers'
+        ]
     
     def detect_card_name(self, query: str) -> Optional[str]:
         """Detect credit card name from the query."""
@@ -117,6 +141,38 @@ class QueryEnhancer:
                 return match.group(1).replace(',', '')
         return None
     
+    def is_travel_query(self, query: str) -> bool:
+        """Detect if this is a travel-related query"""
+        query_lower = query.lower()
+        return any(pattern in query_lower for pattern in self.travel_query_patterns)
+    
+    def is_generic_recommendation_query(self, query: str) -> bool:
+        """Detect if this is a generic recommendation query that might benefit from follow-up questions"""
+        query_lower = query.lower()
+        
+        # Check for generic recommendation patterns
+        has_generic_pattern = any(pattern in query_lower for pattern in self.generic_recommendation_patterns)
+        
+        # Check if no specific card is mentioned
+        no_specific_card = self.detect_card_name(query) is None
+        
+        # Check if no specific category is mentioned
+        no_specific_category = self.detect_category(query) is None
+        
+        return has_generic_pattern and no_specific_card and (no_specific_category or self.is_travel_query(query))
+    
+    def is_generic_comparison_query(self, query: str) -> bool:
+        """Detect if this is a generic comparison query asking about ALL cards (like 'which card gives points for education')"""
+        query_lower = query.lower()
+        
+        # Check for generic comparison patterns
+        has_comparison_pattern = any(pattern in query_lower for pattern in self.generic_comparison_patterns)
+        
+        # Check if no specific card is mentioned
+        no_specific_card = self.detect_card_name(query) is None
+        
+        return has_comparison_pattern and no_specific_card
+    
     def enhance_query(self, query: str) -> Tuple[str, Dict[str, any]]:
         """
         Enhance query with category and card detection, plus other metadata
@@ -124,16 +180,23 @@ class QueryEnhancer:
         Returns:
             Tuple of (enhanced_query, metadata)
         """
-        card_detected = self.detect_card_name(query)  # Call the new method
+        card_detected = self.detect_card_name(query)
         category = self.detect_category(query)
         spend_amount = self.detect_spend_amount(query)
+        is_travel_query = self.is_travel_query(query)
+        is_generic_recommendation = self.is_generic_recommendation_query(query)
+        is_generic_comparison = self.is_generic_comparison_query(query)
         
         metadata = {
-            'card_detected': card_detected,  # Add the detected card to metadata
+            'card_detected': card_detected,
             'category_detected': category,
             'spend_amount': spend_amount,
             'is_calculation_query': bool(spend_amount),
-            'requires_category_rate': category in ['hotel', 'flight', 'travel']
+            'requires_category_rate': category in ['hotel', 'flight', 'travel'],
+            'is_travel_query': is_travel_query,
+            'is_generic_recommendation': is_generic_recommendation,
+            'is_generic_comparison': is_generic_comparison,
+            'suggest_followup': is_generic_recommendation and not spend_amount
         }
         
         # Enhance the query with explicit category information
@@ -142,7 +205,14 @@ class QueryEnhancer:
         # Detect spend distribution queries
         is_distribution_query = any(word in query.lower() for word in ['split', 'distribution', 'monthly', 'breakdown', 'categories'])
         
-        if category and spend_amount:
+        # Handle travel queries specially
+        if is_travel_query and not card_detected:
+            enhanced_query += f"\n\nIMPORTANT: This is a travel-related query. For comprehensive comparison, retrieve information from ALL available cards about: 1) Travel rewards rates (flights, hotels), 2) Travel benefits (lounge access, insurance, concierge), 3) Travel milestone bonuses, 4) Foreign currency charges, 5) Welcome bonuses. Ensure EVERY card is considered equally - do not focus only on first few cards mentioned in context. Cards to compare: Axis Atlas (EDGE Miles), ICICI EPM (Reward Points), HSBC Premier (Reward Points), HDFC Infinia (Reward Points)."
+        elif is_generic_comparison and not card_detected:
+            enhanced_query += f"\n\nIMPORTANT: This is a generic comparison query asking about ALL cards. Analyze information from EVERY available card systematically: Axis Atlas (EDGE Miles), ICICI EPM (Reward Points), HSBC Premier (Reward Points), HDFC Infinia (Reward Points). Do not limit analysis to first few cards in context. If a card excludes this category, state that clearly. If a card earns rewards for this category, provide the specific rate and any conditions."
+        elif is_generic_recommendation and not card_detected:
+            enhanced_query += f"\n\nIMPORTANT: This is a generic recommendation query. Analyze ALL available cards systematically and provide balanced comparison. Do not limit analysis to first few cards in context. Include key differentiators for each card."
+        elif category and spend_amount:
             # Make category explicit in the query with generic guidance
             if category in ['hotel', 'flight']:
                 enhanced_query += f"\n\nIMPORTANT: This is specifically about {category} spending. Check for accelerated earning rates for {category} category. Look for any monthly caps on accelerated rates - if spend exceeds cap, use base rate for excess amount. CRITICAL: Also check for annual spending milestones - look for 'Milestones:' section with spend thresholds like ₹3L, ₹7.5L, ₹15L and apply milestone bonuses if user spend qualifies."
@@ -192,35 +262,10 @@ class QueryEnhancer:
     
     def needs_card_selector(self, query: str) -> bool:
         """
-        Detect if query needs card selector.
-        Returns True if: No specific card detected AND query is about card topics
+        Card selector permanently disabled for better user experience.
+        Always returns False to allow open-ended searches.
         """
-        # If specific card is mentioned, no selector needed
-        if self.detect_card_name(query) is not None:
-            return False
-        
-        query_lower = query.lower()
-        
-        # Check if query is about card-related topics
-        card_topics = [
-            'points', 'rewards', 'cashback', 'miles', 'benefits',
-            'fees', 'charges', 'annual fee', 'interest rate',
-            'lounge', 'insurance', 'milestone', 'welcome bonus',
-            'credit card', 'card', 'spend', 'spends', 'spending',
-            'utility', 'hotel', 'flight', 'travel', 'fuel', 'grocery'
-        ]
-        has_card_topic = any(topic in query_lower for topic in card_topics)
-        
-        # Also include explicit comparison requests (preserve existing logic)
-        comparison_keywords = [
-            'which card', 'which credit card', 'best card', 'better card',
-            'compare', 'comparison', 'vs', 'versus', 'difference',
-            'recommend', 'recommendation', 'suggest', 'should i',
-            'which one', 'what card', 'best for', 'better for'
-        ]
-        has_comparison = any(keyword in query_lower for keyword in comparison_keywords)
-        
-        return has_card_topic or has_comparison
+        return False
     
     def is_generic_comparison_query(self, query: str) -> bool:
         """
@@ -232,3 +277,24 @@ class QueryEnhancer:
     def get_available_cards(self) -> list[str]:
         """Get list of available cards from our data directory"""
         return list(self.card_patterns.keys())
+    
+    def get_followup_questions(self, query: str) -> list[str]:
+        """Generate contextual follow-up questions for generic queries"""
+        followup_questions = []
+        
+        if self.is_travel_query(query):
+            followup_questions = [
+                "What type of travel do you do most? (Domestic flights, International flights, Hotels)",
+                "What's your approximate monthly travel spending?",
+                "Do you prefer earning miles/points or cashback for travel?",
+                "Are lounge access and travel insurance important to you?"
+            ]
+        elif self.is_generic_recommendation_query(query):
+            followup_questions = [
+                "What's your primary spending category? (Travel, Dining, Shopping, General)",
+                "What's your approximate monthly credit card spending?",
+                "Do you prefer earning miles, points, or cashback?",
+                "Are you looking for specific benefits like lounge access or insurance?"
+            ]
+        
+        return followup_questions

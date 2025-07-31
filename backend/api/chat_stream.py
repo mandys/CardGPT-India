@@ -41,31 +41,14 @@ async def chat_stream_endpoint(request: ChatStreamRequest, http_request: Request
         if query_logger and query_logger.config.enabled:
             session_id = await log_query_stream(query_logger, request, http_request)
         
-        # Check if this query needs card selector
-        if query_enhancer_service.needs_card_selector(request.message):
-            available_cards = query_enhancer_service.get_available_cards()
-            card_selection_prompt = f"""I noticed you're asking for a comparison without specifying which cards to compare. 
-
-To provide you with the most accurate and focused comparison, please select 2-3 cards from our available options:
-
-**Available Cards:**
-{chr(10).join([f"• {card}" for card in available_cards])}
-
-Which specific cards would you like me to compare for your query: "{request.message}"?
-
-This approach will give you more precise results and save processing time."""
-            
-            # Return immediate response for card selection
-            async def card_selection_stream():
-                chunk = StreamChunk(
-                    type="complete",
-                    content=card_selection_prompt,
-                    metadata={"requires_card_selection": True, "available_cards": available_cards, "original_query": request.message}
-                )
-                yield f"data: {chunk.model_dump_json()}\n\n"
-                yield "data: [DONE]\n\n"
-            
-            return StreamingResponse(card_selection_stream(), media_type="text/plain")
+        # Card selector removed - process all queries directly for better user experience
+        
+        # Check if we should suggest follow-up questions for generic queries
+        enhanced_query, initial_metadata = query_enhancer_service.enhance_query(request.message)
+        followup_questions = []
+        
+        if initial_metadata.get('suggest_followup', False):
+            followup_questions = query_enhancer_service.get_followup_questions(request.message)
         
         # Process streaming query
         def generate_stream():
@@ -82,7 +65,8 @@ This approach will give you more precise results and save processing time."""
                     query_enhancer_service=query_enhancer_service,
                     start_time=start_time,
                     session_id=session_id,
-                    query_logger=query_logger
+                    query_logger=query_logger,
+                    followup_questions=followup_questions
                 )
             except Exception as e:
                 logger.error(f"Stream generation error: {str(e)}", exc_info=True)
@@ -122,7 +106,8 @@ def process_query_stream(
     query_enhancer_service,
     start_time: float,
     session_id: str,
-    query_logger
+    query_logger,
+    followup_questions: list = None
 ):
     """Process streaming user query"""
     
@@ -251,9 +236,22 @@ def process_query_stream(
                 embedding_usage = {"tokens": 0, "cost": 0, "model": "vertex-ai-search"}
                 total_cost = embedding_usage["cost"] + usage_info.get("cost", 0.0)
                 
+                # Add follow-up questions to the response if available
+                final_content = chunk_text if chunk_text else None
+                if followup_questions and final_content:
+                    final_content += f"\n\n**💡 For more personalized recommendations, consider these details:**\n"
+                    for i, q in enumerate(followup_questions, 1):
+                        final_content += f"{i}. {q}\n"
+                
+                # Add follow-up questions to metadata
+                final_metadata = metadata.copy() if metadata else {}
+                if followup_questions:
+                    final_metadata["followup_questions"] = followup_questions
+                    final_metadata["query_type"] = "generic_recommendation"
+                
                 final_chunk = StreamChunk(
                     type="complete",
-                    content=chunk_text if chunk_text else None,
+                    content=final_content,
                     sources=[{
                         "cardName": doc.get("cardName", ""),
                         "section": doc.get("section", ""), 
@@ -275,7 +273,7 @@ def process_query_stream(
                     },
                     total_cost=total_cost,
                     enhanced_question=enhanced_question,
-                    metadata=metadata
+                    metadata=final_metadata
                 )
                 
                 yield f"data: {final_chunk.model_dump_json()}\n\n"

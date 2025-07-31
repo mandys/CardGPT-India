@@ -38,41 +38,49 @@ async def chat_endpoint(request: ChatRequest, http_request: Request, services=De
         if query_logger and query_logger.config.enabled:
             session_id = await log_query(query_logger, request, http_request)
         
-        # Check if this is a generic comparison query
-        if query_enhancer_service.is_generic_comparison_query(request.message):
-            available_cards = query_enhancer_service.get_available_cards()
-            card_selection_prompt = f"""I noticed you're asking for a comparison without specifying which cards to compare. 
-
-To provide you with the most accurate and focused comparison, please select 2-3 cards from our available options:
-
-**Available Cards:**
-{chr(10).join([f"• {card}" for card in available_cards])}
-
-Which specific cards would you like me to compare for your query: "{request.message}"?
-
-This approach will give you more precise results and save processing time."""
-            
-            return ChatResponse(
-                answer=card_selection_prompt,
-                sources=[],
-                embedding_usage=UsageInfo(tokens=0, cost=0.0, model="none"),
-                llm_usage=UsageInfo(tokens=0, cost=0.0, model="card-selection"),
-                total_cost=0.0,
-                enhanced_question=request.message,
-                metadata={"requires_card_selection": True, "available_cards": available_cards, "original_query": request.message}
-            )
+        # Card selector removed - process all queries directly
         
-        # Process query using the same logic as the existing apps
-        result = await process_query(
-            question=request.message,
-            query_mode=request.query_mode,
-            card_filter=request.card_filter,
-            top_k=request.top_k,
-            selected_model=request.model,
-            llm_service=llm_service,
-            retriever_service=retriever_service,
-            query_enhancer_service=query_enhancer_service
-        )
+        # Check if we should suggest follow-up questions for generic queries
+        enhanced_query, initial_metadata = query_enhancer_service.enhance_query(request.message)
+        
+        if initial_metadata.get('suggest_followup', False):
+            # For generic queries, we can either suggest follow-ups OR provide a comprehensive answer
+            # Let's provide comprehensive answer with suggested follow-ups in metadata
+            followup_questions = query_enhancer_service.get_followup_questions(request.message)
+            
+            # Process the query normally but add follow-up questions to metadata
+            result = await process_query(
+                question=request.message,
+                query_mode=request.query_mode,
+                card_filter=request.card_filter,
+                top_k=request.top_k,
+                selected_model=request.model,
+                llm_service=llm_service,
+                retriever_service=retriever_service,
+                query_enhancer_service=query_enhancer_service
+            )
+            
+            # Add follow-up questions to metadata
+            result["metadata"]["followup_questions"] = followup_questions
+            result["metadata"]["query_type"] = "generic_recommendation"
+            
+            # Enhance the answer with a note about follow-up questions
+            if followup_questions:
+                result["answer"] += f"\n\n**💡 For more personalized recommendations, consider these details:**\n"
+                for i, q in enumerate(followup_questions, 1):
+                    result["answer"] += f"{i}. {q}\n"
+        else:
+            # Process query using the same logic as the existing apps
+            result = await process_query(
+                question=request.message,
+                query_mode=request.query_mode,
+                card_filter=request.card_filter,
+                top_k=request.top_k,
+                selected_model=request.model,
+                llm_service=llm_service,
+                retriever_service=retriever_service,
+                query_enhancer_service=query_enhancer_service
+            )
         
         response = ChatResponse(
             answer=result["answer"],

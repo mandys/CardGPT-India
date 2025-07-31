@@ -115,8 +115,34 @@ class VertexRetriever:
         
         # Special enhancement for education spending queries
         if "education" in query_text.lower() and any(word in query_text.lower() for word in ["points", "rewards", "earn", "spending", "fee", "payment"]):
-            enhanced_query += " education education_government rewards rate points MCC"
-            logger.info(f"Enhanced education spending query: {enhanced_query}")
+            # Add all card names to ensure comprehensive retrieval for education queries
+            all_card_names = "Axis Bank Atlas Credit Card ICICI Bank Emeralde Private Metal Credit Card HSBC Premier Credit Card HDFC Infinia Credit Card"
+            enhanced_query += f" {all_card_names} education education_government rewards rate points MCC earning"
+            logger.info(f"Enhanced education spending query to include all cards: {enhanced_query}")
+        
+        # Special enhancement for travel queries to ensure ALL cards are retrieved
+        travel_keywords = ["travel", "trip", "vacation", "holiday", "journey", "lot of travel", "upcoming travel", "business travel"]
+        if any(keyword in query_text.lower() for keyword in travel_keywords):
+            # Add all card names to ensure comprehensive retrieval
+            all_card_names = "Axis Bank Atlas Credit Card ICICI Bank Emeralde Private Metal Credit Card HSBC Premier Credit Card HDFC Infinia Credit Card"
+            enhanced_query += f" {all_card_names} travel benefits lounge access insurance miles points rewards foreign currency charges welcome bonus"
+            logger.info(f"Enhanced travel query to include all cards: {enhanced_query}")
+        
+        # Special enhancement for generic recommendation queries
+        generic_rec_keywords = ["which card should i", "best card for", "recommend", "suggest", "better card", "good card", "right card"]
+        if any(keyword in query_text.lower() for keyword in generic_rec_keywords) and not card_filter:
+            # Add all card names to ensure comprehensive comparison
+            all_card_names = "Axis Bank Atlas Credit Card ICICI Bank Emeralde Private Metal Credit Card HSBC Premier Credit Card HDFC Infinia Credit Card"
+            enhanced_query += f" {all_card_names} comparison benefits features rewards"
+            logger.info(f"Enhanced generic recommendation query: {enhanced_query}")
+        
+        # Special enhancement for generic comparison queries (which card gives/earns/offers)
+        generic_comp_keywords = ["which card gives", "which card earns", "which card offers", "which card has", "which card provides", "which cards give", "which cards earn", "which cards offer", "which cards have", "what card gives", "what card earns", "what card offers"]
+        if any(keyword in query_text.lower() for keyword in generic_comp_keywords) and not card_filter:
+            # Add all card names to ensure comprehensive comparison
+            all_card_names = "Axis Bank Atlas Credit Card ICICI Bank Emeralde Private Metal Credit Card HSBC Premier Credit Card HDFC Infinia Credit Card"
+            enhanced_query += f" {all_card_names} rewards earning rate points miles benefits exclusions"
+            logger.info(f"Enhanced generic comparison query: {enhanced_query}")
             
         logger.info(f"Executing search with enhanced query: {enhanced_query}")
         

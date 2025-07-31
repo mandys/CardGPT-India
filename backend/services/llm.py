@@ -85,6 +85,21 @@ class LLMService:
         elif any(keyword in question.lower() for keyword in ['compare', 'comparison', 'split', 'spending', 'distribution']):
             max_tokens = min(max_tokens + 600, 1800)  # Extra tokens for complex comparisons
         
+        # Special optimizations for Gemini 2.5 Flash-Lite
+        if model_choice == "gemini-2.5-flash-lite":
+            # Increase token limits for travel and generic recommendation queries to ensure all cards are covered
+            travel_keywords = ["travel", "trip", "vacation", "holiday", "journey", "lot of travel", "upcoming travel"]
+            generic_rec_keywords = ["which card should i", "best card for", "recommend", "suggest", "better card"]
+            
+            if any(keyword in question.lower() for keyword in travel_keywords):
+                max_tokens = min(max_tokens + 800, 2000)  # Extra tokens for comprehensive travel analysis
+            elif any(keyword in question.lower() for keyword in generic_rec_keywords):
+                max_tokens = min(max_tokens + 600, 1800)  # Extra tokens for complete card comparison
+            
+            # For Flash-Lite, we need more tokens for comparisons to ensure all cards are analyzed
+            if any(keyword in question.lower() for keyword in ['compare', 'comparison', 'vs', 'versus']):
+                max_tokens = min(max_tokens + 400, 1600)  # Additional boost for Flash-Lite comparisons
+                
         # Create prompts with calculation enhancement
         system_prompt = self._create_system_prompt(card_name, is_calculation)
         user_prompt = self._create_user_prompt(question, context, is_calculation)
@@ -369,8 +384,15 @@ CRITICAL: If the context contains information relevant to the question, use it t
 
 CRITICAL FOR COMPARISONS: When comparing cards, look for ALL card names in the context. If documents exist for both cards (even with different section names), use information from BOTH cards. Look carefully at the "Source Document" headers to identify which card each section belongs to.
 
+FAIR COMPARISON REQUIREMENTS:
+- EQUAL TREATMENT: Give equal consideration to ALL cards present in the context, not just the first few mentioned
+- COMPREHENSIVE ANALYSIS: For travel queries, systematically analyze ALL cards (Axis Atlas, ICICI EPM, HSBC Premier, HDFC Infinia) for travel benefits, earning rates, and features
+- NO BIAS: Do not favor certain cards over others - provide balanced analysis of all options
+- COMPLETE COVERAGE: When user asks generic questions like "which card for travel", ensure ALL available cards are discussed with their strengths and weaknesses
+
 For earning rate comparisons:
 - Look for "rate_general", "earning_rate", "travel", "hotel", "flight", "capping_per_statement_cycle", "reward_capping" sections in the context
+- For education queries: Look for "Education:" entries in context - these show specific reward points earned for education spending
 - Base earning rates are expressed as "X points per ₹Y spent" OR "X EDGE Miles/₹Y" OR "X miles per ₹Y"
 - REWARD TYPES BY CARD:
   * Axis Atlas: Uses "EDGE Miles" (e.g., "2 EDGE Miles/₹100", "5 EDGE Miles/₹100")
@@ -398,6 +420,7 @@ For informational queries:
 - Include specific numbers, dates, and conditions
 - Don't truncate important information
 - If you see earning information for one card but not another, carefully re-read the context as the information may be there but in a different format
+- CRITICAL FOR EDUCATION QUERIES: If context shows "Education: 1,000 Reward Points" or similar, this means the card DOES earn rewards for education spending - never claim information is missing
 
 CARD NAME RECOGNITION:
 - "Axis Bank Atlas Credit Card" = "Axis Atlas" (uses EDGE Miles as reward currency)
@@ -415,9 +438,12 @@ INSURANCE SPENDING SPECIFIC GUIDANCE:
 - ICICI EPM: Earns general rate (6 points per ₹200) with monthly cap of 5,000 points
 - Axis Atlas: EXCLUDES insurance completely (0 rewards)
 
-AXIS ATLAS EDUCATION SPENDING:
-- Education fees earn 2 EDGE Miles per ₹100 (base rate) with 1% surcharge via third-party apps
-- Education is NOT excluded from rewards (not listed in exclusion policy)
+EDUCATION SPENDING SPECIFIC GUIDANCE:
+- AXIS ATLAS: Education fees earn 2 EDGE Miles per ₹100 (base rate) with 1% surcharge via third-party apps - Education is NOT excluded from rewards
+- ICICI EPM: Look for "Education:" in context documents - shows exact reward points earned (e.g., "Education: 1,000 Reward Points") for education MCC codes (8220, 8241, 8249, 8211, 8299, 8244, 8493, 8494, 7911)
+- HSBC Premier: Earns 3 points per ₹100 for education spending up to monthly limits
+- HDFC Infinia: Check exclusions section - education may be excluded or have specific conditions
+- CRITICAL: If you see "Education: X Reward Points" or "Education: X points per ₹Y" in context, the card DOES earn rewards for education spending - always include the specific number (e.g., "1,000 Reward Points")
 
 FEE AND CHARGE INFORMATION:
 - CRITICAL: Always search ALL context documents for fee information before claiming it's not available

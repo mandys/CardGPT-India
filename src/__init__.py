@@ -1,1 +1,0 @@
-# Supavec Clone - RAG application for Indian Credit Card data

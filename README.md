@@ -234,7 +234,8 @@ npx tsc --noEmit
 │   ├── auth.db                      # SQLite database (local development)
 │   ├── api/                         # API endpoints
 │   │   ├── auth.py                  # Authentication endpoints
-│   │   ├── chat.py                  # Chat endpoint with streaming
+│   │   ├── chat_stream.py           # Streaming chat endpoint (primary)
+│   │   ├── chat.py                  # Standard chat endpoint (legacy)
 │   │   ├── config.py                # Configuration endpoint
 │   │   └── health.py                # Health check endpoint
 │   ├── services/                    # Business logic services
@@ -390,12 +391,19 @@ GET /api/health
 # Returns: Service status, model availability
 ```
 
-### Streaming API
+### Streaming API (Primary Endpoint)
 ```http
 POST /api/chat/stream
 Content-Type: application/json
 
-# Returns: Server-Sent Events (SSE) stream
+{
+  "message": "Compare Atlas and Infinia for travel",
+  "model": "gemini-2.5-flash-lite",
+  "query_mode": "General Query",
+  "top_k": 10
+}
+
+# Returns: Server-Sent Events (SSE) stream with real-time responses
 ```
 
 ## Cost Optimization

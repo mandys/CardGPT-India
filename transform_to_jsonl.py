@@ -40,6 +40,45 @@ def _clean_id(text: str) -> str:
         cleaned = cleaned[:120]
     return cleaned
 
+def generate_card_aliases(card_name: str) -> list:
+    """Generate aliases for a card name for better search matching"""
+    aliases = []
+    
+    # Card-specific alias mappings
+    alias_mappings = {
+        'HDFC Infinia Credit Card': [
+            'infinia', 'hdfc infinia', 'hdfc bank infinia', 'hdfc infinia credit card',
+            'infinia credit card', 'hdfc premium', 'infinia visa'
+        ],
+        'Axis Bank Atlas Credit Card': [
+            'atlas', 'axis atlas', 'axis bank atlas', 'axis atlas credit card', 
+            'atlas credit card', 'axis travel card', 'atlas visa'
+        ],
+        'ICICI Bank Emeralde Private Metal Credit Card': [
+            'epm', 'icici epm', 'emeralde', 'emeralde private metal', 
+            'icici emeralde', 'private metal', 'emeralde credit card',
+            'icici private metal', 'epm credit card'
+        ],
+        'HSBC Premier Credit Card': [
+            'premier', 'hsbc premier', 'hsbc premier credit card',
+            'premier credit card', 'hsbc travel card'
+        ]
+    }
+    
+    # Get specific aliases for this card
+    aliases = alias_mappings.get(card_name, [])
+    
+    # Add generic variations if no specific mapping exists
+    if not aliases:
+        # Extract key words from card name
+        words = card_name.lower().replace('credit card', '').split()
+        if len(words) >= 2:
+            # Add bank + card name combination
+            aliases.append(f"{words[0]} {words[-1]}")
+            aliases.append(words[-1])  # Just the card name
+    
+    return aliases
+
 def create_chunks_from_node(node: dict, path_prefix: str, card_name: str) -> list:
     """Creates a chunk for a dictionary node and recurses for its children."""
     chunks = []
@@ -61,12 +100,19 @@ def create_chunks_from_node(node: dict, path_prefix: str, card_name: str) -> lis
         chunk_id = f"{truncated_card}_{truncated_path}"
     
     content = _format_dict_to_text(node)
+    aliases = generate_card_aliases(card_name)
+    
+    # Add aliases to content for better searchability
+    if aliases:
+        alias_text = f"\n\nCard Aliases: {', '.join(aliases)}"
+        content += alias_text
     
     chunks.append({
         "id": chunk_id,
         "content": content,
         "cardName": card_name,
-        "section": path_prefix.split('.')[-1]
+        "section": path_prefix.split('.')[-1],
+        "aliases": aliases  # Add aliases as structured data
     })
     
     # Process both nested dictionaries AND important string fields
@@ -98,11 +144,15 @@ def create_chunks_from_node(node: dict, path_prefix: str, card_name: str) -> lis
             else:
                 string_content = f"{key.replace('_', ' ').title()}: {str(value)}"
             
+            # Get aliases for string chunks too
+            string_aliases = generate_card_aliases(card_name)
+            
             chunks.append({
                 "id": string_chunk_id,
-                "content": string_content,
+                "content": string_content + (f"\n\nCard Aliases: {', '.join(string_aliases)}" if string_aliases else ""),
                 "cardName": card_name,
-                "section": key
+                "section": key,
+                "aliases": string_aliases
             })
             
     return chunks
@@ -140,7 +190,8 @@ def transform_data():
                             "id": chunk["id"],
                             "struct_data": {
                                 "cardName": chunk["cardName"],
-                                "section": chunk["section"]
+                                "section": chunk["section"],
+                                "aliases": chunk.get("aliases", [])
                             },
                             "content": {
                                 "mime_type": "text/plain",

@@ -409,6 +409,14 @@ For earning rate comparisons:
 - If a card mentions travel/hotel categories but shows same rate as general, that's the actual rate
 - CRITICAL: Insurance spending ≠ Insurance benefits/coverage. Look for earning caps, not coverage amounts.
 
+EARNING RATE COMPARISON LOGIC (CRITICAL):
+- NEVER compare base rates to category-specific rates - this is misleading
+- Example: Don't compare "Infinia 3.33% base" vs "Atlas 5% travel" - compare "Infinia 10X hotels/5X flights via SmartBuy" vs "Atlas 5% travel"
+- For general spend comparisons, use base rates: Infinia 3.33% (5/₹150) vs Atlas 2% (2/₹100)
+- For travel spend comparisons, use travel rates: Infinia 10X/5X SmartBuy vs Atlas 5% direct
+- Atlas 5% travel rate applies ONLY to travel categories, NOT general spend
+- When user asks "which is better", specify FOR WHAT TYPE OF SPENDING
+
 For calculations:
 - Apply earning rates: "X points per ₹Y" → (spend ÷ Y) × X
 - Check caps and exclusions
@@ -431,6 +439,15 @@ CARD NAME RECOGNITION:
 - When users ask about "ICICI EPM", look for documents labeled "ICICI Bank Emeralde Private Metal Credit Card" 
 - NEVER claim a card's information is missing if there are documents for that card in the context
 - PAY SPECIAL ATTENTION: Axis Atlas reward information uses "EDGE Miles" terminology, not "points"
+
+HDFC INFINIA TRAVEL BENEFITS (CRITICAL):
+- HDFC Infinia has PREMIUM travel earning rates through SmartBuy portal:
+  * Hotels via SmartBuy: 10X reward points (exceptional rate)
+  * Flights via SmartBuy: 5X reward points (premium rate)
+  * These are MUCH HIGHER than the base rate of 3.33% (5 points/₹150)
+- For travel comparisons, emphasize Infinia's SmartBuy advantage: "While Axis Atlas offers 5 EDGE Miles/₹100 (5%) on direct travel bookings, HDFC Infinia provides 10X points on hotels and 5X points on flights via SmartBuy portal, which significantly outperforms Atlas for travel spending."
+- General spend: Infinia earns 5 points per ₹150 (3.33%) - this is the BASE rate, NOT the travel rate
+- NEVER compare Infinia's base rate to Atlas's travel rate - compare travel-to-travel rates
 
 INSURANCE SPENDING SPECIFIC GUIDANCE:
 - HDFC Infinia: Earns general rate (5 points per ₹150) with daily cap of 5,000 RP

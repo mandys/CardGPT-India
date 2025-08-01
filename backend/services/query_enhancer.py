@@ -5,7 +5,9 @@ Preprocesses user queries to detect categories and ensure correct earning rates 
 
 import re
 from typing import Dict, Tuple, Optional
+import logging
 
+logger = logging.getLogger(__name__)
 
 class QueryEnhancer:
     """Enhances user queries to improve LLM accuracy for credit card calculations"""
@@ -173,6 +175,34 @@ class QueryEnhancer:
         
         return has_comparison_pattern and no_specific_card
     
+    def detect_direct_comparison(self, query: str) -> Optional[tuple]:
+        """Detect direct card-to-card comparison queries"""
+        import re
+        
+        logger.info(f"=== DIRECT COMPARISON DEBUG ===")
+        logger.info(f"Original query: '{query}'")
+        
+        direct_comparison_patterns = [
+            r'\bbetween\s+(\w+).*?and\s+(\w+)', 
+            r'(\w+)\s+vs\s+(\w+)', 
+            r'(\w+)\s+versus\s+(\w+)',
+            r'compare\s+(\w+).*?and\s+(\w+)',
+            r'(\w+)\s+or\s+(\w+)',
+            r'(\w+)\s+better\s+than\s+(\w+)'
+        ]
+        
+        for pattern in direct_comparison_patterns:
+            match = re.search(pattern, query.lower())
+            logger.info(f"Pattern '{pattern}' -> Match: {match.groups() if match else 'No match'}")
+            if match:
+                logger.info(f"SUCCESS: Direct comparison detected: {match.groups()}")
+                logger.info(f"=== END DIRECT COMPARISON DEBUG ===")
+                return match.groups()
+        
+        logger.info(f"No direct comparison patterns matched")
+        logger.info(f"=== END DIRECT COMPARISON DEBUG ===")
+        return None
+
     def enhance_query(self, query: str) -> Tuple[str, Dict[str, any]]:
         """
         Enhance query with category and card detection, plus other metadata
@@ -186,6 +216,7 @@ class QueryEnhancer:
         is_travel_query = self.is_travel_query(query)
         is_generic_recommendation = self.is_generic_recommendation_query(query)
         is_generic_comparison = self.is_generic_comparison_query(query)
+        direct_comparison = self.detect_direct_comparison(query)
         
         metadata = {
             'card_detected': card_detected,
@@ -196,11 +227,26 @@ class QueryEnhancer:
             'is_travel_query': is_travel_query,
             'is_generic_recommendation': is_generic_recommendation,
             'is_generic_comparison': is_generic_comparison,
+            'direct_comparison': direct_comparison,
             'suggest_followup': is_generic_recommendation and not spend_amount
         }
-        
+        logger.info(f"Query metadata: {metadata}")
         # Enhance the query with explicit category information
         enhanced_query = query
+        
+        # Handle direct card-to-card comparisons first (highest priority)
+        if direct_comparison:
+            card1, card2 = direct_comparison
+            logger.info(f"=== QUERY ENHANCEMENT DEBUG ===")
+            logger.info(f"Direct comparison detected: {direct_comparison}")
+            logger.info(f"Original enhanced_query: '{enhanced_query}'")
+            
+            # With document-level aliases, we can rely on natural search matching
+            # The search engine will match aliases automatically, so we just need to
+            # ensure both card terms are in the query for balanced retrieval
+            enhanced_query += f" {card1} {card2}"
+            logger.info(f"Enhanced query after adding card names: '{enhanced_query}'")
+            logger.info(f"=== END QUERY ENHANCEMENT DEBUG ===")
         
         # Detect spend distribution queries
         is_distribution_query = any(word in query.lower() for word in ['split', 'distribution', 'monthly', 'breakdown', 'categories'])
@@ -240,6 +286,11 @@ class QueryEnhancer:
             enhanced_query += f"\n\nIMPORTANT: This is a spend distribution query. For each category, calculate separately using the appropriate rate (base rate for most categories, accelerated for hotels/flights, zero for excluded categories). Do NOT add base + category rates."
         elif spend_amount and not category:
             enhanced_query += f"\n\nNote: No specific category mentioned, so use BASE RATE for calculation. CRITICAL: Check for annual spending milestones - look for 'Milestones:' section and apply milestone bonuses if user spend qualifies."
+        
+        logger.info(f"=== FINAL ENHANCEMENT RESULT ===")
+        logger.info(f"Final enhanced query: '{enhanced_query}'")
+        logger.info(f"Final metadata: {metadata}")
+        logger.info(f"=== END FINAL ENHANCEMENT RESULT ===")
         
         return enhanced_query, metadata
     

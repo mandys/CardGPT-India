@@ -72,36 +72,14 @@ class VertexRetriever:
         """Performs a search with precise metadata filtering."""
         # Note: use_mmr is ignored for Vertex AI Search (ChromaDB-specific parameter)
         
-        # Map user-friendly card names to actual card names in data
-        card_name_mapping = {
-            'axis atlas': 'Axis Bank Atlas Credit Card',
-            'atlas': 'Axis Bank Atlas Credit Card', 
-            'icici epm': 'ICICI Bank Emeralde Private Metal Credit Card',
-            'epm': 'ICICI Bank Emeralde Private Metal Credit Card',
-            'hsbc premier': 'HSBC Premier Credit Card',
-            'premier': 'HSBC Premier Credit Card',
-            'hdfc infinia': 'HDFC Infinia Credit Card',
-            'infinia': 'HDFC Infinia Credit Card'
-        }
-        
-        # Enhance query with proper card names (case-insensitive replacement)
+        # With document-level aliases, we can rely on natural search matching
+        # No need for hardcoded card name mappings anymore
         enhanced_query = query_text
-        import re
-        for user_name, actual_name in card_name_mapping.items():
-            # Use word boundary regex for accurate replacement
-            pattern = r'\b' + re.escape(user_name) + r'\b'
-            enhanced_query = re.sub(pattern, actual_name, enhanced_query, flags=re.IGNORECASE)
         
-        # For now, disable filtering since the data store schema needs to be updated
-        # TODO: Re-enable filtering once the data store is updated with new JSONL format
+        # For card filtering, simply add the card name to the query
         if card_filter:
-            logger.info(f"Card filter '{card_filter}' requested but filtering disabled (data store needs update)")
-            # Enhance query with card name instead of using filter
-            if card_filter.lower() in card_name_mapping:
-                actual_card_name = card_name_mapping[card_filter.lower()]
-                enhanced_query = f"{actual_card_name} {enhanced_query}"
-            else:
-                enhanced_query = f"{card_filter} {enhanced_query}"
+            logger.info(f"Adding card filter '{card_filter}' to query")
+            enhanced_query = f"{card_filter} {enhanced_query}"
             
         # Special enhancement for insurance spending queries
         if "insurance" in query_text.lower() and any(word in query_text.lower() for word in ["spend", "spending", "spends", "earn", "points", "rewards"]):
@@ -115,34 +93,31 @@ class VertexRetriever:
         
         # Special enhancement for education spending queries
         if "education" in query_text.lower() and any(word in query_text.lower() for word in ["points", "rewards", "earn", "spending", "fee", "payment"]):
-            # Add all card names to ensure comprehensive retrieval for education queries
-            all_card_names = "Axis Bank Atlas Credit Card ICICI Bank Emeralde Private Metal Credit Card HSBC Premier Credit Card HDFC Infinia Credit Card"
-            enhanced_query += f" {all_card_names} education education_government rewards rate points MCC earning"
-            logger.info(f"Enhanced education spending query to include all cards: {enhanced_query}")
+            # With aliases, we just need to add relevant terms for better matching
+            enhanced_query += " education education_government rewards rate points MCC earning"
+            logger.info(f"Enhanced education spending query: {enhanced_query}")
         
-        # Special enhancement for travel queries to ensure ALL cards are retrieved
+        # Special enhancement for travel queries
         travel_keywords = ["travel", "trip", "vacation", "holiday", "journey", "lot of travel", "upcoming travel", "business travel"]
         if any(keyword in query_text.lower() for keyword in travel_keywords):
-            # Add all card names to ensure comprehensive retrieval
-            all_card_names = "Axis Bank Atlas Credit Card ICICI Bank Emeralde Private Metal Credit Card HSBC Premier Credit Card HDFC Infinia Credit Card"
-            enhanced_query += f" {all_card_names} travel benefits lounge access insurance miles points rewards foreign currency charges welcome bonus"
-            logger.info(f"Enhanced travel query to include all cards: {enhanced_query}")
+            # Add travel-specific terms for better matching
+            enhanced_query += " travel benefits lounge access insurance miles points rewards foreign currency charges welcome bonus"
+            logger.info(f"Enhanced travel query: {enhanced_query}")
         
         # Special enhancement for generic recommendation queries
         generic_rec_keywords = ["which card should i", "best card for", "recommend", "suggest", "better card", "good card", "right card"]
         if any(keyword in query_text.lower() for keyword in generic_rec_keywords) and not card_filter:
-            # Add all card names to ensure comprehensive comparison
-            all_card_names = "Axis Bank Atlas Credit Card ICICI Bank Emeralde Private Metal Credit Card HSBC Premier Credit Card HDFC Infinia Credit Card"
-            enhanced_query += f" {all_card_names} comparison benefits features rewards"
+            # Add comparison terms for better matching
+            enhanced_query += " comparison benefits features rewards"
             logger.info(f"Enhanced generic recommendation query: {enhanced_query}")
         
         # Special enhancement for generic comparison queries (which card gives/earns/offers)
         generic_comp_keywords = ["which card gives", "which card earns", "which card offers", "which card has", "which card provides", "which cards give", "which cards earn", "which cards offer", "which cards have", "what card gives", "what card earns", "what card offers"]
         if any(keyword in query_text.lower() for keyword in generic_comp_keywords) and not card_filter:
-            # Add all card names to ensure comprehensive comparison
-            all_card_names = "Axis Bank Atlas Credit Card ICICI Bank Emeralde Private Metal Credit Card HSBC Premier Credit Card HDFC Infinia Credit Card"
-            enhanced_query += f" {all_card_names} rewards earning rate points miles benefits exclusions"
+            # Add relevant terms for comprehensive comparison
+            enhanced_query += " rewards earning rate points miles benefits exclusions"
             logger.info(f"Enhanced generic comparison query: {enhanced_query}")
+        
             
         logger.info(f"Executing search with enhanced query: {enhanced_query}")
         
@@ -167,6 +142,11 @@ class VertexRetriever:
         try:
             response = self.client.search(request)
             results = self._process_response(response)
+            
+            # For comparison queries, ensure balanced representation from multiple cards
+            if not card_filter and "infinia" in query_text.lower() and "atlas" in query_text.lower():
+                logger.info("Applying balanced search for comparison query")
+                results = self._balance_comparison_results(results, top_k)
             
             # If card_filter is specified, post-process results to filter by card name
             if card_filter and results:
@@ -219,12 +199,12 @@ class VertexRetriever:
             # Also check derivedStructData
             derived_struct_data = document.get('derivedStructData', {})
             logger.info(f"Derived struct data keys: {list(derived_struct_data.keys())}")
-            logger.info(f"Derived struct data: {derived_struct_data}")
+            # logger.info(f"Derived struct data: {derived_struct_data}")
             
             # Handle both text and raw_bytes content formats
             content_obj = document.get('content', {})
-            logger.info(f"Content object keys: {list(content_obj.keys())}")
-            logger.info(f"Content object: {content_obj}")
+            # logger.info(f"Content object keys: {list(content_obj.keys())}")
+            # logger.info(f"Content object: {content_obj}")
             
             content = ''
             
@@ -310,6 +290,54 @@ class VertexRetriever:
             "ICICI EPM", 
             "HSBC Premier"
         ]
+
+    def _balance_comparison_results(self, results: List[Dict], top_k: int) -> List[Dict]:
+        """Balance search results for comparison queries to ensure fair representation"""
+        if not results:
+            return results
+        
+        # Separate results by card
+        infinia_docs = []
+        atlas_docs = []
+        other_docs = []
+        
+        for result in results:
+            card_name = result.get('cardName', '').lower()
+            if 'infinia' in card_name:
+                infinia_docs.append(result)
+            elif 'atlas' in card_name:
+                atlas_docs.append(result)
+            else:
+                other_docs.append(result)
+        
+        logger.info(f"Before balancing: Infinia={len(infinia_docs)}, Atlas={len(atlas_docs)}, Other={len(other_docs)}")
+        
+        # For comparison queries, aim for 40% Infinia, 40% Atlas, 20% other
+        target_infinia = max(1, int(top_k * 0.4))
+        target_atlas = max(1, int(top_k * 0.4)) 
+        target_other = max(0, top_k - target_infinia - target_atlas)
+        
+        # Select balanced results
+        balanced_results = []
+        balanced_results.extend(infinia_docs[:target_infinia])
+        balanced_results.extend(atlas_docs[:target_atlas])
+        balanced_results.extend(other_docs[:target_other])
+        
+        # If we still need more results, fill from remaining docs
+        remaining_slots = top_k - len(balanced_results)
+        if remaining_slots > 0:
+            remaining_docs = infinia_docs[target_infinia:] + atlas_docs[target_atlas:] + other_docs[target_other:]
+            balanced_results.extend(remaining_docs[:remaining_slots])
+        
+        logger.info(f"After balancing: Total={len(balanced_results)}, Target was {top_k}")
+        
+        # Log the final balance
+        final_infinia = sum(1 for r in balanced_results if 'infinia' in r.get('cardName', '').lower())
+        final_atlas = sum(1 for r in balanced_results if 'atlas' in r.get('cardName', '').lower())
+        final_other = len(balanced_results) - final_infinia - final_atlas
+        logger.info(f"Final balance: Infinia={final_infinia}, Atlas={final_atlas}, Other={final_other}")
+        
+        return balanced_results[:top_k]
 
     def _fallback_response(self, query: str) -> List[Dict]:
         """Provides a fallback response on API failure."""

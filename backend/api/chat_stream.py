@@ -131,29 +131,26 @@ def process_query_stream(
             search_card_filter = metadata['card_detected']
         
         # For comparison queries mentioning multiple cards, search without filter to get all cards
-        if "compare" in question.lower() and any(card in question.lower() for card in ["atlas", "icici", "epm", "hsbc", "premier"]):
+        is_comparison_query = (
+            "compare" in question.lower() or 
+            metadata.get('direct_comparison') or
+            any(pattern in question.lower() for pattern in ["vs", "versus", "between", "better than", " or "])
+        )
+        
+        if is_comparison_query and any(card in question.lower() for card in ["atlas", "icici", "epm", "hsbc", "premier", "infinia", "hdfc"]):
             search_card_filter = None  # Search all cards for comparison
-            
-            # Boost search with actual card names for better document retrieval
-            card_names_to_boost = []
-            question_lower = question.lower()
-            if any(pattern in question_lower for pattern in ["axis", "atlas"]):
-                card_names_to_boost.append("Axis Bank Atlas Credit Card")
-            if any(pattern in question_lower for pattern in ["icici", "epm", "emeralde"]):
-                card_names_to_boost.append("ICICI Bank Emeralde Private Metal Credit Card")
-            if any(pattern in question_lower for pattern in ["hsbc", "premier"]):
-                card_names_to_boost.append("HSBC Premier Credit Card")
-                
-            # For complex comparison queries, use simple search without overwhelming keywords
-            # Just add minimal card names for targeting
-            if card_names_to_boost and len(question) < 200:  # Only if query isn't already too long
-                question += f" {' '.join(card_names_to_boost[:2])}"  # Limit to 2 cards max
+            # With document-level aliases, no need for hardcoded card name boosting
+            logger.info(f"Detected comparison query - removing card filter for comprehensive search")
+        
+        # Apply additional enhancements to the already enhanced query
+        final_search_query = enhanced_question
         
         # Enhance search for calculation queries to include milestone data
         # But skip for complex comparison queries to avoid overwhelming search
         if (metadata.get('is_calculation_query', False) and 
             not ("compare" in question.lower() and len(question) > 100)):
-            question += " milestone spend threshold bonus benefits"
+            final_search_query += " milestone spend threshold bonus benefits"
+            logger.info(f"Added milestone terms to search query")
         
         # For ultra-complex queries (>200 chars), use simplified search terms
         if len(question) > 200 and "compare" in question.lower():
@@ -181,8 +178,8 @@ def process_query_stream(
             if "gift" in question_lower:
                 simplified_query += "gift "
                 
-            question = simplified_query.strip()
-            logger.info(f"Simplified ultra-complex query to: {question}")
+            final_search_query = simplified_query.strip()
+            logger.info(f"Simplified ultra-complex query to: {final_search_query}")
         
         # Send search status
         search_status_chunk = StreamChunk(
@@ -192,9 +189,11 @@ def process_query_stream(
         yield f"data: {search_status_chunk.model_dump_json()}\n\n"
         
         # Search documents
-        logger.info(f"Searching documents with query: {question}")
+        logger.info(f"Searching documents with FINAL query: {final_search_query}")
+        logger.info(f"Original query was: {question}")
+        logger.info(f"QueryEnhancer output was: {enhanced_question}")
         relevant_docs = retriever_service.search_similar_documents(
-            query_text=question,
+            query_text=final_search_query,
             top_k=top_k,
             card_filter=search_card_filter,
             use_mmr=True

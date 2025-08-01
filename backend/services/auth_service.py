@@ -666,6 +666,14 @@ class AuthService:
         today_result = cursor.fetchone()
         today_queries = today_result[0] if today_result else 0
         
+        # Handle datetime conversion for SQLite (stores as strings)
+        def format_datetime(dt_value):
+            if dt_value is None:
+                return None
+            if isinstance(dt_value, str):
+                return dt_value  # Already a string
+            return dt_value.isoformat()  # Convert datetime to string
+        
         return {
             'user': {
                 'id': user[0],
@@ -673,8 +681,8 @@ class AuthService:
                 'email': user[2],
                 'name': user[3],
                 'picture': user[4],
-                'created_at': user[5],
-                'last_login': user[6]
+                'created_at': format_datetime(user[5]),
+                'last_login': format_datetime(user[6])
             },
             'stats': {
                 'total_queries': total_queries,

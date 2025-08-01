@@ -79,7 +79,7 @@ class ErrorResponse(BaseModel):
     error: str = Field(..., description="Error message")
     detail: Optional[str] = Field(None, description="Detailed error information")
     code: Optional[str] = Field(None, description="Error code")
-    timestamp: datetime = Field(default_factory=datetime.now, description="Timestamp")
+    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat(), description="Timestamp")
 
 # Streaming Models
 class StreamChunk(BaseModel):

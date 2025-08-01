@@ -1,3 +1,4 @@
+
 """
 Query Enhancement Service
 Preprocesses user queries to detect categories and ensure correct earning rates are applied
@@ -230,6 +231,7 @@ class QueryEnhancer:
             'direct_comparison': direct_comparison,
             'suggest_followup': is_generic_recommendation and not spend_amount
         }
+        
         logger.info(f"Query metadata: {metadata}")
         # Enhance the query with explicit category information
         enhanced_query = query
@@ -251,11 +253,20 @@ class QueryEnhancer:
         # Detect spend distribution queries
         is_distribution_query = any(word in query.lower() for word in ['split', 'distribution', 'monthly', 'breakdown', 'categories'])
         
-        # Handle travel queries specially
-        if is_travel_query and not card_detected:
+        # Handle generic comparison queries first (higher priority than travel queries)
+        if is_generic_comparison and not card_detected:
+            if "travel insurance" in query.lower():
+                if any(word in query.lower() for word in ["spend", "rewards", "points"]):
+                    enhanced_query = f"Travel insurance spending rewards for {', '.join(self.card_patterns.keys())}"
+                else:
+                    enhanced_query = f"Travel insurance coverage benefits for {', '.join(self.card_patterns.keys())} including lost baggage, trip cancellation, and medical coverage"
+            elif category == 'education':
+                enhanced_query = f"Education spending rewards and fees for {', '.join(self.card_patterns.keys())}"
+            else:
+                enhanced_query += f"\n\nIMPORTANT: This is a generic comparison query asking about ALL cards. Analyze information from EVERY available card systematically: Axis Atlas (EDGE Miles), ICICI EPM (Reward Points), HSBC Premier (Reward Points), HDFC Infinia (Reward Points). Do not limit analysis to first few cards in context. If a card excludes this category, state that clearly. If a card earns rewards for this category, provide the specific rate and any conditions."
+        # Handle travel queries specially (lower priority than generic comparisons)
+        elif is_travel_query and not card_detected:
             enhanced_query += f"\n\nIMPORTANT: This is a travel-related query. For comprehensive comparison, retrieve information from ALL available cards about: 1) Travel rewards rates (flights, hotels), 2) Travel benefits (lounge access, insurance, concierge), 3) Travel milestone bonuses, 4) Foreign currency charges, 5) Welcome bonuses. Ensure EVERY card is considered equally - do not focus only on first few cards mentioned in context. Cards to compare: Axis Atlas (EDGE Miles), ICICI EPM (Reward Points), HSBC Premier (Reward Points), HDFC Infinia (Reward Points)."
-        elif is_generic_comparison and not card_detected:
-            enhanced_query += f"\n\nIMPORTANT: This is a generic comparison query asking about ALL cards. Analyze information from EVERY available card systematically: Axis Atlas (EDGE Miles), ICICI EPM (Reward Points), HSBC Premier (Reward Points), HDFC Infinia (Reward Points). Do not limit analysis to first few cards in context. If a card excludes this category, state that clearly. If a card earns rewards for this category, provide the specific rate and any conditions."
         elif is_generic_recommendation and not card_detected:
             enhanced_query += f"\n\nIMPORTANT: This is a generic recommendation query. Analyze ALL available cards systematically and provide balanced comparison. Do not limit analysis to first few cards in context. Include key differentiators for each card."
         elif category and spend_amount:
@@ -274,14 +285,14 @@ class QueryEnhancer:
             # Handle category queries without spend amounts (like comparisons)
             enhanced_query += f"\n\nIMPORTANT: This is about {category} rewards comparison. For each card, find: 1) Base earning rate (general rate), 2) Travel/Hotel specific rates if any, 3) Monthly caps on accelerated rates, 4) Any exclusions. Look in 'rewards', 'travel', and 'rate_general' sections."
         elif category == 'education' and not spend_amount:
-            # Handle education category comparisons
-            enhanced_query += f"\n\nIMPORTANT: This is about education spending rewards comparison. Check earning rates and surcharge_fees sections for each card."
+            # Handle education category comparisons - now using RAG retrieval instead of hardcoded responses
+            enhanced_query += f"\n\nIMPORTANT: This is about education spending rewards comparison. For each card, find: 1) Earning rates for education spending, 2) Any exclusions or conditions, 3) Surcharge fees for third-party apps, 4) Monthly or statement cycle caps, 5) MCC codes if mentioned. Look in 'spending_categories', 'rewards', 'surcharge_fees', and 'reward_capping' sections."
         elif category == 'milestone':
             # Handle milestone queries separately (they often don't have spend amounts)
             enhanced_query += f"\n\nIMPORTANT: This is about milestone benefits. For Axis Atlas, look for annual spending milestones in 'Milestones:' section (₹3L=2500 miles, ₹7.5L=2500 miles, ₹15L=5000 miles). Also check 'renewal_benefits' and tier structure for other types of milestone rewards. Do NOT confuse tier-based 'Milestone Miles' with annual spending milestones."
         elif category == 'utility' and any(keyword in query.lower() for keyword in ['surcharge', 'fee', 'charge', 'cost']):
             # Handle utility fee/surcharge queries separately
-            enhanced_query += f"\n\nIMPORTANT: This is about utility fees/surcharges. Calculate surcharges on amount ABOVE threshold if mentioned. Show surcharge calculation: percentage × (spend - threshold)."
+            enhanced_query += f"\n\nIMPORTANT: This is about utility fees/surcharges. Calculate surcharges on amount ABOVE threshold if mentioned. Show surcharge calculation: percentage \u00d7 (spend - threshold)."
         elif is_distribution_query:
             enhanced_query += f"\n\nIMPORTANT: This is a spend distribution query. For each category, calculate separately using the appropriate rate (base rate for most categories, accelerated for hotels/flights, zero for excluded categories). Do NOT add base + category rates."
         elif spend_amount and not category:

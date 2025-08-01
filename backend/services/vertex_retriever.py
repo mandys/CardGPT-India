@@ -111,9 +111,18 @@ class VertexRetriever:
             enhanced_query += " comparison benefits features rewards"
             logger.info(f"Enhanced generic recommendation query: {enhanced_query}")
         
+        # Special enhancement for fee-related queries (MUST come first to avoid conflicts)
+        fee_keywords = ["fee", "fees", "cost", "costs", "charge", "charges", "expensive", "cheapest", "highest fee", "lowest fee", "annual fee", "joining fee"]
+        is_fee_query = any(keyword in query_text.lower() for keyword in fee_keywords)
+        
+        if is_fee_query and not card_filter:
+            # Add fee-specific terms for better matching
+            enhanced_query += " joining fee annual fee charges costs expenses waiver"
+            logger.info(f"Enhanced fee-related query: {enhanced_query}")
+        
         # Special enhancement for generic comparison queries (which card gives/earns/offers)
-        generic_comp_keywords = ["which card gives", "which card earns", "which card offers", "which card has", "which card provides", "which cards give", "which cards earn", "which cards offer", "which cards have", "what card gives", "what card earns", "what card offers"]
-        if any(keyword in query_text.lower() for keyword in generic_comp_keywords) and not card_filter:
+        # BUT SKIP if this is a fee query to avoid conflicts
+        elif not is_fee_query and any(keyword in query_text.lower() for keyword in ["which card gives", "which card earns", "which card offers", "which card has", "which card provides", "which cards give", "which cards earn", "which cards offer", "which cards have", "what card gives", "what card earns", "what card offers"]) and not card_filter:
             # Add relevant terms for comprehensive comparison
             enhanced_query += " rewards earning rate points miles benefits exclusions"
             logger.info(f"Enhanced generic comparison query: {enhanced_query}")

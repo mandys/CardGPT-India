@@ -1,0 +1,208 @@
+which card has the highest fee ?
+
+19:30
+🤖
+Here's a comparison of the fees for the cards mentioned:
+
+Axis Atlas Credit Card:
+
+Joining Fee: ₹5,000 + GST
+Annual Fee: ₹5,000 + GST
+Fee Waiver: None
+ICICI Bank Emeralde Private Metal Credit Card:
+
+Annual Fee: ₹12,499 (from the 2nd year onwards)
+HSBC Premier Credit Card:
+
+No specific fee information is provided in the context.
+HDFC Infinia Credit Card:
+
+Annual membership fee waiver is available upon spending ₹8 Lakh (Infinia) or ₹10 Lakh (Infinia Metal Edition) in the preceding 12 months. The context does not explicitly state the fee amount if the waiver criteria are not met.
+Based on the provided information, the ICICI Bank Emeralde Private Metal Credit Card has the highest explicitly stated annual fee at ₹12,499. The Axis Atlas Credit Card has a fee of ₹5,000 + GST. For the HDFC Infinia, the fee is waived if spending thresholds are met, and for the HSBC Premier, the fee amount is not specified.
+
+
+INFO:api.auth:🚀 Increment query endpoint called
+INFO:api.auth:🔑 Authenticated user: 1
+INFO:services.auth_service:🚀 Incrementing query count for user_id=1, session_id=None, date=2025-08-01
+INFO:services.auth_service:✅ Query count updated to: 44
+INFO:api.auth:✅ Query incremented successfully: new_count=44
+INFO:     127.0.0.1:57068 - "POST /api/auth/increment-query HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57068 - "GET /api/auth/query-limit HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57068 - "GET /api/auth/stats HTTP/1.1" 200 OK
+INFO:services.query_logger:Query logged for session 2ff7d200-cc5a-4bb0-afa8-e4d247418fbb
+INFO:services.query_enhancer:=== DIRECT COMPARISON DEBUG ===
+INFO:services.query_enhancer:Original query: 'which card has the highest fee ?'
+INFO:services.query_enhancer:Pattern '\bbetween\s+(\w+).*?and\s+(\w+)' -> Match: No match
+INFO:services.query_enhancer:Pattern '(\w+)\s+vs\s+(\w+)' -> Match: No match
+INFO:services.query_enhancer:Pattern '(\w+)\s+versus\s+(\w+)' -> Match: No match
+INFO:services.query_enhancer:Pattern 'compare\s+(\w+).*?and\s+(\w+)' -> Match: No match
+INFO:services.query_enhancer:Pattern '(\w+)\s+or\s+(\w+)' -> Match: No match
+INFO:services.query_enhancer:Pattern '(\w+)\s+better\s+than\s+(\w+)' -> Match: No match
+INFO:services.query_enhancer:No direct comparison patterns matched
+INFO:services.query_enhancer:=== END DIRECT COMPARISON DEBUG ===
+INFO:services.query_enhancer:Query metadata: {'card_detected': None, 'category_detected': None, 'spend_amount': None, 'is_calculation_query': False, 'requires_category_rate': False, 'is_travel_query': False, 'is_generic_recommendation': False, 'is_generic_comparison': False, 'direct_comparison': None, 'suggest_followup': False}
+INFO:services.query_enhancer:=== FINAL ENHANCEMENT RESULT ===
+INFO:services.query_enhancer:Final enhanced query: 'which card has the highest fee ?'
+INFO:services.query_enhancer:Final metadata: {'card_detected': None, 'category_detected': None, 'spend_amount': None, 'is_calculation_query': False, 'requires_category_rate': False, 'is_travel_query': False, 'is_generic_recommendation': False, 'is_generic_comparison': False, 'direct_comparison': None, 'suggest_followup': False}
+INFO:services.query_enhancer:=== END FINAL ENHANCEMENT RESULT ===
+INFO:     127.0.0.1:57068 - "POST /api/chat/stream HTTP/1.1" 200 OK
+INFO:api.chat_stream:Starting stream processing for: which card has the highest fee ?
+INFO:services.query_enhancer:=== DIRECT COMPARISON DEBUG ===
+INFO:services.query_enhancer:Original query: 'which card has the highest fee ?'
+INFO:services.query_enhancer:Pattern '\bbetween\s+(\w+).*?and\s+(\w+)' -> Match: No match
+INFO:services.query_enhancer:Pattern '(\w+)\s+vs\s+(\w+)' -> Match: No match
+INFO:services.query_enhancer:Pattern '(\w+)\s+versus\s+(\w+)' -> Match: No match
+INFO:services.query_enhancer:Pattern 'compare\s+(\w+).*?and\s+(\w+)' -> Match: No match
+INFO:services.query_enhancer:Pattern '(\w+)\s+or\s+(\w+)' -> Match: No match
+INFO:services.query_enhancer:Pattern '(\w+)\s+better\s+than\s+(\w+)' -> Match: No match
+INFO:services.query_enhancer:No direct comparison patterns matched
+INFO:services.query_enhancer:=== END DIRECT COMPARISON DEBUG ===
+INFO:services.query_enhancer:Query metadata: {'card_detected': None, 'category_detected': None, 'spend_amount': None, 'is_calculation_query': False, 'requires_category_rate': False, 'is_travel_query': False, 'is_generic_recommendation': False, 'is_generic_comparison': False, 'direct_comparison': None, 'suggest_followup': False}
+INFO:services.query_enhancer:=== FINAL ENHANCEMENT RESULT ===
+INFO:services.query_enhancer:Final enhanced query: 'which card has the highest fee ?'
+INFO:services.query_enhancer:Final metadata: {'card_detected': None, 'category_detected': None, 'spend_amount': None, 'is_calculation_query': False, 'requires_category_rate': False, 'is_travel_query': False, 'is_generic_recommendation': False, 'is_generic_comparison': False, 'direct_comparison': None, 'suggest_followup': False}
+INFO:services.query_enhancer:=== END FINAL ENHANCEMENT RESULT ===
+INFO:api.chat_stream:Searching documents with FINAL query: which card has the highest fee ?
+INFO:api.chat_stream:Original query was: which card has the highest fee ?
+INFO:api.chat_stream:QueryEnhancer output was: which card has the highest fee ?
+INFO:services.vertex_retriever:Enhanced generic comparison query: which card has the highest fee ? rewards earning rate points miles benefits exclusions
+INFO:services.vertex_retriever:Executing search with enhanced query: which card has the highest fee ? rewards earning rate points miles benefits exclusions
+INFO:services.vertex_retriever:=== DEBUGGING VERTEX AI RESPONSE ===
+INFO:services.vertex_retriever:Total results: 8
+INFO:services.vertex_retriever:
+--- RESULT 1 ---
+INFO:services.vertex_retriever:Result dict keys: ['id', 'document']
+INFO:services.vertex_retriever:Document keys: ['name', 'id', 'structData', 'derivedStructData']
+INFO:services.vertex_retriever:Struct data: {'cardName': 'HDFC Infinia Credit Card', 'section': 'card', 'aliases': ['infinia', 'hdfc infinia', 'hdfc bank infinia', 'hdfc infinia credit card', 'infinia credit card', 'hdfc premium', 'infinia visa']}
+INFO:services.vertex_retriever:Derived struct data keys: ['can_fetch_raw_content', 'extractive_answers', 'snippets', 'extractive_segments']
+INFO:services.vertex_retriever:No raw content found, extracting from derivedStructData...
+INFO:services.vertex_retriever:Extracted 3 segments from extractive_segments
+INFO:services.vertex_retriever:Added 1 answers from extractive_answers
+INFO:services.vertex_retriever:Combined content from multiple sources, total length: 8490
+INFO:services.vertex_retriever:Combined content preview: Reward Capping:
+Travel Monthly Cap: 1,50,000 Reward Points (for flights & hotel bookings via Smartbuy)
+Max Earned Statement Cycle: 2,00,000 Reward Points
+Renewal Benefits:
+Description: Annual membersh...
+INFO:services.vertex_retriever:Final extracted: cardName='HDFC Infinia Credit Card', section='card', content_length=8490
+INFO:services.vertex_retriever:
+--- RESULT 2 ---
+INFO:services.vertex_retriever:Result dict keys: ['id', 'document']
+INFO:services.vertex_retriever:Document keys: ['name', 'id', 'structData', 'derivedStructData']
+INFO:services.vertex_retriever:Struct data: {'cardName': 'HSBC Premier Credit Card', 'section': 'card', 'aliases': ['premier', 'hsbc premier', 'hsbc premier credit card', 'premier credit card', 'hsbc travel card']}
+INFO:services.vertex_retriever:Derived struct data keys: ['can_fetch_raw_content', 'extractive_answers', 'snippets', 'extractive_segments']
+INFO:services.vertex_retriever:No raw content found, extracting from derivedStructData...
+INFO:services.vertex_retriever:Extracted 3 segments from extractive_segments
+INFO:services.vertex_retriever:Added 1 answers from extractive_answers
+INFO:services.vertex_retriever:Combined content from multiple sources, total length: 4179
+INFO:services.vertex_retriever:Combined content preview: Accelerated Categories: None
+Accrual Exclusions: Cash advances [28, 29], Fees/charges [28, 29], Disputed transactions [28, 29], Fuel (MCC 5541, 5983, 5172, 5542, 5552) [30]
+Travel: 3 points per ₹100 (...
+INFO:services.vertex_retriever:Final extracted: cardName='HSBC Premier Credit Card', section='card', content_length=4179
+INFO:services.vertex_retriever:
+--- RESULT 3 ---
+INFO:services.vertex_retriever:Result dict keys: ['id', 'document']
+INFO:services.vertex_retriever:Document keys: ['name', 'id', 'structData', 'derivedStructData']
+INFO:services.vertex_retriever:Struct data: {'cardName': 'HSBC Premier Credit Card', 'aliases': ['premier', 'hsbc premier', 'hsbc premier credit card', 'premier credit card', 'hsbc travel card'], 'section': 'rewards'}
+INFO:services.vertex_retriever:Derived struct data keys: ['can_fetch_raw_content', 'extractive_answers', 'snippets', 'extractive_segments']
+INFO:services.vertex_retriever:No raw content found, extracting from derivedStructData...
+INFO:services.vertex_retriever:Extracted 1 segments from extractive_segments
+INFO:services.vertex_retriever:Added 1 answers from extractive_answers
+INFO:services.vertex_retriever:Combined content from multiple sources, total length: 2527
+INFO:services.vertex_retriever:Combined content preview: Rate General: 3 Reward points for every ₹100 spent on qualifying settled transactions [1, 25-27].
+Value Per Point: None
+Earning Rate: 3 points per ₹100. If the purchase amount is not in multiples of ₹...
+INFO:services.vertex_retriever:Final extracted: cardName='HSBC Premier Credit Card', section='rewards', content_length=2527
+INFO:services.vertex_retriever:
+--- RESULT 4 ---
+INFO:services.vertex_retriever:Result dict keys: ['id', 'document']
+INFO:services.vertex_retriever:Document keys: ['name', 'id', 'structData', 'derivedStructData']
+INFO:services.vertex_retriever:Struct data: {'cardName': 'Axis Bank Atlas Credit Card', 'aliases': ['atlas', 'axis atlas', 'axis bank atlas', 'axis atlas credit card', 'atlas credit card', 'axis travel card', 'atlas visa'], 'section': 'card'}
+INFO:services.vertex_retriever:Derived struct data keys: ['can_fetch_raw_content', 'extractive_answers', 'snippets', 'extractive_segments']
+INFO:services.vertex_retriever:No raw content found, extracting from derivedStructData...
+INFO:services.vertex_retriever:Extracted 3 segments from extractive_segments
+INFO:services.vertex_retriever:Added 1 answers from extractive_answers
+INFO:services.vertex_retriever:Combined content from multiple sources, total length: 6500
+INFO:services.vertex_retriever:Combined content preview: Id: axis_atlas
+Name: Axis Bank Atlas Credit Card
+Bank: Axis Bank
+Category: Travel
+Network: Visa Infinite
+Launch Date: 2022-12
+Fees:
+Joining Fee: ₹5,000 + GST
+Annual Fee: ₹5,000 + GST
+Add On Card Fee: ...
+INFO:services.vertex_retriever:Final extracted: cardName='Axis Bank Atlas Credit Card', section='card', content_length=6500
+INFO:services.vertex_retriever:
+--- RESULT 5 ---
+INFO:services.vertex_retriever:Result dict keys: ['id', 'document']
+INFO:services.vertex_retriever:Document keys: ['name', 'id', 'structData', 'derivedStructData']
+INFO:services.vertex_retriever:Struct data: {'cardName': 'HDFC Infinia Credit Card', 'section': 'rewards', 'aliases': ['infinia', 'hdfc infinia', 'hdfc bank infinia', 'hdfc infinia credit card', 'infinia credit card', 'hdfc premium', 'infinia visa']}
+INFO:services.vertex_retriever:Derived struct data keys: ['can_fetch_raw_content', 'extractive_answers', 'snippets', 'extractive_segments']
+INFO:services.vertex_retriever:No raw content found, extracting from derivedStructData...
+INFO:services.vertex_retriever:Extracted 3 segments from extractive_segments
+INFO:services.vertex_retriever:Added 1 answers from extractive_answers
+INFO:services.vertex_retriever:Combined content from multiple sources, total length: 4865
+INFO:services.vertex_retriever:Combined content preview: For Marriott Bonvoy points: www.marriott.com or https://marriottbonvoyasia.com/
+Rate General: 5 Reward Points/₹150
+Value Per Point: ₹1 per Reward Point (for Flights, Hotels, Apple products, Tanishq vo...
+INFO:services.vertex_retriever:Final extracted: cardName='HDFC Infinia Credit Card', section='rewards', content_length=4865
+INFO:services.vertex_retriever:
+--- RESULT 6 ---
+INFO:services.vertex_retriever:Result dict keys: ['id', 'document']
+INFO:services.vertex_retriever:Document keys: ['name', 'id', 'structData', 'derivedStructData']
+INFO:services.vertex_retriever:Struct data: {'cardName': 'Axis Bank Atlas Credit Card', 'section': 'rewards', 'aliases': ['atlas', 'axis atlas', 'axis bank atlas', 'axis atlas credit card', 'atlas credit card', 'axis travel card', 'atlas visa']}
+INFO:services.vertex_retriever:Derived struct data keys: ['can_fetch_raw_content', 'extractive_answers', 'snippets', 'extractive_segments']
+INFO:services.vertex_retriever:No raw content found, extracting from derivedStructData...
+INFO:services.vertex_retriever:Extracted 1 segments from extractive_segments
+INFO:services.vertex_retriever:Added 1 answers from extractive_answers
+INFO:services.vertex_retriever:Combined content from multiple sources, total length: 1903
+INFO:services.vertex_retriever:Combined content preview: Non Encashable: True
+View Location: Atlas Miles section of the Axis Bank Mobile Application
+Rate General: 2 EDGE Miles/₹100
+Value Per Point: ₹1 per EDGE Mile
+Accrual Exclusions: Gold/ Jewellery, Rent,...
+INFO:services.vertex_retriever:Final extracted: cardName='Axis Bank Atlas Credit Card', section='rewards', content_length=1903
+INFO:services.vertex_retriever:
+--- RESULT 7 ---
+INFO:services.vertex_retriever:Result dict keys: ['id', 'document']
+INFO:services.vertex_retriever:Document keys: ['name', 'id', 'structData', 'derivedStructData']
+INFO:services.vertex_retriever:Struct data: {'cardName': 'ICICI Bank Emeralde Private Metal Credit Card', 'aliases': ['epm', 'icici epm', 'emeralde', 'emeralde private metal', 'icici emeralde', 'private metal', 'emeralde credit card', 'icici private metal', 'epm credit card'], 'section': 'card'}
+INFO:services.vertex_retriever:Derived struct data keys: ['can_fetch_raw_content', 'extractive_answers', 'snippets', 'extractive_segments']
+INFO:services.vertex_retriever:No raw content found, extracting from derivedStructData...
+INFO:services.vertex_retriever:Extracted 3 segments from extractive_segments
+INFO:services.vertex_retriever:Added 1 answers from extractive_answers
+INFO:services.vertex_retriever:Combined content from multiple sources, total length: 8024
+INFO:services.vertex_retriever:Combined content preview: Reference Sources: [51-55]
+Tier Structure: None
+Miles Transfer:
+Airline Partners: No direct airline transfer partners available
+Redemption Method: Points can be redeemed for flight bookings through iS...
+INFO:services.vertex_retriever:Final extracted: cardName='ICICI Bank Emeralde Private Metal Credit Card', section='card', content_length=8024
+INFO:services.vertex_retriever:
+--- RESULT 8 ---
+INFO:services.vertex_retriever:Result dict keys: ['id', 'document']
+INFO:services.vertex_retriever:Document keys: ['name', 'id', 'structData', 'derivedStructData']
+INFO:services.vertex_retriever:Struct data: {'cardName': 'HDFC Infinia Credit Card', 'section': 'travel', 'aliases': ['infinia', 'hdfc infinia', 'hdfc bank infinia', 'hdfc infinia credit card', 'infinia credit card', 'hdfc premium', 'infinia visa']}
+INFO:services.vertex_retriever:Derived struct data keys: ['can_fetch_raw_content', 'extractive_answers', 'snippets', 'extractive_segments']
+INFO:services.vertex_retriever:No raw content found, extracting from derivedStructData...
+INFO:services.vertex_retriever:Extracted 1 segments from extractive_segments
+INFO:services.vertex_retriever:Added 1 answers from extractive_answers
+INFO:services.vertex_retriever:Combined content from multiple sources, total length: 1689
+INFO:services.vertex_retriever:Combined content preview: Base Rate: 5 Reward Points/₹150 (on Travel EDGE categories)
+Categories: Travel EDGE, Direct Airlines, Direct Hotels
+Smartbuy Accelerated Rates:
+Hotels:
+Rate: 10X Reward Points (33% return rate)
+Platfo...
+INFO:services.vertex_retriever:Final extracted: cardName='HDFC Infinia Credit Card', section='travel', content_length=1689
+INFO:services.vertex_retriever:=== END DEBUGGING ===
+INFO:services.vertex_retriever:Successfully processed 8 documents.
+INFO:api.chat_stream:Found 8 relevant documents
+INFO:api.chat_stream:Starting LLM streaming with model: gemini-2.5-flash-lite
+INFO:services.llm:Generated streaming answer using gemini-2.5-flash-lite: ~4577 input + ~214 output tokens, 8 chunks
+INFO:api.chat_stream:Streaming completed - tokens: 4791, cost: 0.0005435300000000001
+INFO:     127.0.0.1:57068 - "GET /api/auth/query-limit HTTP/1.1" 200 OK
+ERROR:services.query_logger:Failed to update daily stats: table query_stats has no column named gemini_flash_lite_queries
+INFO:api.chat_stream:Successfully logged streaming response for session 2ff7d200-cc5a-4bb0-afa8-e4d247418fbb

@@ -4,6 +4,8 @@ import json
 import base64
 from pathlib import Path
 import logging
+from datetime import datetime, timezone
+import hashlib
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -79,7 +81,19 @@ def generate_card_aliases(card_name: str) -> list:
     
     return aliases
 
-def create_chunks_from_node(node: dict, path_prefix: str, card_name: str) -> list:
+def generate_content_hash(content: str) -> str:
+    """Generate a consistent hash for content to track changes"""
+    return hashlib.sha256(content.encode('utf-8')).hexdigest()[:16]
+
+def get_file_metadata(file_path: Path) -> dict:
+    """Get file metadata for tracking changes"""
+    stat = file_path.stat()
+    return {
+        "last_modified": datetime.fromtimestamp(stat.st_mtime, timezone.utc).isoformat(),
+        "file_size": stat.st_size
+    }
+
+def create_chunks_from_node(node: dict, path_prefix: str, card_name: str, file_metadata: dict = None) -> list:
     """Creates a chunk for a dictionary node and recurses for its children."""
     chunks = []
     if not isinstance(node, dict):
@@ -107,12 +121,26 @@ def create_chunks_from_node(node: dict, path_prefix: str, card_name: str) -> lis
         alias_text = f"\n\nCard Aliases: {', '.join(aliases)}"
         content += alias_text
     
+    # Generate version and metadata for incremental updates
+    current_time = datetime.now(timezone.utc).isoformat()
+    content_hash = generate_content_hash(content)
+    
+    # Version format: v{major}.{minor} where major increments on schema changes, minor on content changes
+    version = "v2.0"  # Major version 2 for incremental update system
+    
     chunks.append({
         "id": chunk_id,
         "content": content,
         "cardName": card_name,
         "section": path_prefix.split('.')[-1],
-        "aliases": aliases  # Add aliases as structured data
+        "aliases": aliases,
+        "metadata": {
+            "updated_at": current_time,
+            "version": version,
+            "content_hash": content_hash,
+            "chunk_type": "dictionary_node",
+            "file_metadata": file_metadata or {}
+        }
     })
     
     # Process both nested dictionaries AND important string fields
@@ -120,7 +148,7 @@ def create_chunks_from_node(node: dict, path_prefix: str, card_name: str) -> lis
         if isinstance(value, dict):
             clean_key = _clean_id(key)
             new_path = f"{path_prefix}.{clean_key}"
-            chunks.extend(create_chunks_from_node(value, new_path, card_name))
+            chunks.extend(create_chunks_from_node(value, new_path, card_name, file_metadata))
         elif isinstance(value, (str, int, float)) or value is None:
             # Create dedicated chunks for ALL simple value fields (string, number, null)
             clean_key = _clean_id(key)
@@ -147,12 +175,24 @@ def create_chunks_from_node(node: dict, path_prefix: str, card_name: str) -> lis
             # Get aliases for string chunks too
             string_aliases = generate_card_aliases(card_name)
             
+            # Add versioning metadata to string chunks
+            final_string_content = string_content + (f"\n\nCard Aliases: {', '.join(string_aliases)}" if string_aliases else "")
+            string_content_hash = generate_content_hash(final_string_content)
+            
             chunks.append({
                 "id": string_chunk_id,
-                "content": string_content + (f"\n\nCard Aliases: {', '.join(string_aliases)}" if string_aliases else ""),
+                "content": final_string_content,
                 "cardName": card_name,
                 "section": key,
-                "aliases": string_aliases
+                "aliases": string_aliases,
+                "metadata": {
+                    "updated_at": current_time,
+                    "version": version,
+                    "content_hash": string_content_hash,
+                    "chunk_type": "string_field",
+                    "field_name": key,
+                    "file_metadata": file_metadata or {}
+                }
             })
             
     return chunks
@@ -165,8 +205,14 @@ def transform_data():
 
     with open(output_file, 'w', encoding='utf-8') as f_out:
         total_chunks = 0
+        generation_time = datetime.now(timezone.utc).isoformat()
+        
         for json_file in json_files:
             logger.info(f"Processing {json_file.name}...")
+            
+            # Get file metadata for tracking changes
+            file_metadata = get_file_metadata(json_file)
+            
             with open(json_file, 'r', encoding='utf-8') as f_in:
                 data = json.load(f_in)
                 card_name = data.get("card", {}).get("name", "Unknown Card")
@@ -179,19 +225,27 @@ def transform_data():
                     sections_to_process.append(("common_terms", data["common_terms"]))
                 
                 for section_name, section_data in sections_to_process:
-                    chunks = create_chunks_from_node(section_data, section_name, card_name)
+                    chunks = create_chunks_from_node(section_data, section_name, card_name, file_metadata)
                     for chunk in chunks:
                         # --- THIS IS THE CRITICAL FIX ---
                         # Encode the text content to bytes, then to a Base64 string
                         content_bytes = chunk["content"].encode('utf-8')
                         content_base64 = base64.b64encode(content_bytes).decode('utf-8')
 
+                        # Enhanced structured data with versioning for incremental updates
                         vertex_doc = {
                             "id": chunk["id"],
                             "struct_data": {
                                 "cardName": chunk["cardName"],
                                 "section": chunk["section"],
-                                "aliases": chunk.get("aliases", [])
+                                "aliases": chunk.get("aliases", []),
+                                "updated_at": chunk["metadata"]["updated_at"],
+                                "version": chunk["metadata"]["version"],
+                                "content_hash": chunk["metadata"]["content_hash"],
+                                "chunk_type": chunk["metadata"]["chunk_type"],
+                                "generation_time": generation_time,
+                                "file_last_modified": chunk["metadata"]["file_metadata"].get("last_modified"),
+                                "incremental_update_ready": True
                             },
                             "content": {
                                 "mime_type": "text/plain",

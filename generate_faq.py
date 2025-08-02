@@ -99,6 +99,15 @@ class FAQGenerator:
                 "confidence": 0.82,
                 "categories": ["fees", "comparison"],
                 "cards": ["HDFC Infinia", "HSBC Premier", "ICICI EPM", "Axis Atlas"]
+            },
+            {
+                "id": "faq_insurance_premium_earning",
+                "question": "Which cards earn points on insurance premium payments?",
+                "answer": "Three cards earn points on insurance premiums: HDFC Infinia earns 5 points per ₹150 (3.33% return) with daily cap of 5,000 points. HSBC Premier earns 3 points per ₹100 (3% return) up to ₹1L monthly spend. ICICI EPM earns 6 points per ₹200 (3% return) with 5,000 points cap per statement cycle. Axis Atlas excludes insurance premiums completely (0% return). For ₹50K annual premium: Infinia = 1,667 points (₹1,667 value), HSBC = 1,500 points, ICICI EPM = 1,500 points, Atlas = 0 points.",
+                "keywords": ["insurance", "premium", "earning", "comparison", "life insurance", "health insurance"],
+                "confidence": 0.91,
+                "categories": ["insurance", "comparison"],
+                "cards": ["HDFC Infinia", "HSBC Premier", "ICICI EPM", "Axis Atlas"]
             }
         ]
         

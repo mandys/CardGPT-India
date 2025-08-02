@@ -235,8 +235,9 @@ Add a new `spending_categories` section to each card JSON:
 **✅ Phase 4: Missing Critical Categories (COMPLETED)**
 - Gold/jewellery category standardized across all 4 cards
 - Government/tax category standardized across all 4 cards
+- Insurance category standardized across all 4 cards (ADDED)
 - Comprehensive earning rates, exclusions, and surcharge data captured
-- **JSONL Status**: 1023 chunks (complete category coverage)
+- **JSONL Status**: 1055 chunks (complete category coverage with insurance)
 
 ### **Current Architecture Benefits**
 - **Zero Hardcoded Responses**: Category queries now use pure RAG retrieval
@@ -350,7 +351,7 @@ Add a new `spending_categories` section to each card JSON:
 ## 🎯 **Updated Success Metrics**
 
 ### **Category Completeness**
-- ✅ **6 categories standardized**: education, fuel, utility, rent, gold/jewellery, government/tax
+- ✅ **7 categories standardized**: education, fuel, utility, rent, gold/jewellery, government/tax, insurance
 - ✅ **Complete category coverage**: All critical spending categories implemented
 - ✅ **Zero hardcoded responses**: Complete elimination from query_enhancer.py
 
@@ -367,8 +368,8 @@ Add a new `spending_categories` section to each card JSON:
 ## 📊 **Technical Architecture Evolution**
 
 ### **Current JSONL Stats**
-- **1023 chunks**: Up from initial ~173 chunks (488% increase)
-- **Complete category coverage**: All 6 critical categories across 4 cards
+- **1055 chunks**: Up from initial ~173 chunks (510% increase)
+- **Complete category coverage**: All 7 critical categories across 4 cards
 - **Multiple retrieval paths**: Each category has 8-12 granular chunks  
 - **High accuracy**: RAG system finds complete category information reliably
 
@@ -394,17 +395,19 @@ def enhanced_search(query):
 
 ## 🏆 **Major Achievement: Phase 4 Complete**
 
-**Core category standardization is now 100% complete** with all 6 critical spending categories implemented across all 4 credit cards. The RAG system has evolved from requiring hardcoded responses to pure retrieval-based answers.
+**Core category standardization is now 100% complete** with all 7 critical spending categories implemented across all 4 credit cards. The RAG system has evolved from requiring hardcoded responses to pure retrieval-based answers.
 
 ### **Transformation Summary:**
 - **Before**: Hardcoded education responses in query_enhancer.py
-- **After**: 1023 comprehensive chunks covering all categories
-- **Result**: Zero hardcoded responses, 488% increase in retrievable data
+- **After**: 1055 comprehensive chunks covering all categories
+- **Result**: Zero hardcoded responses, 510% increase in retrievable data
 
 ### **Query Examples Now Working:**
 - "Which cards give points on gold purchases?" → Complete accurate comparison
 - "Compare government payment rewards across all cards" → Detailed breakdown  
 - "Does HSBC Premier have surcharge on jewellery transactions?" → Specific answer
+- "Which cards earn points on insurance premiums?" → Comprehensive insurance comparison
+- "Compare insurance earning caps across all cards" → Detailed cap analysis
 
 ## 🎯 **Phase 5 Achievement Summary**
 

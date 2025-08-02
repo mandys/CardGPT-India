@@ -150,8 +150,8 @@ data/
 ```bash
 python transform_to_jsonl.py
 # Creates: card_data.jsonl with complete data (card + common_terms sections)
-# Enhanced with 1023 chunks (massive increase from initial ~173 chunks)
-# Includes standardized category data for education, fuel, utility, rent, gold/jewellery, government/tax
+# Enhanced with 1055 chunks (massive increase from initial ~173 chunks)
+# Includes standardized category data for education, fuel, utility, rent, gold/jewellery, government/tax, insurance
 
 # For incremental updates (83% faster):
 python incremental_update.py
@@ -295,7 +295,8 @@ npx tsc --noEmit
          "utility": { /* standardized category structure */ },
          "rent": { /* standardized category structure */ },
          "gold_jewellery": { /* standardized category structure */ },
-         "government_tax": { /* standardized category structure */ }
+         "government_tax": { /* standardized category structure */ },
+         "insurance": { /* standardized category structure */ }
        },
        "milestones": { /* milestone benefits */ },
        "fees": { /* fee structure */ }
@@ -522,7 +523,7 @@ npm start
 echo $VERTEX_AI_DATA_STORE_ID
 
 # Check JSONL format and chunk count
-wc -l card_data.jsonl  # Should show 1023 lines
+wc -l card_data.jsonl  # Should show 1055 lines
 head -n 1 card_data.jsonl | jq .
 
 # Check for incremental updates
@@ -532,12 +533,12 @@ python incremental_update.py --check-changes
 ## Recent Major Improvements
 
 ### 🎯 **Phase 4: Category Standardization Complete (CRITICAL)**
-- **6 Categories Standardized**: education, fuel, utility, rent, gold/jewellery, government/tax
-- **1023 Chunks**: Up from 173 chunks (488% increase in retrievable data)
+- **7 Categories Standardized**: education, fuel, utility, rent, gold/jewellery, government/tax, insurance
+- **1055 Chunks**: Up from 173 chunks (510% increase in retrievable data)
 - **Zero Hardcoded Responses**: Complete elimination from query_enhancer.py
 - **Pure RAG System**: All category queries now use retrieval-based answers
 - **Comprehensive Coverage**: Each category has 8-12 granular chunks per card for maximum accuracy
-- **Query Examples**: "Which cards give points on gold purchases?", "Compare government payment rewards"
+- **Query Examples**: "Which cards give points on gold purchases?", "Compare government payment rewards", "Which cards earn points on insurance premiums?"
 
 ### 🚀 **Phase 5: Infrastructure Improvements Complete (CRITICAL)**
 - **Incremental Update System**: 83% downtime reduction (20-30 min → <5 min)
@@ -548,7 +549,7 @@ python incremental_update.py --check-changes
 - **Zero-Downtime Updates**: Change single JSON file, update only affected chunks
 
 ### 🏆 **Major Achievement Summary**
-**Complete RAG System Transformation**: From hardcoded responses to pure retrieval-based intelligence with enterprise-grade infrastructure. The system now handles complex category queries ("Which cards give points on gold purchases?") and comparison queries ("Is Infinia better than Atlas for education?") with 90%+ accuracy using standardized data and pre-built FAQ answers.
+**Complete RAG System Transformation**: From hardcoded responses to pure retrieval-based intelligence with enterprise-grade infrastructure. The system now handles complex category queries ("Which cards give points on gold purchases?", "Which cards earn points on insurance premiums?") and comparison queries ("Is Infinia better than Atlas for education?") with 90%+ accuracy using standardized data and pre-built FAQ answers.
 
 ### 🗄️ **Hybrid Database System**
 - **Local Development**: Uses SQLite (`backend/auth.db`) - no PostgreSQL installation required

@@ -7,6 +7,8 @@ import ChatInterface from '../Chat/ChatInterface';
 import SettingsModal from '../Settings/SettingsModal';
 import AuthModal from '../Auth/AuthModal';
 import UserProfile from '../Auth/UserProfile';
+import { UserPreferencesModal, PreferenceSidebar } from '../Preferences';
+import { usePreferences } from '../../hooks/usePreferences';
 import { useStreamingChatStore } from '../../hooks/useStreamingChat';
 import { useSidebar } from '../../hooks/useSidebar';
 import { useAuth } from '../../contexts/AuthContext';
@@ -20,6 +22,9 @@ const MainLayout: React.FC = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
+  const [isPreferencesModalOpen, setIsPreferencesModalOpen] = useState(false);
+  const [isPreferencesSidebarOpen, setIsPreferencesSidebarOpen] = useState(false);
+  const [hasUserDismissedModal, setHasUserDismissedModal] = useState(false);
   
   const {
     messages,
@@ -37,6 +42,14 @@ const MainLayout: React.FC = () => {
   
   const { isOpen, isMobile } = useSidebar();
   const { isAuthenticated, queryLimit, incrementQuery, checkQueryLimit } = useAuth();
+  const { 
+    updatePreferences, 
+    preferences, 
+    hasLoadedInitial, 
+    isEmpty, 
+    completionPercentage,
+ 
+  } = usePreferences();
 
   // Test connection on mount
   useEffect(() => {
@@ -56,6 +69,25 @@ const MainLayout: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [location.state, isConnected]);
+
+  // First-time user welcome modal
+  useEffect(() => {
+    console.log('🔍 Preference modal check:', { hasLoadedInitial, isEmpty, completionPercentage, preferences });
+    // Only show if preferences have loaded and user has very few preferences
+    // Also check if preferences is null or has no meaningful data
+    const hasNoPrefData = !preferences || Object.keys(preferences).length === 0 || 
+                         (!preferences.travel_type && !preferences.fee_willingness && 
+                          (!preferences.spend_categories || preferences.spend_categories.length === 0));
+    
+    if (hasLoadedInitial && (isEmpty || hasNoPrefData) && completionPercentage <= 10 && !hasUserDismissedModal) {
+      console.log('✅ Showing preference modal for first-time user');
+      // Small delay to let the interface settle
+      const timer = setTimeout(() => {
+        setIsPreferencesModalOpen(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [hasLoadedInitial, isEmpty, completionPercentage, preferences, hasUserDismissedModal]);
 
   const testConnection = async () => {
     try {
@@ -97,6 +129,8 @@ const MainLayout: React.FC = () => {
       setIsAuthModalOpen(true);
       return;
     }
+    
+    // Note: User preferences are now collected via post-response refinement buttons
     
     await sendMessageStream(message);
     
@@ -186,6 +220,46 @@ const MainLayout: React.FC = () => {
     setSettings({ topK });
   };
 
+  const handlePreferenceRefinement = async (preference: string, value: string) => {
+    try {
+      // Special case: if preference is 'requery', it means we should requery with updated preferences
+      if (preference === 'requery') {
+        // The value is actually the query to re-send
+        const queryToResend = value;
+        console.log('Requerying with updated preferences:', queryToResend);
+        // Send the query again with the updated preferences
+        await sendMessageStream(queryToResend);
+        return;
+      }
+      
+      // Update the specific preference
+      const updatedPreferences = { ...preferences };
+      
+      // Parse the preference path (e.g., "travelFrequency", "spendingCategories.travel")
+      const keys = preference.split('.');
+      let target: any = updatedPreferences;
+      
+      // Navigate to the nested property
+      for (let i = 0; i < keys.length - 1; i++) {
+        if (!(keys[i] in target)) {
+          target[keys[i]] = {};
+        }
+        target = target[keys[i]];
+      }
+      
+      // Set the final value
+      const finalKey = keys[keys.length - 1];
+      target[finalKey] = value;
+      
+      // Update preferences via the API
+      await updatePreferences(updatedPreferences);
+      
+      console.log('Preference updated:', preference, '=', value);
+    } catch (error) {
+      console.error('Failed to update preference:', error);
+    }
+  };
+
   const availableModels = config?.available_models || [];
 
   return (
@@ -226,6 +300,7 @@ const MainLayout: React.FC = () => {
             onExampleClick={handleExampleClick}
             onCardSelection={handleCardSelection}
             onShowAuth={() => setIsAuthModalOpen(true)}
+            onPreferenceRefinement={handlePreferenceRefinement}
           />
         </div>
       </div>
@@ -258,6 +333,8 @@ const MainLayout: React.FC = () => {
         topK={settings.topK}
         onTopKChange={handleTopKChange}
         isLoading={isLoading}
+        onShowPreferences={() => setIsPreferencesModalOpen(true)}
+        onShowPreferencesSidebar={() => setIsPreferencesSidebarOpen(true)}
       />
       
       {/* Auth Modal */}
@@ -274,6 +351,27 @@ const MainLayout: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* User Preferences Modal */}
+      <UserPreferencesModal
+        isOpen={isPreferencesModalOpen}
+        onClose={() => {
+          setIsPreferencesModalOpen(false);
+          setHasUserDismissedModal(true); // Track that user dismissed modal
+        }}
+        onComplete={(preferences) => {
+          updatePreferences(preferences);
+          setIsPreferencesModalOpen(false);
+          setHasUserDismissedModal(true); // Track completion as dismissal too
+        }}
+        triggerContext={isEmpty ? "welcome" : "manual"}
+      />
+
+      {/* Preferences Sidebar */}
+      <PreferenceSidebar
+        isOpen={isPreferencesSidebarOpen}
+        onClose={() => setIsPreferencesSidebarOpen(false)}
+      />
     </div>
   );
 };

@@ -1,9 +1,10 @@
 import React from 'react';
-import { Settings, Zap, CreditCard, Search } from 'lucide-react';
+import { Settings, Zap, CreditCard, Search, User } from 'lucide-react';
 import { ModelInfo, QueryMode, CardFilter } from '../../types';
 import ModelSelector from './ModelSelector';
 import QueryModeSelector from './QueryModeSelector';
 import { ThemeToggle } from './ThemeToggle';
+import { PreferenceDebug } from './PreferenceDebug';
 
 interface SettingsPanelProps {
   models: ModelInfo[];
@@ -16,6 +17,8 @@ interface SettingsPanelProps {
   topK: number;
   onTopKChange: (topK: number) => void;
   isLoading?: boolean;
+  onShowPreferences?: () => void;
+  onShowPreferencesSidebar?: () => void;
 }
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({
@@ -29,6 +32,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   topK,
   onTopKChange,
   isLoading = false,
+  onShowPreferences,
+  onShowPreferencesSidebar,
 }) => {
   const supportedCards: CardFilter[] = ['None', 'Axis Atlas', 'ICICI EPM', 'HSBC Premier', 'HDFC Infinia'];
 
@@ -122,6 +127,40 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
             More results = better accuracy, higher cost
           </p>
         </div>
+
+        {/* User Preferences */}
+        <div>
+          <div className="flex items-center space-x-2 mb-3">
+            <User className="w-4 h-4 text-green-500" />
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">User Preferences</label>
+          </div>
+          <div className="space-y-2">
+            {onShowPreferences && (
+              <button
+                onClick={onShowPreferences}
+                className="w-full btn-secondary text-sm py-2 px-3 flex items-center justify-between"
+              >
+                <span>Setup Preferences</span>
+                <span className="text-xs text-gray-500">Quick setup</span>
+              </button>
+            )}
+            {onShowPreferencesSidebar && (
+              <button
+                onClick={onShowPreferencesSidebar}
+                className="w-full btn-outline text-sm py-2 px-3 flex items-center justify-between"
+              >
+                <span>Manage Preferences</span>
+                <span className="text-xs text-gray-500">Full control</span>
+              </button>
+            )}
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Set your spending habits and travel preferences for personalized recommendations
+          </p>
+        </div>
+
+        {/* Preference Debug Component */}
+        <PreferenceDebug />
       </div>
       
       {/* Footer */}

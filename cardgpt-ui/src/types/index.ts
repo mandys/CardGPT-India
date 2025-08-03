@@ -20,6 +20,8 @@ export interface ChatRequest {
   query_mode: string;
   card_filter?: string;
   top_k: number;
+  user_preferences?: UserPreferences;
+  session_id?: string;
 }
 
 export interface DocumentSource {
@@ -88,3 +90,56 @@ export interface ChatState {
 
 export type QueryMode = 'General Query' | 'Specific Card' | 'Compare Cards';
 export type CardFilter = 'None' | 'Axis Atlas' | 'ICICI EPM' | 'HSBC Premier'| 'HDFC Infinia';
+
+// User Preference Types
+export interface UserPreferences {
+  travel_type?: string; // 'domestic' | 'international' | 'both'
+  lounge_access?: string; // 'solo' | 'with_guests' | 'family'
+  fee_willingness?: string; // '0-1000' | '1000-5000' | '5000-10000' | '10000+'
+  current_cards?: string[];
+  preferred_banks?: string[];
+  spend_categories?: string[];
+}
+
+export interface UserPreferenceRequest {
+  preferences: UserPreferences;
+  session_id?: string;
+}
+
+export interface UserPreferenceResponse {
+  user_id: string;
+  preferences: UserPreferences;
+  completion_status: {
+    travel_preferences: boolean;
+    financial_preferences: boolean;
+    card_preferences: boolean;
+    spending_preferences: boolean;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+
+export interface EnhancedChatRequest extends ChatRequest {
+  user_preferences?: UserPreferences;
+  session_id?: string;
+}
+
+// Preference completion status helper
+export interface PreferenceCompletion {
+  overall: number; // 0-100 percentage
+  categories: {
+    travel_preferences: boolean;
+    financial_preferences: boolean;
+    card_preferences: boolean;
+    spending_preferences: boolean;
+  };
+}
+
+// Preference analytics
+export interface PreferenceAnalytics {
+  most_common_travel_type: string;
+  average_fee_willingness: string;
+  popular_banks: string[];
+  completion_rate: number;
+}

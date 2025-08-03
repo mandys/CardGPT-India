@@ -50,7 +50,8 @@ class LLMService:
         card_name: str = None, 
         model_choice: str = "gemini-1.5-pro",  # Changed from Flash due to performance issues
         max_tokens: int = 1200,  # Increased from 800 for Gemini 2.5 Flash-Lite detailed responses
-        temperature: float = 0.1
+        temperature: float = 0.1,
+        user_preferences: Dict = None
     ) -> tuple[str, Dict[str, Any]]:
         """
         Generate an answer using selected LLM
@@ -101,7 +102,7 @@ class LLMService:
                 max_tokens = min(max_tokens + 400, 1600)  # Additional boost for Flash-Lite comparisons
                 
         # Create prompts with calculation enhancement
-        system_prompt = self._create_system_prompt(card_name, is_calculation)
+        system_prompt = self._create_system_prompt(card_name, is_calculation, user_preferences)
         user_prompt = self._create_user_prompt(question, context, is_calculation)
         
         # Google Gemini only architecture
@@ -117,7 +118,8 @@ class LLMService:
         card_name: str = None, 
         model_choice: str = "gemini-1.5-pro",
         max_tokens: int = 1200,
-        temperature: float = 0.1
+        temperature: float = 0.1,
+        user_preferences: Dict = None
     ):
         """
         Generate a streaming answer using selected LLM
@@ -154,7 +156,7 @@ class LLMService:
             max_tokens = min(max_tokens + 600, 1800)  # Extra tokens for complex comparisons
         
         # Create prompts with calculation enhancement
-        system_prompt = self._create_system_prompt(card_name, is_calculation)
+        system_prompt = self._create_system_prompt(card_name, is_calculation, user_preferences)
         user_prompt = self._create_user_prompt(question, context, is_calculation)
         
         # Google Gemini only architecture
@@ -376,8 +378,8 @@ class LLMService:
         final_context = "\n\n---\n\n".join(context_parts)
         return final_context
     
-    def _create_system_prompt(self, card_name: str = None, is_calculation: bool = False) -> str:
-        """Create a concise system prompt for the LLM"""
+    def _create_system_prompt(self, card_name: str = None, is_calculation: bool = False, user_preferences: Dict = None) -> str:
+        """Create a concise system prompt for the LLM with user preference context"""
         prompt = """You are a helpful credit card expert. Answer questions clearly and accurately based on the provided context.
 
 CRITICAL: If the context contains information relevant to the question, use it to provide a comprehensive answer. NEVER claim information is missing if it exists in the context.
@@ -483,6 +485,59 @@ CALCULATION REQUIREMENTS:
         
         if card_name:
             prompt += f"\nFocus on information about the {card_name} card."
+        
+        # Add user preference context if available
+        logger.info(f"🔍 [LLM_PREFS] Checking user preferences: {user_preferences}")
+        logger.info(f"🔍 [LLM_PREFS] User preferences type: {type(user_preferences)}")
+        if user_preferences:
+            logger.info(f"🎯 [LLM_PREFS] Adding user preferences to LLM prompt: {user_preferences}")
+            print(f"🎯 Adding user preferences to LLM prompt: {user_preferences}")
+            prompt += "\n\nUSER PREFERENCE CONTEXT:"
+            prompt += "\nPersonalize your response based on the user's preferences:"
+            
+            # Handle both UserPreferences object and dict
+            travel_type = getattr(user_preferences, 'travel_type', None) if hasattr(user_preferences, 'travel_type') else user_preferences.get('travel_type') if isinstance(user_preferences, dict) else None
+            if travel_type:
+                if travel_type == 'domestic':
+                    prompt += "\n- User travels DOMESTICALLY only - prioritize domestic benefits, airport lounges in India"
+                elif travel_type == 'international':
+                    prompt += "\n- User travels INTERNATIONALLY - prioritize international benefits, global lounges, foreign currency fees"
+                elif travel_type == 'both':
+                    prompt += "\n- User travels both DOMESTICALLY and INTERNATIONALLY - mention both types of benefits"
+            
+            lounge_pref = getattr(user_preferences, 'lounge_access', None) if hasattr(user_preferences, 'lounge_access') else user_preferences.get('lounge_access') if isinstance(user_preferences, dict) else None
+            if lounge_pref:
+                if lounge_pref == 'solo':
+                    prompt += "\n- User travels SOLO - focus on individual lounge access benefits"
+                elif lounge_pref == 'with_guests':
+                    prompt += "\n- User travels WITH GUESTS - emphasize guest lounge access and complimentary guest benefits"
+                elif lounge_pref == 'family':
+                    prompt += "\n- User travels with FAMILY - highlight family-friendly benefits and multiple guest access"
+            
+            fee_range = getattr(user_preferences, 'fee_willingness', None) if hasattr(user_preferences, 'fee_willingness') else user_preferences.get('fee_willingness') if isinstance(user_preferences, dict) else None
+            if fee_range:
+                if fee_range == '0-1000':
+                    prompt += "\n- User prefers LOW annual fees (₹0-1000) - emphasize value and fee waivers"
+                elif fee_range == '1000-5000':
+                    prompt += "\n- User accepts MODERATE annual fees (₹1000-5000) - balance benefits vs fees"
+                elif fee_range == '5000-10000':
+                    prompt += "\n- User accepts HIGHER annual fees (₹5000-10000) - focus on premium benefits"
+                elif fee_range == '10000+':
+                    prompt += "\n- User accepts PREMIUM annual fees (₹10000+) - highlight ultra-premium benefits and luxury services"
+            
+            categories = getattr(user_preferences, 'spend_categories', None) if hasattr(user_preferences, 'spend_categories') else user_preferences.get('spend_categories') if isinstance(user_preferences, dict) else None
+            if categories:
+                cat_text = ', '.join(categories)
+                prompt += f"\n- User spends primarily on: {cat_text} - prioritize cards with high rewards in these categories"
+            
+            current_cards = getattr(user_preferences, 'current_cards', None) if hasattr(user_preferences, 'current_cards') else user_preferences.get('current_cards') if isinstance(user_preferences, dict) else None
+            if current_cards:
+                cards_text = ', '.join(current_cards)
+                prompt += f"\n- User currently has: {cards_text} - consider upgrades or complementary cards, avoid suggesting existing cards"
+            
+            prompt += "\n- IMPORTANT: Use this preference context to provide personalized recommendations and highlight relevant benefits"
+        else:
+            logger.info("⚠️ [LLM_PREFS] No user preferences provided or preferences are empty")
         
         return prompt
     

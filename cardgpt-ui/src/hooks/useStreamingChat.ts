@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { ChatMessage, ApiError, AppSettings, QueryMode, CardFilter } from '../types';
 import { streamingApiClient, StreamingChatResponse } from '../services/streamingApi';
 import { generateMessageId } from '../utils/formatMessage';
+import { usePreferenceStore } from '../stores/usePreferenceStore';
 
 interface StreamingChatState {
   // Messages
@@ -74,6 +75,10 @@ export const useStreamingChatStore = create<StreamingChatState>((set, get) => ({
     });
     
     try {
+      // Get current preferences from the preference store
+      const preferenceState = usePreferenceStore.getState();
+      const currentPreferences = preferenceState.preferences || undefined;
+      
       await streamingApiClient.sendMessageStream(
         {
           message,
@@ -81,6 +86,8 @@ export const useStreamingChatStore = create<StreamingChatState>((set, get) => ({
           query_mode: state.settings.queryMode,
           card_filter: state.settings.cardFilter === 'None' ? undefined : state.settings.cardFilter,
           top_k: state.settings.topK,
+          user_preferences: currentPreferences,
+          session_id: preferenceState.getSessionId(),
         },
         // onChunk: Update message content progressively
         (chunk: string) => {

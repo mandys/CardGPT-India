@@ -13,6 +13,7 @@ interface ChatInterfaceProps {
   onExampleClick: (example: string) => void;
   onCardSelection?: (selectedCards: string[], originalQuery: string) => void;
   onShowAuth?: () => void;
+  onPreferenceRefinement?: (preference: string, value: string) => void;
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -23,6 +24,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onExampleClick,
   onCardSelection,
   onShowAuth,
+  onPreferenceRefinement,
 }) => {
   const [inputMessage, setInputMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -116,11 +118,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             
             {messages.map((message) => (
               <MessageBubble 
-                key={message.id} 
-                message={message} 
-                onCardSelection={onCardSelection}
-                onTipClick={onExampleClick}
-              />
+            key={message.id} 
+            message={message} 
+            onCardSelection={onCardSelection}
+            onTipClick={onExampleClick}
+            onPreferenceRefinement={onPreferenceRefinement}
+          />
             ))}
             {/* Status Indicator - Compact style like typing indicator */}
             {currentStatus && (

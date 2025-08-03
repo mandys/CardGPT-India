@@ -2,12 +2,13 @@
 Chat Streaming API endpoints
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks, Header
 from fastapi.responses import StreamingResponse
 from models import ChatStreamRequest, StreamChunk
 import logging
 import time
 import json
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -20,8 +21,66 @@ def get_services():
     from main import app_state
     return app_state
 
+def get_session_id(request: Request) -> str:
+    """Extract session ID from request"""
+    session_id = request.headers.get('x-session-id')
+    if not session_id:
+        # Generate a default session ID if not provided
+        session_id = f"session_{int(time.time())}"
+    return session_id
+
+async def get_user_preferences(request: Request, authorization: Optional[str] = None):
+    """Get user preferences from either authenticated user or session"""
+    logger.info(f"🔍 [CHAT_PREFS] Getting user preferences - Auth: {'Present' if authorization else 'None'}")
+    try:
+        from main import app_state
+        preference_service = app_state.get("preference_service")
+        auth_service = app_state.get("auth_service")
+        
+        logger.info(f"🔍 [CHAT_PREFS] Services - Preference: {'Present' if preference_service else 'None'}, Auth: {'Present' if auth_service else 'None'}")
+        
+        if not preference_service:
+            logger.warning("⚠️ [CHAT_PREFS] No preference service available")
+            return None
+            
+        # Check if user is authenticated
+        if authorization and authorization.startswith("Bearer "):
+            token = authorization.split(" ")[1]
+            logger.info(f"🔍 [CHAT_PREFS] Processing authenticated user with token: {token[:20]}...")
+            try:
+                if auth_service:
+                    # Use the same method as the preferences API
+                    user_info = auth_service.decode_jwt_token(token)
+                    logger.info(f"🔍 [CHAT_PREFS] Auth service returned user info: {user_info}")
+                    if user_info and user_info.get('user_id'):
+                        user_id = str(user_info['user_id'])
+                        prefs_result = preference_service.get_user_preferences(user_id)
+                        logger.info(f"🔍 [CHAT_PREFS] Retrieved authenticated user preferences: {prefs_result}")
+                        if prefs_result and prefs_result.preferences:
+                            return prefs_result.preferences
+            except Exception as e:
+                logger.warning(f"⚠️ [CHAT_PREFS] Auth failed, falling back to session: {e}")
+                pass  # Fall back to session preferences
+        
+        # Fall back to session preferences
+        session_id = get_session_id(request)
+        logger.info(f"🔍 [CHAT_PREFS] Getting session preferences for session: {session_id}")
+        prefs = preference_service.get_session_preferences(session_id)
+        logger.info(f"🔍 [CHAT_PREFS] Retrieved session preferences: {prefs}")
+        return prefs
+        
+    except Exception as e:
+        logger.error(f"❌ [CHAT_PREFS] Failed to get user preferences: {str(e)}", exc_info=True)
+        return None
+
 @router.post("/chat/stream")
-async def chat_stream_endpoint(request: ChatStreamRequest, http_request: Request, background_tasks: BackgroundTasks, services=Depends(get_services)):
+async def chat_stream_endpoint(
+    request: ChatStreamRequest, 
+    http_request: Request, 
+    background_tasks: BackgroundTasks, 
+    services=Depends(get_services),
+    authorization: Optional[str] = Header(None)
+):
     """Streaming chat endpoint for real-time responses"""
     
     start_time = time.time()
@@ -36,6 +95,11 @@ async def chat_stream_endpoint(request: ChatStreamRequest, http_request: Request
         
         if not all([llm_service, retriever_service, query_enhancer_service]):
             raise HTTPException(status_code=503, detail="Services not available")
+        
+        # Get user preferences
+        user_preferences = await get_user_preferences(http_request, authorization)
+        print(f"🔍 [STREAM] Retrieved user preferences: {user_preferences}")
+        print(f"🔍 [STREAM] Authorization header passed: {'Present' if authorization else 'None'}")
         
         # Log query if logging is enabled
         if query_logger and query_logger.config.enabled:
@@ -66,7 +130,10 @@ async def chat_stream_endpoint(request: ChatStreamRequest, http_request: Request
                     start_time=start_time,
                     session_id=session_id,
                     query_logger=query_logger,
-                    followup_questions=followup_questions
+                    followup_questions=followup_questions,
+                    user_preferences=user_preferences,
+                    pre_enhanced_query=enhanced_query,
+                    pre_metadata=initial_metadata
                 )
             except Exception as e:
                 logger.error(f"Stream generation error: {str(e)}", exc_info=True)
@@ -107,7 +174,10 @@ def process_query_stream(
     start_time: float,
     session_id: str,
     query_logger,
-    followup_questions: list = None
+    followup_questions: list = None,
+    user_preferences=None,
+    pre_enhanced_query: str = None,
+    pre_metadata: dict = None
 ):
     """Process streaming user query"""
     
@@ -120,8 +190,13 @@ def process_query_stream(
             content="Searching..."
         )
         yield f"data: {status_chunk.model_dump_json()}\n\n"
-        # Enhance query
-        enhanced_question, metadata = query_enhancer_service.enhance_query(question)
+        
+        # Use pre-enhanced query if available, otherwise enhance now
+        if pre_enhanced_query and pre_metadata:
+            enhanced_question, metadata = pre_enhanced_query, pre_metadata
+            logger.info(f"Using pre-enhanced query: {enhanced_question[:100]}...")
+        else:
+            enhanced_question, metadata = query_enhancer_service.enhance_query(question)
         
         # Determine search filters and handle multiple cards in comparison queries
         search_card_filter = None
@@ -227,7 +302,8 @@ def process_query_stream(
             question=enhanced_question,
             context_documents=relevant_docs,
             card_name=card_context,
-            model_choice=model_to_use
+            model_choice=model_to_use,
+            user_preferences=user_preferences
         ):
             logger.debug(f"Received chunk: is_final={is_final}, text_length={len(chunk_text) if chunk_text else 0}")
             if is_final:
@@ -247,6 +323,14 @@ def process_query_stream(
                 if followup_questions:
                     final_metadata["followup_questions"] = followup_questions
                     final_metadata["query_type"] = "generic_recommendation"
+                
+                # CRITICAL: Add original query to metadata for frontend ambiguity detection
+                final_metadata["original_query"] = question
+                
+                # Add user preference info to enhanced question for debugging visibility
+                debug_enhanced_question = enhanced_question
+                if user_preferences:
+                    debug_enhanced_question += f"\n\n[DEBUG] User Preferences Applied: {user_preferences}"
                 
                 final_chunk = StreamChunk(
                     type="complete",
@@ -271,7 +355,7 @@ def process_query_stream(
                         "total_tokens": usage_info.get("total_tokens", 0)
                     },
                     total_cost=total_cost,
-                    enhanced_question=enhanced_question,
+                    enhanced_question=debug_enhanced_question,
                     metadata=final_metadata
                 )
                 

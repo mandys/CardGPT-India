@@ -2,10 +2,11 @@
 Chat API endpoints
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends, Request, Header
 from models import ChatRequest, ChatResponse, QueryEnhanceRequest, QueryEnhanceResponse, DocumentSource, UsageInfo
 import logging
 import time
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +18,50 @@ def get_services():
     from main import app_state
     return app_state
 
+def get_session_id(request: Request) -> str:
+    """Extract session ID from request"""
+    session_id = request.headers.get('x-session-id')
+    if not session_id:
+        # Generate a default session ID if not provided
+        session_id = f"session_{int(time.time())}"
+    return session_id
+
+async def get_user_preferences(request: Request, authorization: Optional[str] = None):
+    """Get user preferences from either authenticated user or session"""
+    try:
+        from main import app_state
+        preference_service = app_state.get("preference_service")
+        auth_service = app_state.get("auth_service")
+        
+        if not preference_service:
+            return None
+            
+        # Check if user is authenticated
+        if authorization and authorization.startswith("Bearer "):
+            token = authorization.split(" ")[1]
+            try:
+                if auth_service:
+                    user = auth_service.get_current_user(token)
+                    if user:
+                        return preference_service.get_user_preferences(user.id)
+            except Exception:
+                pass  # Fall back to session preferences
+        
+        # Fall back to session preferences
+        session_id = get_session_id(request)
+        return preference_service.get_session_preferences(session_id)
+        
+    except Exception as e:
+        logger.warning(f"Failed to get user preferences: {str(e)}")
+        return None
+
 @router.post("/chat", response_model=ChatResponse)
-async def chat_endpoint(request: ChatRequest, http_request: Request, services=Depends(get_services)):
+async def chat_endpoint(
+    request: ChatRequest, 
+    http_request: Request, 
+    services=Depends(get_services),
+    authorization: Optional[str] = Header(None)
+):
     """Main chat endpoint for processing user queries"""
     
     start_time = time.time()
@@ -33,6 +76,10 @@ async def chat_endpoint(request: ChatRequest, http_request: Request, services=De
         
         if not all([llm_service, retriever_service, query_enhancer_service]):
             raise HTTPException(status_code=503, detail="Services not available")
+        
+        # Get user preferences
+        user_preferences = await get_user_preferences(http_request, authorization)
+        print(f"🔍 Retrieved user preferences: {user_preferences}")
         
         # Log query if logging is enabled
         if query_logger and query_logger.config.enabled:
@@ -57,7 +104,8 @@ async def chat_endpoint(request: ChatRequest, http_request: Request, services=De
                 selected_model=request.model,
                 llm_service=llm_service,
                 retriever_service=retriever_service,
-                query_enhancer_service=query_enhancer_service
+                query_enhancer_service=query_enhancer_service,
+                user_preferences=user_preferences
             )
             
             # Add follow-up questions to metadata
@@ -79,7 +127,8 @@ async def chat_endpoint(request: ChatRequest, http_request: Request, services=De
                 selected_model=request.model,
                 llm_service=llm_service,
                 retriever_service=retriever_service,
-                query_enhancer_service=query_enhancer_service
+                query_enhancer_service=query_enhancer_service,
+                user_preferences=user_preferences
             )
         
         response = ChatResponse(
@@ -117,7 +166,8 @@ async def process_query(
     selected_model: str,
     llm_service,
     retriever_service,
-    query_enhancer_service
+    query_enhancer_service,
+    user_preferences=None
 ):
     """Process user query - same logic as existing apps"""
     
@@ -195,10 +245,14 @@ async def process_query(
         question=enhanced_question,
         context_documents=relevant_docs,
         card_name=card_context,
-        model_choice=model_to_use
+        model_choice=model_to_use,
+        user_preferences=user_preferences
     )
     
     total_cost = embedding_usage["cost"] + llm_usage["cost"]
+    
+    # CRITICAL: Add original query to metadata for frontend ambiguity detection
+    metadata["original_query"] = question
     
     return {
         "answer": answer,

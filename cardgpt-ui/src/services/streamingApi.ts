@@ -1,4 +1,4 @@
-import { ChatRequest, DocumentSource, UsageInfo } from '../types';
+import { ChatRequest, DocumentSource, UsageInfo, UserPreferences } from '../types';
 
 export interface StreamChunk {
   type: 'chunk' | 'complete' | 'error' | 'status';

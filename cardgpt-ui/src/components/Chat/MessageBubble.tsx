@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, ChevronDown, ChevronRight, Bug } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { ChatMessage } from '../../types';
@@ -6,15 +6,19 @@ import CardSelection from './CardSelection';
 import CostDisplay from './CostDisplay';
 import SourcesDisplay from './SourcesDisplay';
 import TipsContainer from './TipsContainer';
+import PreferenceRefinementButtons from '../Preferences/PreferenceRefinementButtons';
 
 interface MessageBubbleProps {
   message: ChatMessage;
   onCardSelection?: (selectedCards: string[], originalQuery: string) => void;
   onTipClick?: (tip: string) => void;
+  onPreferenceRefinement?: (preference: string, value: string) => void;
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onCardSelection, onTipClick }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onCardSelection, onTipClick, onPreferenceRefinement }) => {
   const [showDebugInfo, setShowDebugInfo] = useState(false);
+  const [showRefinementButtons, setShowRefinementButtons] = useState(false);
+  
   const isUser = message.role === 'user';
   const requiresCardSelection = message.metadata?.requires_card_selection;
   const availableCards = message.metadata?.available_cards;
@@ -27,6 +31,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onCardSelection,
     message.llm_usage || 
     message.total_cost !== undefined
   );
+
+  // Always show preference buttons for completed assistant responses
+  useEffect(() => {
+    if (!isUser && isComplete && !requiresCardSelection) {
+      console.log('✅ [MESSAGE_BUBBLE] Showing preference refinement buttons for completed response');
+      setShowRefinementButtons(true);
+    }
+  }, [isUser, isComplete, requiresCardSelection]);
   
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in`}>
@@ -145,6 +157,19 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onCardSelection,
             </div>
           )}
           
+          {/* Preference Refinement Buttons - always show for completed responses */}
+          {showRefinementButtons && !isUser && isComplete && !requiresCardSelection && onPreferenceRefinement && (
+            <PreferenceRefinementButtons
+              message={message.metadata?.original_query || message.content}
+              onRefinementApplied={onPreferenceRefinement}
+              onRequery={(refinedQuery) => {
+                // Trigger requery with updated preferences
+                onPreferenceRefinement('requery', refinedQuery);
+              }}
+              className="max-w-4xl"
+            />
+          )}
+
           {/* Tips Container - only show for completed assistant messages */}
           {!isUser && isComplete && !requiresCardSelection && onTipClick && (
             <TipsContainer

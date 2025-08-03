@@ -1,5 +1,13 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
-import { ChatRequest, ChatResponse, ConfigResponse, ApiError } from '../types';
+import { 
+  ChatRequest, 
+  ChatResponse, 
+  ConfigResponse, 
+  ApiError,
+  UserPreferences,
+  UserPreferenceRequest,
+  UserPreferenceResponse
+} from '../types';
 
 class ApiClient {
   private client: AxiosInstance;
@@ -126,6 +134,137 @@ class ApiClient {
       return true;
     } catch (error) {
       console.error('Connection test failed:', error);
+      return false;
+    }
+  }
+
+  // User Preference Methods
+
+  /**
+   * Get user preferences (authenticated users only)
+   */
+  async getUserPreferences(): Promise<UserPreferenceResponse> {
+    const token = localStorage.getItem('jwt_token');
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await this.client.get('/preferences', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  }
+
+  /**
+   * Create or update user preferences (authenticated users only)
+   */
+  async updateUserPreferences(preferences: UserPreferences): Promise<UserPreferenceResponse> {
+    const token = localStorage.getItem('jwt_token');
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const request: UserPreferenceRequest = { preferences };
+    const response = await this.client.post('/preferences', request, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  }
+
+  /**
+   * Clear user preferences (authenticated users only)
+   */
+  async clearUserPreferences(): Promise<{ success: boolean; message: string }> {
+    const token = localStorage.getItem('jwt_token');
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await this.client.delete('/preferences', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  }
+
+  /**
+   * Save session preferences (anonymous users)
+   */
+  async saveSessionPreferences(preferences: UserPreferences, sessionId?: string): Promise<{ success: boolean; session_id: string; message: string }> {
+    const request: UserPreferenceRequest = { 
+      preferences,
+      session_id: sessionId 
+    };
+    const response = await this.client.post('/preferences/session', request);
+    return response.data;
+  }
+
+  /**
+   * Get session preferences (anonymous users)
+   */
+  async getSessionPreferences(sessionId: string): Promise<UserPreferences> {
+    const response = await this.client.get(`/preferences/session/${sessionId}`);
+    return response.data;
+  }
+
+
+  /**
+   * Helper method to get session ID from localStorage
+   */
+  private getSessionId(): string {
+    let sessionId = localStorage.getItem('session_id');
+    if (!sessionId) {
+      sessionId = 'session_' + Math.random().toString(36).substring(2, 15);
+      localStorage.setItem('session_id', sessionId);
+    }
+    return sessionId;
+  }
+
+  /**
+   * Get preferences for current user (authenticated or session-based)
+   */
+  async getCurrentUserPreferences(): Promise<UserPreferences | null> {
+    const token = localStorage.getItem('jwt_token');
+    
+    try {
+      if (token) {
+        // Authenticated user
+        const response = await this.getUserPreferences();
+        return response.preferences;
+      } else {
+        // Anonymous user
+        const sessionId = this.getSessionId();
+        return await this.getSessionPreferences(sessionId);
+      }
+    } catch (error) {
+      console.log('No preferences found or error retrieving preferences');
+      return null;
+    }
+  }
+
+  /**
+   * Save preferences for current user (authenticated or session-based)
+   */
+  async saveCurrentUserPreferences(preferences: UserPreferences): Promise<boolean> {
+    try {
+      const token = localStorage.getItem('jwt_token');
+      
+      if (token) {
+        // Authenticated user
+        await this.updateUserPreferences(preferences);
+      } else {
+        // Anonymous user
+        const sessionId = this.getSessionId();
+        await this.saveSessionPreferences(preferences, sessionId);
+      }
+      return true;
+    } catch (error) {
+      console.error('Failed to save preferences:', error);
       return false;
     }
   }

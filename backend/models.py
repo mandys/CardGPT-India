@@ -124,3 +124,51 @@ class QueryLimitResponse(BaseModel):
     current_count: int = Field(..., description="Current daily query count")
     limit: int = Field(..., description="Daily query limit (-1 for unlimited)")
     remaining: Optional[int] = Field(None, description="Remaining queries (None for unlimited)")
+
+# User Preference Models
+class UserPreferences(BaseModel):
+    """Model for user preferences"""
+    travel_type: Optional[str] = Field(None, description="Travel preference: domestic | international | both")
+    lounge_access: Optional[str] = Field(None, description="Lounge access needs: solo | with_guests | family")
+    fee_willingness: Optional[str] = Field(None, description="Annual fee comfort: 0-1000 | 1000-5000 | 5000-10000 | 10000+")
+    current_cards: Optional[List[str]] = Field(None, description="List of current credit cards")
+    preferred_banks: Optional[List[str]] = Field(None, description="List of preferred banks")
+    spend_categories: Optional[List[str]] = Field(None, description="Top spending categories")
+
+class UserPreferenceRequest(BaseModel):
+    """Request model for creating/updating user preferences"""
+    preferences: UserPreferences = Field(..., description="User preferences to update")
+    session_id: Optional[str] = Field(None, description="Session ID for anonymous users")
+
+class UserPreferenceResponse(BaseModel):
+    """Response model for user preferences"""
+    user_id: str = Field(..., description="User ID or session ID")
+    preferences: UserPreferences = Field(..., description="User preferences")
+    completion_status: Dict[str, bool] = Field({}, description="Preference completion status")
+    created_at: datetime = Field(..., description="Creation timestamp")
+    updated_at: datetime = Field(..., description="Last update timestamp")
+
+class PreferenceAnalytics(BaseModel):
+    """Model for preference analytics data"""
+    most_common_travel_type: str = Field("", description="Most common travel preference")
+    average_fee_willingness: str = Field("", description="Average fee willingness")
+    popular_banks: List[str] = Field([], description="Most popular banks")
+    completion_rate: float = Field(0.0, description="Preference completion rate")
+
+# Enhanced Chat Request with User Preferences
+class EnhancedChatRequest(BaseModel):
+    """Enhanced chat request with user preferences"""
+    message: str = Field(..., description="User's question or message")
+    model: str = Field("gemini-1.5-pro", description="AI model to use")
+    query_mode: str = Field("General Query", description="Query mode")
+    card_filter: Optional[str] = Field(None, description="Card filter for specific card queries")
+    top_k: int = Field(10, ge=1, le=15, description="Number of search results to retrieve")
+    user_preferences: Optional[UserPreferences] = Field(None, description="User preferences for personalization")
+    session_id: Optional[str] = Field(None, description="Session ID for anonymous users")
+
+class AmbiguityDetectionResponse(BaseModel):
+    """Response model for query ambiguity detection"""
+    is_ambiguous: bool = Field(..., description="Whether the query is ambiguous")
+    missing_context: List[str] = Field([], description="List of missing context types")
+    suggested_questions: List[str] = Field([], description="Suggested clarification questions")
+    refinement_buttons: List[Dict[str, str]] = Field([], description="Quick refinement button options")

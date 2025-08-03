@@ -267,8 +267,8 @@ class QueryEnhancer:
         # Handle travel queries specially (lower priority than generic comparisons)
         elif is_travel_query and not card_detected:
             enhanced_query += f"\n\nIMPORTANT: This is a travel-related query. For comprehensive comparison, retrieve information from ALL available cards about: 1) Travel rewards rates (flights, hotels), 2) Travel benefits (lounge access, insurance, concierge), 3) Travel milestone bonuses, 4) Foreign currency charges, 5) Welcome bonuses. Ensure EVERY card is considered equally - do not focus only on first few cards mentioned in context. Cards to compare: Axis Atlas (EDGE Miles), ICICI EPM (Reward Points), HSBC Premier (Reward Points), HDFC Infinia (Reward Points)."
-        elif is_generic_recommendation and not card_detected:
-            enhanced_query += f"\n\nIMPORTANT: This is a generic recommendation query. Analyze ALL available cards systematically and provide balanced comparison. Do not limit analysis to first few cards in context. Include key differentiators for each card."
+        # elif is_generic_recommendation and not card_detected:
+        #     enhanced_query += f"\n\nIMPORTANT: This is a generic recommendation query. Analyze ALL available cards systematically and provide balanced comparison. Do not limit analysis to first few cards in context. Include key differentiators for each card."
         elif category and spend_amount:
             # Make category explicit in the query with generic guidance
             if category in ['hotel', 'flight']:

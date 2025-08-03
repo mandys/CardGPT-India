@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 
 # Import our models and API routes
 from models import HealthResponse, ErrorResponse, ConfigResponse, ModelInfo
-from api import chat, config, health, admin, chat_stream, auth
+from api import chat, config, health, admin, chat_stream, auth, preferences
 
 # Load environment variables
 load_dotenv()
@@ -88,11 +88,18 @@ async def lifespan(app: FastAPI):
         auth_service = AuthService()
         app_state["auth_service"] = auth_service
         
+        # Initialize preference service
+        from services.preference_service import PreferenceService
+        preference_service = PreferenceService()
+        app_state["preference_service"] = preference_service
+        
         # Log appropriate database info based on type
         if auth_service.use_postgres:
             logger.info(f"🔑 Auth service initialized with PostgreSQL database")
+            logger.info(f"🎯 Preference service initialized with PostgreSQL database")
         else:
             logger.info(f"🔑 Auth service initialized with SQLite database at: {auth_service.db_path}")
+            logger.info(f"🎯 Preference service initialized with SQLite database")
         
         logger.info("✅ All services initialized successfully")
         
@@ -174,6 +181,7 @@ app.include_router(config.router, prefix="/api", tags=["config"])
 app.include_router(health.router, prefix="/api", tags=["health"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(auth.router, prefix="/api", tags=["auth"])
+app.include_router(preferences.router, prefix="/api", tags=["preferences"])
 
 # Root endpoint
 @app.get("/")

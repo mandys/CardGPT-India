@@ -25,6 +25,7 @@ const MainLayout: React.FC = () => {
   const [isPreferencesModalOpen, setIsPreferencesModalOpen] = useState(false);
   const [isPreferencesSidebarOpen, setIsPreferencesSidebarOpen] = useState(false);
   const [hasUserDismissedModal, setHasUserDismissedModal] = useState(false);
+  const [initialPreferenceModalStep, setInitialPreferenceModalStep] = useState(0); // New state
   
   const {
     messages,
@@ -231,6 +232,16 @@ const MainLayout: React.FC = () => {
         await sendMessageStream(queryToResend);
         return;
       }
+
+      // Special case: if preference is 'show_card_selection_modal', open the preferences modal
+      if (preference === 'show_card_selection_modal') {
+        setIsPreferencesModalOpen(true);
+        // Optionally, set a state to indicate which step to open to in the modal
+        // For now, the modal will open to the first step, but we can enhance this later.
+        // The 'cards' step is at index 3 in UserPreferencesModal.tsx
+        setInitialPreferenceModalStep(3); 
+        return;
+      }
       
       // Update the specific preference
       const updatedPreferences = { ...preferences };
@@ -313,8 +324,6 @@ const MainLayout: React.FC = () => {
         onShowSignIn={() => {
           if (isAuthenticated) {
             setIsUserProfileOpen(true);
-          } else {
-            setIsAuthModalOpen(true);
           }
         }}
       />
@@ -358,13 +367,16 @@ const MainLayout: React.FC = () => {
         onClose={() => {
           setIsPreferencesModalOpen(false);
           setHasUserDismissedModal(true); // Track that user dismissed modal
+          setInitialPreferenceModalStep(0); // Reset step on close
         }}
         onComplete={(preferences) => {
           updatePreferences(preferences);
           setIsPreferencesModalOpen(false);
           setHasUserDismissedModal(true); // Track completion as dismissal too
+          setInitialPreferenceModalStep(0); // Reset step on complete
         }}
         triggerContext={isEmpty ? "welcome" : "manual"}
+        initialStep={initialPreferenceModalStep} // Pass the initial step
       />
 
       {/* Preferences Sidebar */}

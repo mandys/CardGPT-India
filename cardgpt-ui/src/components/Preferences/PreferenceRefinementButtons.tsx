@@ -1,6 +1,15 @@
 import React from 'react';
-import { ArrowRight, Plane, IndianRupee } from 'lucide-react';
+import { ArrowRight, Plane, IndianRupee, ShoppingBag, Utensils, CreditCard } from 'lucide-react';
 import { usePreferences } from '../../hooks/usePreferences';
+import { useStreamingChatStore } from '../../hooks/useStreamingChat';
+import { UserPreferences } from '../../types';
+
+interface PreferenceButton {
+  text: string;
+  preference: string;
+  value: string;
+  icon: React.ComponentType<any>;
+}
 
 interface PreferenceRefinementButtonsProps {
   message: string;
@@ -15,12 +24,32 @@ const PreferenceRefinementButtons: React.FC<PreferenceRefinementButtonsProps> = 
   onRequery,
   className = ''
 }) => {
-  const { updatePreferences, isLoading, getMissingPreferencesForQuery } = usePreferences();
+  const { updatePreferences, isLoading, getMissingPreferencesForQuery, preferences } = usePreferences();
+  const { config } = useStreamingChatStore();
+  const supportedCards = config?.supported_cards || [];
 
   const handleRefinementClick = async (preference: string, value: string, buttonText: string) => {
     try {
+      // Special case for "Manage Cards" button
+      if (preference === 'show_card_selection_modal') {
+        onRefinementApplied?.(preference, value);
+        return;
+      }
+
+      let updatedPrefs: Partial<UserPreferences> = {};
+
+      if (preference === 'current_cards') {
+        const currentCards = preferences?.current_cards || [];
+        const newCards = currentCards.includes(value)
+          ? currentCards.filter(card => card !== value)
+          : [...currentCards, value];
+        updatedPrefs = { current_cards: newCards };
+      } else {
+        updatedPrefs = { [preference]: value };
+      }
+
       // Update the preference
-      await updatePreferences({ [preference]: value });
+      await updatePreferences(updatedPrefs);
       console.log(`✅ [REFINEMENT] Applied ${preference}: ${value}`);
       
       // Call callbacks
@@ -39,17 +68,44 @@ const PreferenceRefinementButtons: React.FC<PreferenceRefinementButtonsProps> = 
     }
   };
 
-  const allPreferenceButtons = [
+  const allPreferenceButtons: PreferenceButton[] = [
     { text: "I travel domestically", preference: "travel_type", value: "domestic", icon: Plane },
     { text: "I travel internationally", preference: "travel_type", value: "international", icon: Plane },
     { text: "I travel with family", preference: "lounge_access", value: "family", icon: Plane },
     { text: "₹0 fee cards only", preference: "fee_willingness", value: "0-1000", icon: IndianRupee },
     { text: "₹1K-5K annual fee", preference: "fee_willingness", value: "1000-5000", icon: IndianRupee },
-    { text: "₹5K+ annual fee OK", preference: "fee_willingness", value: "5000-10000", icon: IndianRupee }
+    { text: "₹5K+ annual fee OK", preference: "fee_willingness", value: "5000-10000", icon: IndianRupee },
+    { text: "I spend on travel", preference: "spend_categories", value: "travel", icon: ShoppingBag },
+    { text: "I spend on online shopping", preference: "spend_categories", value: "online_shopping", icon: ShoppingBag },
+    { text: "I spend on dining", preference: "spend_categories", value: "dining", icon: Utensils },
+    // Dynamically add buttons for each supported card
+    ...supportedCards.map((card: string) => ({
+      text: `I use ${card}`,
+      preference: "current_cards",
+      value: card,
+      icon: CreditCard
+    })),
+    { text: "Manage my cards", preference: "show_card_selection_modal", value: "true", icon: CreditCard }
   ];
 
   const missingPreferences = getMissingPreferencesForQuery(message);
-  const preferenceButtons = allPreferenceButtons.filter(button => missingPreferences.includes(button.preference));
+  const preferenceButtons: PreferenceButton[] = allPreferenceButtons.filter((button: PreferenceButton) => {
+    // Special handling for spend_categories: if any spend category is missing, show all spend category buttons
+    if (button.preference === 'spend_categories') {
+      return missingPreferences.includes('spend_categories');
+    }
+    // Special handling for card selection: only show individual card buttons if current_cards is missing
+    if (button.preference === 'current_cards') {
+      const currentCards = preferences?.current_cards || [];
+      // Only show the button if the card is not already selected and current_cards is considered missing
+      return missingPreferences.includes('current_cards') && !currentCards.includes(button.value);
+    }
+    // Only show "Manage my cards" if current_cards or preferred_banks are missing
+    if (button.preference === 'show_card_selection_modal') {
+      return missingPreferences.includes('current_cards') || missingPreferences.includes('preferred_banks');
+    }
+    return missingPreferences.includes(button.preference);
+  });
 
   if (preferenceButtons.length === 0) {
     return null;
@@ -73,7 +129,7 @@ const PreferenceRefinementButtons: React.FC<PreferenceRefinementButtonsProps> = 
 
           {/* Quick Refinement Buttons */}
           <div className="flex flex-wrap gap-2">
-            {preferenceButtons.map((button, index) => {
+            {preferenceButtons.map((button: PreferenceButton, index: number) => {
               const IconComponent = button.icon;
               
               return (

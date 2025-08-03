@@ -398,6 +398,16 @@ class QueryEnhancer:
         if spend_categories:
             context_parts.append(f"spends on {', '.join(spend_categories)}")
 
+        # Current cards
+        current_cards = getattr(user_preferences, 'current_cards', None)
+        if current_cards:
+            context_parts.append(f"currently uses {', '.join(current_cards)}")
+
+        # Preferred banks
+        preferred_banks = getattr(user_preferences, 'preferred_banks', None)
+        if preferred_banks:
+            context_parts.append(f"prefers banks like {', '.join(preferred_banks)}")
+
         if not context_parts:
             return ""
 

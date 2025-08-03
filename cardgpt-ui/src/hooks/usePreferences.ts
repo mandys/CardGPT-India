@@ -75,6 +75,8 @@ export const usePreferences = () => {
     if (!preferences?.lounge_access) missing.push('lounge_access');
     if (!preferences?.fee_willingness) missing.push('fee_willingness');
     if ((preferences?.spend_categories?.length ?? 0) === 0) missing.push('spend_categories');
+    if ((preferences?.current_cards?.length ?? 0) === 0) missing.push('current_cards');
+    if ((preferences?.preferred_banks?.length ?? 0) === 0) missing.push('preferred_banks');
     
     return missing;
   }, [preferences]);

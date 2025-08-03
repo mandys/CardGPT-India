@@ -21,15 +21,20 @@ def get_services():
     from main import app_state
     return app_state
 
-def get_session_id(request: Request) -> str:
+def get_session_id(request: Request, chat_request = None) -> str:
     """Extract session ID from request"""
+    # First try to get from request body (used by streaming chat)
+    if chat_request and hasattr(chat_request, 'session_id') and chat_request.session_id:
+        return chat_request.session_id
+    
+    # Fallback to header
     session_id = request.headers.get('x-session-id')
     if not session_id:
         # Generate a default session ID if not provided
         session_id = f"session_{int(time.time())}"
     return session_id
 
-async def get_user_preferences(request: Request, authorization: Optional[str] = None):
+async def get_user_preferences(request: Request, authorization: Optional[str] = None, chat_request = None):
     """Get user preferences from either authenticated user or session"""
     logger.info(f"🔍 [CHAT_PREFS] Getting user preferences - Auth: {'Present' if authorization else 'None'}")
     try:
@@ -50,7 +55,7 @@ async def get_user_preferences(request: Request, authorization: Optional[str] = 
             try:
                 if auth_service:
                     # Use the same method as the preferences API
-                    user_info = auth_service.decode_jwt_token(token)
+                    user_info = auth_service.verify_jwt_token(token)
                     logger.info(f"🔍 [CHAT_PREFS] Auth service returned user info: {user_info}")
                     if user_info and user_info.get('user_id'):
                         user_id = str(user_info['user_id'])
@@ -62,8 +67,8 @@ async def get_user_preferences(request: Request, authorization: Optional[str] = 
                 logger.warning(f"⚠️ [CHAT_PREFS] Auth failed, falling back to session: {e}")
                 pass  # Fall back to session preferences
         
-        # Fall back to session preferences
-        session_id = get_session_id(request)
+        # Fall back to session preferences using proper session ID
+        session_id = get_session_id(request, chat_request)
         logger.info(f"🔍 [CHAT_PREFS] Getting session preferences for session: {session_id}")
         prefs = preference_service.get_session_preferences(session_id)
         logger.info(f"🔍 [CHAT_PREFS] Retrieved session preferences: {prefs}")
@@ -97,18 +102,21 @@ async def chat_stream_endpoint(
             raise HTTPException(status_code=503, detail="Services not available")
         
         # Get user preferences
-        user_preferences = await get_user_preferences(http_request, authorization)
+        user_preferences = await get_user_preferences(http_request, authorization, request)
         print(f"🔍 [STREAM] Retrieved user preferences: {user_preferences}")
         print(f"🔍 [STREAM] Authorization header passed: {'Present' if authorization else 'None'}")
         
-        # Log query if logging is enabled
+        # Log query if logging is enabled (use same session ID for consistency)
         if query_logger and query_logger.config.enabled:
             session_id = await log_query_stream(query_logger, request, http_request)
+        else:
+            # Ensure we have a session ID even when logging is disabled
+            session_id = get_session_id(http_request, request)
         
         # Card selector removed - process all queries directly for better user experience
         
         # Check if we should suggest follow-up questions for generic queries
-        enhanced_query, initial_metadata = query_enhancer_service.enhance_query(request.message)
+        enhanced_query, initial_metadata = query_enhancer_service.enhance_query(request.message, user_preferences)
         followup_questions = []
         
         if initial_metadata.get('suggest_followup', False):
@@ -196,7 +204,8 @@ def process_query_stream(
             enhanced_question, metadata = pre_enhanced_query, pre_metadata
             logger.info(f"Using pre-enhanced query: {enhanced_question[:100]}...")
         else:
-            enhanced_question, metadata = query_enhancer_service.enhance_query(question)
+            # Pass user preferences to query enhancer for personalized enhancement
+            enhanced_question, metadata = query_enhancer_service.enhance_query(question, user_preferences)
         
         # Determine search filters and handle multiple cards in comparison queries
         search_card_filter = None

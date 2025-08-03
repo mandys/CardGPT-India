@@ -36,11 +36,23 @@ export class StreamingApiClient {
     onStatus?: (status: string) => void
   ): Promise<void> {
     try {
+      // Prepare headers with authentication if available
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      // Add JWT authorization header if user is authenticated
+      const token = localStorage.getItem('jwt_token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        console.log(`🔐 [STREAMING] Including JWT token in request: ${token.substring(0, 20)}...`);
+      } else {
+        console.log(`🔓 [STREAMING] No JWT token found - using session-based preferences`);
+      }
+
       const response = await fetch(`${this.baseUrl}/api/chat/stream`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(request),
       });
 

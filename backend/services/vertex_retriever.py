@@ -81,53 +81,9 @@ class VertexRetriever:
             logger.info(f"Adding card filter '{card_filter}' to query")
             enhanced_query = f"{card_filter} {enhanced_query}"
             
-        # Special enhancement for insurance spending queries
-        if "insurance" in query_text.lower() and any(word in query_text.lower() for word in ["spend", "spending", "spends", "earn", "points", "rewards"]):
-            enhanced_query += " earning rates reward capping others section insurance transactions"
-            logger.info(f"Enhanced insurance spending query: {enhanced_query}")
+        # Note: Query enhancement is now handled by QueryEnhancer service
+        # Vertex retriever focuses on search execution only
         
-        # Special enhancement for fee waiver queries
-        if any(term in query_text.lower() for term in ["fee waiver", "waiver", "annual fee waiver"]):
-            enhanced_query += " fee_waiver annual fee spend threshold spend condition"
-            logger.info(f"Enhanced fee waiver query: {enhanced_query}")
-        
-        # Special enhancement for education spending queries
-        if "education" in query_text.lower() and any(word in query_text.lower() for word in ["points", "rewards", "earn", "spending", "fee", "payment"]):
-            # With aliases, we just need to add relevant terms for better matching
-            enhanced_query += " education education_government rewards rate points MCC earning"
-            logger.info(f"Enhanced education spending query: {enhanced_query}")
-        
-        # Special enhancement for travel queries
-        travel_keywords = ["travel", "trip", "vacation", "holiday", "journey", "lot of travel", "upcoming travel", "business travel"]
-        if any(keyword in query_text.lower() for keyword in travel_keywords):
-            # Add travel-specific terms for better matching
-            enhanced_query += " travel benefits lounge access insurance miles points rewards foreign currency charges welcome bonus"
-            logger.info(f"Enhanced travel query: {enhanced_query}")
-        
-        # Special enhancement for generic recommendation queries
-        generic_rec_keywords = ["which card should i", "best card for", "recommend", "suggest", "better card", "good card", "right card"]
-        if any(keyword in query_text.lower() for keyword in generic_rec_keywords) and not card_filter:
-            # Add comparison terms for better matching
-            enhanced_query += " comparison benefits features rewards"
-            logger.info(f"Enhanced generic recommendation query: {enhanced_query}")
-        
-        # Special enhancement for fee-related queries (MUST come first to avoid conflicts)
-        fee_keywords = ["fee", "fees", "cost", "costs", "charge", "charges", "expensive", "cheapest", "highest fee", "lowest fee", "annual fee", "joining fee"]
-        is_fee_query = any(keyword in query_text.lower() for keyword in fee_keywords)
-        
-        if is_fee_query and not card_filter:
-            # Add fee-specific terms for better matching
-            enhanced_query += " joining fee annual fee charges costs expenses waiver"
-            logger.info(f"Enhanced fee-related query: {enhanced_query}")
-        
-        # Special enhancement for generic comparison queries (which card gives/earns/offers)
-        # BUT SKIP if this is a fee query to avoid conflicts
-        elif not is_fee_query and any(keyword in query_text.lower() for keyword in ["which card gives", "which card earns", "which card offers", "which card has", "which card provides", "which cards give", "which cards earn", "which cards offer", "which cards have", "what card gives", "what card earns", "what card offers"]) and not card_filter:
-            # Add relevant terms for comprehensive comparison
-            enhanced_query += " rewards earning rate points miles benefits exclusions"
-            logger.info(f"Enhanced generic comparison query: {enhanced_query}")
-        
-            
         logger.info(f"Executing search with enhanced query: {enhanced_query}")
         
         request = discoveryengine.SearchRequest(

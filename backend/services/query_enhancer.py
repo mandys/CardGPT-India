@@ -204,7 +204,7 @@ class QueryEnhancer:
         logger.info(f"=== END DIRECT COMPARISON DEBUG ===")
         return None
 
-    def enhance_query(self, query: str) -> Tuple[str, Dict[str, any]]:
+    def enhance_query(self, query: str, user_preferences: Dict = None) -> Tuple[str, Dict[str, any]]:
         """
         Enhance query with category and card detection, plus other metadata
         
@@ -233,8 +233,17 @@ class QueryEnhancer:
         }
         
         logger.info(f"Query metadata: {metadata}")
+        logger.info(f"User preferences received: {user_preferences}")
+        
         # Enhance the query with explicit category information
         enhanced_query = query
+        
+        # Add preference-aware enhancement FIRST (highest priority)
+        if user_preferences:
+            preference_context = self._build_preference_context(user_preferences, query, is_travel_query, is_generic_recommendation)
+            if preference_context:
+                enhanced_query += f"\n\nUSER PREFERENCE CONTEXT: {preference_context}"
+                logger.info(f"Added preference context: {preference_context}")
         
         # Handle direct card-to-card comparisons first (highest priority)
         if direct_comparison:
@@ -263,40 +272,41 @@ class QueryEnhancer:
             elif category == 'education':
                 enhanced_query = f"Education spending rewards and fees for {', '.join(self.card_patterns.keys())}"
             else:
-                enhanced_query += f"\n\nIMPORTANT: This is a generic comparison query asking about ALL cards. Analyze information from EVERY available card systematically: Axis Atlas (EDGE Miles), ICICI EPM (Reward Points), HSBC Premier (Reward Points), HDFC Infinia (Reward Points). Do not limit analysis to first few cards in context. If a card excludes this category, state that clearly. If a card earns rewards for this category, provide the specific rate and any conditions."
+                enhanced_query += f" comparison all cards Atlas EPM Premier Infinia rewards rates"
         # Handle travel queries specially (lower priority than generic comparisons)
         elif is_travel_query and not card_detected:
-            enhanced_query += f"\n\nIMPORTANT: This is a travel-related query. For comprehensive comparison, retrieve information from ALL available cards about: 1) Travel rewards rates (flights, hotels), 2) Travel benefits (lounge access, insurance, concierge), 3) Travel milestone bonuses, 4) Foreign currency charges, 5) Welcome bonuses. Ensure EVERY card is considered equally - do not focus only on first few cards mentioned in context. Cards to compare: Axis Atlas (EDGE Miles), ICICI EPM (Reward Points), HSBC Premier (Reward Points), HDFC Infinia (Reward Points)."
+            # Add specific card names and travel terms to ensure balanced retrieval
+            enhanced_query += f" travel rewards miles points lounge access Atlas EPM Premier Infinia"
         # elif is_generic_recommendation and not card_detected:
         #     enhanced_query += f"\n\nIMPORTANT: This is a generic recommendation query. Analyze ALL available cards systematically and provide balanced comparison. Do not limit analysis to first few cards in context. Include key differentiators for each card."
         elif category and spend_amount:
-            # Make category explicit in the query with generic guidance
+            # Make category explicit in the query with simple guidance
             if category in ['hotel', 'flight']:
-                enhanced_query += f"\n\nIMPORTANT: This is specifically about {category} spending. Check for accelerated earning rates for {category} category. Look for any monthly caps on accelerated rates - if spend exceeds cap, use base rate for excess amount. CRITICAL: Also check for annual spending milestones - look for 'Milestones:' section with spend thresholds like ₹3L, ₹7.5L, ₹15L and apply milestone bonuses if user spend qualifies."
+                enhanced_query += f" {category} spending rates caps milestones"
             elif category == 'utility':
-                enhanced_query += f"\n\nIMPORTANT: This is about utility spending. Check earning rates and surcharge_fees sections for utility category."
+                enhanced_query += f" utility spending rates surcharge"
             elif category == 'insurance':
-                enhanced_query += f"\n\nIMPORTANT: This is about insurance spending rewards, NOT insurance coverage/benefits. Search for 'others', 'earning rates', 'reward capping', and 'capping per statement cycle' sections. Focus on earning rates when spending on insurance premiums. Key facts by card: HSBC Premier earns 3 points per ₹100 (up to ₹1,00,000 monthly cap), HDFC Infinia earns 5 points per ₹150 (capped at 5,000 RP/day), ICICI EPM earns 6 points per ₹200 (up to 5,000 points monthly cap), Axis Atlas EXCLUDES insurance from rewards (0 points). Do NOT confuse with air accident cover or travel insurance benefits."
+                enhanced_query += f" insurance spending rewards rates caps exclusions"
             elif category in ['fuel', 'rent', 'government']:
-                enhanced_query += f"\n\nIMPORTANT: This is about {category} spending. Check exclusions first - this category may be excluded from earning rewards on some cards."
+                enhanced_query += f" {category} spending exclusions rates"
             elif category == 'education':
-                enhanced_query += f"\n\nIMPORTANT: This is about education spending rewards. Check earning rates and surcharge_fees sections for education category."
+                enhanced_query += f" education spending rates surcharge"
         elif category in ['hotel', 'flight'] and not spend_amount:
             # Handle category queries without spend amounts (like comparisons)
-            enhanced_query += f"\n\nIMPORTANT: This is about {category} rewards comparison. For each card, find: 1) Base earning rate (general rate), 2) Travel/Hotel specific rates if any, 3) Monthly caps on accelerated rates, 4) Any exclusions. Look in 'rewards', 'travel', and 'rate_general' sections."
+            enhanced_query += f" {category} rewards comparison rates caps"
         elif category == 'education' and not spend_amount:
             # Handle education category comparisons - now using RAG retrieval instead of hardcoded responses
-            enhanced_query += f"\n\nIMPORTANT: This is about education spending rewards comparison. For each card, find: 1) Earning rates for education spending, 2) Any exclusions or conditions, 3) Surcharge fees for third-party apps, 4) Monthly or statement cycle caps, 5) MCC codes if mentioned. Look in 'spending_categories', 'rewards', 'surcharge_fees', and 'reward_capping' sections."
+            enhanced_query += f" education spending rewards comparison rates caps surcharge"
         elif category == 'milestone':
             # Handle milestone queries separately (they often don't have spend amounts)
-            enhanced_query += f"\n\nIMPORTANT: This is about milestone benefits. For Axis Atlas, look for annual spending milestones in 'Milestones:' section (₹3L=2500 miles, ₹7.5L=2500 miles, ₹15L=5000 miles). Also check 'renewal_benefits' and tier structure for other types of milestone rewards. Do NOT confuse tier-based 'Milestone Miles' with annual spending milestones."
+            enhanced_query += f" milestone benefits spending thresholds annual rewards"
         elif category == 'utility' and any(keyword in query.lower() for keyword in ['surcharge', 'fee', 'charge', 'cost']):
             # Handle utility fee/surcharge queries separately
-            enhanced_query += f"\n\nIMPORTANT: This is about utility fees/surcharges. Calculate surcharges on amount ABOVE threshold if mentioned. Show surcharge calculation: percentage \u00d7 (spend - threshold)."
+            enhanced_query += f" utility fees surcharges calculation threshold"
         elif is_distribution_query:
-            enhanced_query += f"\n\nIMPORTANT: This is a spend distribution query. For each category, calculate separately using the appropriate rate (base rate for most categories, accelerated for hotels/flights, zero for excluded categories). Do NOT add base + category rates."
+            enhanced_query += f" spend distribution categories rates calculation separate"
         elif spend_amount and not category:
-            enhanced_query += f"\n\nNote: No specific category mentioned, so use BASE RATE for calculation. CRITICAL: Check for annual spending milestones - look for 'Milestones:' section and apply milestone bonuses if user spend qualifies."
+            enhanced_query += f" base rate calculation milestones spending threshold"
         
         logger.info(f"=== FINAL ENHANCEMENT RESULT ===")
         logger.info(f"Final enhanced query: '{enhanced_query}'")
@@ -360,3 +370,57 @@ class QueryEnhancer:
             ]
         
         return followup_questions
+    
+    def _build_preference_context(self, user_preferences: Dict, query: str, is_travel_query: bool, is_generic_recommendation: bool) -> str:
+        """Build intelligent preference context for query enhancement"""
+        context_parts = []
+        
+        # Handle travel preferences for travel queries
+        if is_travel_query and hasattr(user_preferences, 'travel_type') and user_preferences.travel_type:
+            travel_type = user_preferences.travel_type
+            if travel_type == 'domestic':
+                context_parts.append("User travels DOMESTICALLY only - prioritize domestic benefits, domestic lounge access, and domestic travel rewards")
+            elif travel_type == 'international':
+                context_parts.append("User travels INTERNATIONALLY - prioritize international benefits, global lounges, foreign currency advantages, and international travel insurance")
+            elif travel_type == 'both':
+                context_parts.append("User travels both domestically and internationally - mention both types of benefits with balanced coverage")
+        
+        # Handle lounge preferences for travel queries  
+        if is_travel_query and hasattr(user_preferences, 'lounge_access') and user_preferences.lounge_access:
+            lounge_pref = user_preferences.lounge_access
+            if lounge_pref == 'solo':
+                context_parts.append("User travels SOLO - focus on individual lounge access benefits without guest requirements")
+            elif lounge_pref == 'with_guests':
+                context_parts.append("User travels WITH GUESTS - emphasize guest lounge access and complimentary guest benefits")
+            elif lounge_pref == 'family':
+                context_parts.append("User travels with FAMILY - highlight family-friendly benefits and multiple guest access options")
+        
+        # Handle fee willingness for all recommendation queries
+        if (is_travel_query or is_generic_recommendation) and hasattr(user_preferences, 'fee_willingness') and user_preferences.fee_willingness:
+            fee_range = user_preferences.fee_willingness
+            if fee_range == '0-1000':
+                context_parts.append("User prefers LOW annual fees (₹0-1000) - emphasize value, fee waivers, and cost-effectiveness")
+            elif fee_range == '1000-5000':
+                context_parts.append("User accepts MODERATE annual fees (₹1000-5000) - balance benefits vs fees in recommendations")
+            elif fee_range == '5000-10000':
+                context_parts.append("User accepts HIGHER annual fees (₹5000-10000) - focus on premium benefits that justify the cost")
+            elif fee_range == '10000+':
+                context_parts.append("User accepts PREMIUM annual fees (₹10000+) - highlight ultra-premium benefits and luxury services")
+        
+        # Handle spending categories
+        if hasattr(user_preferences, 'spend_categories') and user_preferences.spend_categories:
+            categories = user_preferences['spend_categories']
+            if categories:
+                context_parts.append(f"User spends primarily on: {', '.join(categories)} - prioritize cards with high rewards in these specific categories")
+        
+        # Handle current cards to avoid duplication
+        if hasattr(user_preferences, 'current_cards') and user_preferences.current_cards:
+            current_cards = user_preferences.current_cards
+            if current_cards:
+                context_parts.append(f"User currently has: {', '.join(current_cards)} - consider upgrades or complementary cards, avoid suggesting existing cards")
+        
+        # Join all context parts
+        if context_parts:
+            return " | ".join(context_parts)
+        
+        return ""

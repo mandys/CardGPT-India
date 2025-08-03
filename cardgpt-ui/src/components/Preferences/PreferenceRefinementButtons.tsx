@@ -26,11 +26,13 @@ const PreferenceRefinementButtons: React.FC<PreferenceRefinementButtonsProps> = 
       // Call callbacks
       onRefinementApplied?.(preference, value);
       
-      // Trigger requery with enhanced message
+      // Trigger requery with ORIGINAL message (preferences will be auto-included via streaming endpoint)
       if (onRequery) {
-        const enhancedMessage = `${message} (User preference: ${buttonText})`;
-        console.log(`🔄 [REFINEMENT] Triggering requery with: ${enhancedMessage}`);
-        onRequery(enhancedMessage);
+        // Clean the original message of any previous preference additions
+        const cleanMessage = message.replace(/\s*\(User preference:.*?\)/g, '').trim();
+        console.log(`🔄 [REFINEMENT] Triggering requery with clean message: ${cleanMessage}`);
+        console.log(`🎯 [REFINEMENT] User preferences will be automatically included by backend`);
+        onRequery(cleanMessage);
       }
     } catch (error) {
       console.error('Failed to apply refinement:', error);

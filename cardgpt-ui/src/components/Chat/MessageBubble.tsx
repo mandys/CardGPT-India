@@ -7,6 +7,7 @@ import CostDisplay from './CostDisplay';
 import SourcesDisplay from './SourcesDisplay';
 import TipsContainer from './TipsContainer';
 import PreferenceRefinementButtons from '../Preferences/PreferenceRefinementButtons';
+import { usePreferences } from '../../hooks/usePreferences';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -18,6 +19,7 @@ interface MessageBubbleProps {
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onCardSelection, onTipClick, onPreferenceRefinement }) => {
   const [showDebugInfo, setShowDebugInfo] = useState(false);
   const [showRefinementButtons, setShowRefinementButtons] = useState(false);
+  const { shouldShowPreferencePrompt } = usePreferences();
   
   const isUser = message.role === 'user';
   const requiresCardSelection = message.metadata?.requires_card_selection;
@@ -32,19 +34,23 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onCardSelection,
     message.total_cost !== undefined
   );
 
-  // Always show preference buttons for completed assistant responses
+  // Show preference buttons if contextually relevant or for first-time users
   useEffect(() => {
     if (!isUser && isComplete && !requiresCardSelection) {
-      console.log('✅ [MESSAGE_BUBBLE] Showing preference refinement buttons for completed response');
-      setShowRefinementButtons(true);
+      if (shouldShowPreferencePrompt()) {
+        console.log(`✅ [MESSAGE_BUBBLE] Showing preference refinement buttons.`);
+        setShowRefinementButtons(true);
+      } else {
+        setShowRefinementButtons(false);
+      }
     }
-  }, [isUser, isComplete, requiresCardSelection]);
+  }, [isUser, isComplete, requiresCardSelection, shouldShowPreferencePrompt]);
   
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in`}>
       <div className={`flex items-start space-x-3 max-w-4xl ${isUser ? 'flex-row-reverse space-x-reverse' : ''}`}>
         {/* Avatar */}
-        <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
+        <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${ 
           isUser ? 'glow-purple' : 'glass-card'
         }`} style={isUser ? {background: 'var(--gradient-accent)'} : {}}>
           {isUser ? (
@@ -72,13 +78,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, onCardSelection,
             </div>
           ) : (
             // Regular message bubble
-            <div className={`inline-block px-4 py-3 ${
+            <div className={`inline-block px-4 py-3 ${ 
               isUser 
                 ? 'message-user' 
                 : 'message-assistant'
             }`}>
               {/* Message Text */}
-              <div className={`prose prose-sm max-w-none ${
+              <div className={`prose prose-sm max-w-none ${ 
                 isUser ? 'prose-invert' : 'prose-gray dark:prose-invert'
               }`}>
                 {isUser ? (

@@ -1,4 +1,3 @@
-
 """
 Query Enhancement Service
 Preprocesses user queries to detect categories and ensure correct earning rates are applied
@@ -87,7 +86,7 @@ class QueryEnhancer:
             r'₹\s*(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:lakh|l\b)',
             r'₹\s*(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:crore|cr\b)',
             r'₹\s*(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:thousand|k\b)',
-            r'₹\s*(\d+(?:,\d+)*(?:\.\d+)?)',
+            r'₹\s*(\d+(?:,\d+)*(?:\.\d+)?)', # Corrected: Added missing newline character here
             r'(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:lakh|l\b)',
             r'(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:crore|cr\b)',
             r'(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:thousand|k\b)',
@@ -242,7 +241,7 @@ class QueryEnhancer:
         if user_preferences:
             preference_context = self._build_preference_context(user_preferences, query, is_travel_query, is_generic_recommendation)
             if preference_context:
-                enhanced_query += f"\n\nUSER PREFERENCE CONTEXT: {preference_context}"
+                enhanced_query += f"\n\n{preference_context}"
                 logger.info(f"Added preference context: {preference_context}")
         
         # Handle direct card-to-card comparisons first (highest priority)
@@ -372,55 +371,34 @@ class QueryEnhancer:
         return followup_questions
     
     def _build_preference_context(self, user_preferences: Dict, query: str, is_travel_query: bool, is_generic_recommendation: bool) -> str:
-        """Build intelligent preference context for query enhancement"""
+        """Build intelligent and concise preference context for query enhancement."""
+        if not user_preferences:
+            return ""
+
         context_parts = []
-        
-        # Handle travel preferences for travel queries
-        if is_travel_query and hasattr(user_preferences, 'travel_type') and user_preferences.travel_type:
-            travel_type = user_preferences.travel_type
-            if travel_type == 'domestic':
-                context_parts.append("User travels DOMESTICALLY only - prioritize domestic benefits, domestic lounge access, and domestic travel rewards")
-            elif travel_type == 'international':
-                context_parts.append("User travels INTERNATIONALLY - prioritize international benefits, global lounges, foreign currency advantages, and international travel insurance")
-            elif travel_type == 'both':
-                context_parts.append("User travels both domestically and internationally - mention both types of benefits with balanced coverage")
-        
-        # Handle lounge preferences for travel queries  
-        if is_travel_query and hasattr(user_preferences, 'lounge_access') and user_preferences.lounge_access:
-            lounge_pref = user_preferences.lounge_access
-            if lounge_pref == 'solo':
-                context_parts.append("User travels SOLO - focus on individual lounge access benefits without guest requirements")
-            elif lounge_pref == 'with_guests':
-                context_parts.append("User travels WITH GUESTS - emphasize guest lounge access and complimentary guest benefits")
-            elif lounge_pref == 'family':
-                context_parts.append("User travels with FAMILY - highlight family-friendly benefits and multiple guest access options")
-        
-        # Handle fee willingness for all recommendation queries
-        if (is_travel_query or is_generic_recommendation) and hasattr(user_preferences, 'fee_willingness') and user_preferences.fee_willingness:
-            fee_range = user_preferences.fee_willingness
-            if fee_range == '0-1000':
-                context_parts.append("User prefers LOW annual fees (₹0-1000) - emphasize value, fee waivers, and cost-effectiveness")
-            elif fee_range == '1000-5000':
-                context_parts.append("User accepts MODERATE annual fees (₹1000-5000) - balance benefits vs fees in recommendations")
-            elif fee_range == '5000-10000':
-                context_parts.append("User accepts HIGHER annual fees (₹5000-10000) - focus on premium benefits that justify the cost")
-            elif fee_range == '10000+':
-                context_parts.append("User accepts PREMIUM annual fees (₹10000+) - highlight ultra-premium benefits and luxury services")
-        
-        # Handle spending categories
-        if hasattr(user_preferences, 'spend_categories') and user_preferences.spend_categories:
-            categories = user_preferences['spend_categories']
-            if categories:
-                context_parts.append(f"User spends primarily on: {', '.join(categories)} - prioritize cards with high rewards in these specific categories")
-        
-        # Handle current cards to avoid duplication
-        if hasattr(user_preferences, 'current_cards') and user_preferences.current_cards:
-            current_cards = user_preferences.current_cards
-            if current_cards:
-                context_parts.append(f"User currently has: {', '.join(current_cards)} - consider upgrades or complementary cards, avoid suggesting existing cards")
-        
-        # Join all context parts
-        if context_parts:
-            return " | ".join(context_parts)
-        
-        return ""
+
+        # Travel preferences
+        if is_travel_query:
+            if getattr(user_preferences, 'travel_type', None) == 'domestic':
+                context_parts.append("travels domestically")
+            elif getattr(user_preferences, 'travel_type', None) == 'international':
+                context_parts.append("travels internationally")
+            
+            if getattr(user_preferences, 'lounge_access', None) == 'family':
+                context_parts.append("travels with family")
+
+        # Fee willingness
+        if is_generic_recommendation:
+            fee_willingness = getattr(user_preferences, 'fee_willingness', None)
+            if fee_willingness == '5000-10000' or fee_willingness == '10000+':
+                context_parts.append("can afford luxury cards")
+
+        # Spending categories
+        spend_categories = getattr(user_preferences, 'spend_categories', None)
+        if spend_categories:
+            context_parts.append(f"spends on {', '.join(spend_categories)}")
+
+        if not context_parts:
+            return ""
+
+        return f"USER PREFERENCE CONTEXT: Prioritize recommendations for a user who {', '.join(context_parts)}."

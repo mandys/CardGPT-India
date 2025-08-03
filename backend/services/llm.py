@@ -491,51 +491,28 @@ CALCULATION REQUIREMENTS:
         logger.info(f"🔍 [LLM_PREFS] User preferences type: {type(user_preferences)}")
         if user_preferences:
             logger.info(f"🎯 [LLM_PREFS] Adding user preferences to LLM prompt: {user_preferences}")
-            print(f"🎯 Adding user preferences to LLM prompt: {user_preferences}")
             prompt += "\n\nUSER PREFERENCE CONTEXT:"
-            prompt += "\nPersonalize your response based on the user's preferences:"
+            prompt += "\nPersonalize your response based on the user's preferences."
+
+            preference_summary = []
+            if getattr(user_preferences, 'travel_type', None) == 'domestic':
+                preference_summary.append("travels domestically")
+            elif getattr(user_preferences, 'travel_type', None) == 'international':
+                preference_summary.append("travels internationally")
             
-            # Handle both UserPreferences object and dict
-            travel_type = getattr(user_preferences, 'travel_type', None) if hasattr(user_preferences, 'travel_type') else user_preferences.get('travel_type') if isinstance(user_preferences, dict) else None
-            if travel_type:
-                if travel_type == 'domestic':
-                    prompt += "\n- User travels DOMESTICALLY only - prioritize domestic benefits, airport lounges in India"
-                elif travel_type == 'international':
-                    prompt += "\n- User travels INTERNATIONALLY - prioritize international benefits, global lounges, foreign currency fees"
-                elif travel_type == 'both':
-                    prompt += "\n- User travels both DOMESTICALLY and INTERNATIONALLY - mention both types of benefits"
-            
-            lounge_pref = getattr(user_preferences, 'lounge_access', None) if hasattr(user_preferences, 'lounge_access') else user_preferences.get('lounge_access') if isinstance(user_preferences, dict) else None
-            if lounge_pref:
-                if lounge_pref == 'solo':
-                    prompt += "\n- User travels SOLO - focus on individual lounge access benefits"
-                elif lounge_pref == 'with_guests':
-                    prompt += "\n- User travels WITH GUESTS - emphasize guest lounge access and complimentary guest benefits"
-                elif lounge_pref == 'family':
-                    prompt += "\n- User travels with FAMILY - highlight family-friendly benefits and multiple guest access"
-            
-            fee_range = getattr(user_preferences, 'fee_willingness', None) if hasattr(user_preferences, 'fee_willingness') else user_preferences.get('fee_willingness') if isinstance(user_preferences, dict) else None
-            if fee_range:
-                if fee_range == '0-1000':
-                    prompt += "\n- User prefers LOW annual fees (₹0-1000) - emphasize value and fee waivers"
-                elif fee_range == '1000-5000':
-                    prompt += "\n- User accepts MODERATE annual fees (₹1000-5000) - balance benefits vs fees"
-                elif fee_range == '5000-10000':
-                    prompt += "\n- User accepts HIGHER annual fees (₹5000-10000) - focus on premium benefits"
-                elif fee_range == '10000+':
-                    prompt += "\n- User accepts PREMIUM annual fees (₹10000+) - highlight ultra-premium benefits and luxury services"
-            
-            categories = getattr(user_preferences, 'spend_categories', None) if hasattr(user_preferences, 'spend_categories') else user_preferences.get('spend_categories') if isinstance(user_preferences, dict) else None
-            if categories:
-                cat_text = ', '.join(categories)
-                prompt += f"\n- User spends primarily on: {cat_text} - prioritize cards with high rewards in these categories"
-            
-            current_cards = getattr(user_preferences, 'current_cards', None) if hasattr(user_preferences, 'current_cards') else user_preferences.get('current_cards') if isinstance(user_preferences, dict) else None
-            if current_cards:
-                cards_text = ', '.join(current_cards)
-                prompt += f"\n- User currently has: {cards_text} - consider upgrades or complementary cards, avoid suggesting existing cards"
-            
-            prompt += "\n- IMPORTANT: Use this preference context to provide personalized recommendations and highlight relevant benefits"
+            if getattr(user_preferences, 'lounge_access', None) == 'family':
+                preference_summary.append("travels with family")
+
+            fee_willingness = getattr(user_preferences, 'fee_willingness', None)
+            if fee_willingness in ['5000-10000', '10000+']:
+                preference_summary.append("can afford luxury cards")
+
+            spend_categories = getattr(user_preferences, 'spend_categories', None)
+            if spend_categories:
+                preference_summary.append(f"spends on {', '.join(spend_categories)}")
+
+            if preference_summary:
+                prompt += f" Prioritize recommendations for a user who {', '.join(preference_summary)}."
         else:
             logger.info("⚠️ [LLM_PREFS] No user preferences provided or preferences are empty")
         

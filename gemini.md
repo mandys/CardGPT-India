@@ -13,7 +13,7 @@ The project is a modern full-stack application with a clear separation between t
 *   **Frontend (`cardgpt-ui/`)**:
     *   **Framework**: React with TypeScript
     *   **Styling**: Tailwind CSS
-    *   **State Management**: Zustand
+    *   **State Management**: Zustand and React Context
     *   **Deployment**: Vercel
 
 *   **Backend (`backend/`)**:
@@ -36,21 +36,26 @@ The project is a modern full-stack application with a clear separation between t
 *   **Query Enhancement**: The backend enhances user queries to improve the accuracy of search results from Vertex AI.
 *   **Authentication**: Secure user authentication via Google OAuth, with query limits for guest users.
 *   **Admin Interface**: Endpoints for viewing logs, stats, and exporting data for analysis.
+*   **User Preferences**: Users can set their preferences for travel, fees, and spending to receive personalized recommendations.
+*   **Responsive Design**: A mobile-first design ensures a seamless experience on all devices.
 
 ## 4. Project Structure
 
 The project is organized into two main directories:
 
 *   `cardgpt-ui/`: Contains the React frontend application.
-    *   `src/components/`: Reusable React components.
-    *   `src/contexts/`: Application-wide state management (Auth, Theme).
-    *   `src/hooks/`: Custom React hooks for managing state and logic (e.g., `useStreamingChat`, `useTips`).
-    *   `src/services/`: API clients for communicating with the backend.
+    *   `src/components/`: Reusable React components for UI elements like chat bubbles, modals, and layout components.
+    *   `src/contexts/`: Application-wide state management for authentication (`AuthContext`) and theme (`ThemeContext`).
+    *   `src/hooks/`: Custom React hooks for managing state and logic, including `useStreamingChat` for chat functionality and `useTips` for contextual suggestions.
+    *   `src/services/`: API clients (`api.ts`, `streamingApi.ts`) for communicating with the backend.
+    *   `src/stores/`: Zustand stores for managing application state, such as `usePreferenceStore` for user preferences.
+    *   `src/index.tsx`: The main entry point for the React application, which sets up routing and providers.
+
 *   `backend/`: Contains the FastAPI backend application.
-    *   `api/`: Defines the API endpoints (chat, auth, config, etc.).
-    *   `services/`: Contains the business logic for different parts of the application (LLM, auth, Vertex AI).
+    *   `api/`: Defines the API endpoints for chat (`chat.py`, `chat_stream.py`), authentication (`auth.py`), configuration (`config.py`), and other functionalities.
+    *   `services/`: Contains the business logic for different parts of the application, including the LLM service (`llm.py`), authentication service (`auth_service.py`), and Vertex AI retriever (`vertex_retriever.py`).
     *   `models.py`: Pydantic models for request and response validation.
-    *   `main.py`: The main entry point for the FastAPI application.
+    *   `main.py`: The main entry point for the FastAPI application, which initializes services and sets up middleware.
 *   `data/`: Contains the raw JSON data for credit cards, which is used to feed the Vertex AI Search data store.
 
 ## 5. Getting Started

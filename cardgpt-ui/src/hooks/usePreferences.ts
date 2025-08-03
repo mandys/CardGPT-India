@@ -51,40 +51,33 @@ export const usePreferences = () => {
     return isPreferenceComplete(categoryMap[category]);
   }, [isPreferenceComplete]);
 
-  // Helper function to get missing preference categories for a query
+  const shouldShowPreferencePrompt = useCallback((): boolean => {
+    return completion.overall < 50;
+  }, [completion.overall]);
+
   const getMissingPreferencesForQuery = useCallback((query: string): string[] => {
-    const missing: string[] = [];
-    const queryLower = query.toLowerCase();
-    
-    // Check for travel-related ambiguity
-    const travelKeywords = ['travel', 'lounge', 'airport', 'miles', 'international', 'domestic'];
-    if (travelKeywords.some(keyword => queryLower.includes(keyword))) {
+    const lowerCaseQuery = query.toLowerCase();
+    const missing = [];
+
+    if (lowerCaseQuery.includes('travel') || lowerCaseQuery.includes('lounge') || lowerCaseQuery.includes('trip')) {
       if (!preferences?.travel_type) missing.push('travel_type');
       if (!preferences?.lounge_access) missing.push('lounge_access');
     }
-    
-    // Check for fee-related ambiguity
-    const cardKeywords = ['best card', 'recommend', 'which card', 'good card', 'compare'];
-    if (cardKeywords.some(keyword => queryLower.includes(keyword))) {
-      if (!queryLower.includes('fee') && !queryLower.includes('annual') && !preferences?.fee_willingness) {
-        missing.push('fee_willingness');
-      }
+    if (lowerCaseQuery.includes('fee') || lowerCaseQuery.includes('cost') || lowerCaseQuery.includes('annual')) {
+      if (!preferences?.fee_willingness) missing.push('fee_willingness');
     }
-    
-    // Check for spending category ambiguity
-    const spendKeywords = ['spend', 'rewards', 'points', 'cashback', 'shopping', 'dining', 'fuel'];
-    if (spendKeywords.some(keyword => queryLower.includes(keyword))) {
-      if (!preferences?.spend_categories?.length) missing.push('spend_categories');
+    if (lowerCaseQuery.includes('recommend') || lowerCaseQuery.includes('best card') || lowerCaseQuery.includes('suggest')) {
+      if ((preferences?.spend_categories?.length ?? 0) === 0) missing.push('spend_categories');
     }
+
+    // General check: if any preference is missing, add it to the list
+    if (!preferences?.travel_type) missing.push('travel_type');
+    if (!preferences?.lounge_access) missing.push('lounge_access');
+    if (!preferences?.fee_willingness) missing.push('fee_willingness');
+    if ((preferences?.spend_categories?.length ?? 0) === 0) missing.push('spend_categories');
     
     return missing;
   }, [preferences]);
-
-  // Helper function to suggest quick preference collection
-  const shouldShowPreferencePrompt = useCallback((query: string): boolean => {
-    const missingPrefs = getMissingPreferencesForQuery(query);
-    return missingPrefs.length > 0 && completion.overall < 50;
-  }, [getMissingPreferencesForQuery, completion.overall]);
 
   // Quick preference setters for common scenarios
   const quickSetTravelType = useCallback((type: 'domestic' | 'international' | 'both') => {
@@ -143,9 +136,9 @@ export const usePreferences = () => {
     // Helper functions
     hasPreferences: hasPreferences(),
     hasCompletePreferenceCategory,
-    getMissingPreferencesForQuery,
     shouldShowPreferencePrompt,
     getPreferencesForAPI,
+    getMissingPreferencesForQuery,
     
     // Quick setters
     quickSetTravelType,

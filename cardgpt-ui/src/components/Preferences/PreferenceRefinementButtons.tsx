@@ -15,7 +15,7 @@ const PreferenceRefinementButtons: React.FC<PreferenceRefinementButtonsProps> = 
   onRequery,
   className = ''
 }) => {
-  const { updatePreferences, isLoading } = usePreferences();
+  const { updatePreferences, isLoading, getMissingPreferencesForQuery } = usePreferences();
 
   const handleRefinementClick = async (preference: string, value: string, buttonText: string) => {
     try {
@@ -39,8 +39,7 @@ const PreferenceRefinementButtons: React.FC<PreferenceRefinementButtonsProps> = 
     }
   };
 
-  // Simple predefined preference buttons
-  const preferenceButtons = [
+  const allPreferenceButtons = [
     { text: "I travel domestically", preference: "travel_type", value: "domestic", icon: Plane },
     { text: "I travel internationally", preference: "travel_type", value: "international", icon: Plane },
     { text: "I travel with family", preference: "lounge_access", value: "family", icon: Plane },
@@ -48,6 +47,13 @@ const PreferenceRefinementButtons: React.FC<PreferenceRefinementButtonsProps> = 
     { text: "₹1K-5K annual fee", preference: "fee_willingness", value: "1000-5000", icon: IndianRupee },
     { text: "₹5K+ annual fee OK", preference: "fee_willingness", value: "5000-10000", icon: IndianRupee }
   ];
+
+  const missingPreferences = getMissingPreferencesForQuery(message);
+  const preferenceButtons = allPreferenceButtons.filter(button => missingPreferences.includes(button.preference));
+
+  if (preferenceButtons.length === 0) {
+    return null;
+  }
 
   return (
     <div className={`mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700 ${className}`}>

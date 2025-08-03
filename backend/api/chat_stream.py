@@ -338,8 +338,6 @@ def process_query_stream(
                 
                 # Add user preference info to enhanced question for debugging visibility
                 debug_enhanced_question = enhanced_question
-                if user_preferences:
-                    debug_enhanced_question += f"\n\n[DEBUG] User Preferences Applied: {user_preferences}"
                 
                 final_chunk = StreamChunk(
                     type="complete",

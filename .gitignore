@@ -133,3 +133,6 @@ service-account-key.json
 **/*sk-*
 **/*pk-*
 **/*api_*key*
+data/axis-atlas-new.txt
+data/hdfc-infinia-new.txt
+data/icici-epm.txt

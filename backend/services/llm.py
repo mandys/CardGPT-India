@@ -383,7 +383,13 @@ class LLMService:
         prompt = """You are a helpful credit card expert. Answer questions clearly and accurately based on the provided context.
 
 CRITICAL: If the context contains information relevant to the question, use it to provide a comprehensive answer. NEVER claim information is missing if it exists in the context.
-
+"""
+        if card_name:
+            prompt += f"""
+CRITICAL: Focus ONLY on information about the {card_name} card. Do NOT compare it with other cards unless the original question explicitly asks for a comparison with other SPECIFIC cards (e.g., 'Compare {card_name} with Axis Atlas'). If the question is general (e.g., 'best card for X'), but a card_name is provided, still focus only on {card_name}.
+"""
+        else:
+            prompt += """
 CRITICAL FOR COMPARISONS: When comparing cards, look for ALL card names in the context. If documents exist for both cards (even with different section names), use information from BOTH cards. Look carefully at the "Source Document" headers to identify which card each section belongs to.
 
 FAIR COMPARISON REQUIREMENTS:
@@ -391,7 +397,8 @@ FAIR COMPARISON REQUIREMENTS:
 - COMPREHENSIVE ANALYSIS: For travel queries, systematically analyze ALL cards (Axis Atlas, ICICI EPM, HSBC Premier, HDFC Infinia) for travel benefits, earning rates, and features
 - NO BIAS: Do not favor certain cards over others - provide balanced analysis of all options
 - COMPLETE COVERAGE: When user asks generic questions like "which card for travel", ensure ALL available cards are discussed with their strengths and weaknesses
-
+"""
+        prompt += """
 For earning rate comparisons:
 - Look for "rate_general", "earning_rate", "travel", "hotel", "flight", "capping_per_statement_cycle", "reward_capping" sections in the context
 - For education queries: Look for "Education:" entries in context - these show specific reward points earned for education spending
@@ -483,38 +490,87 @@ CALCULATION REQUIREMENTS:
 - Double-check arithmetic
 - Include currency in results"""
         
-        if card_name:
-            prompt += f"\nFocus on information about the {card_name} card."
-        
-        # Add user preference context if available
+        # Enhanced user preference context integration
         logger.info(f"🔍 [LLM_PREFS] Checking user preferences: {user_preferences}")
         logger.info(f"🔍 [LLM_PREFS] User preferences type: {type(user_preferences)}")
         if user_preferences:
-            logger.info(f"🎯 [LLM_PREFS] Adding user preferences to LLM prompt: {user_preferences}")
-            prompt += "\n\nUSER PREFERENCE CONTEXT:"
-            prompt += "\nPersonalize your response based on the user's preferences."
+            logger.info(f"🎯 [LLM_PREFS] Adding enhanced user preferences to LLM prompt: {user_preferences}")
+            prompt += "\n\n=== USER PERSONALIZATION CONTEXT ==="
+            prompt += "\nTailor your response and recommendations based on this user's specific profile and preferences:"
 
-            preference_summary = []
-            if getattr(user_preferences, 'travel_type', None) == 'domestic':
-                preference_summary.append("travels domestically")
-            elif getattr(user_preferences, 'travel_type', None) == 'international':
-                preference_summary.append("travels internationally")
+            # Travel-specific personalization
+            travel_type = getattr(user_preferences, 'travel_type', None)
+            lounge_access = getattr(user_preferences, 'lounge_access', None)
             
-            if getattr(user_preferences, 'lounge_access', None) == 'family':
-                preference_summary.append("travels with family")
+            if travel_type or lounge_access:
+                prompt += "\n\nTRAVEL PROFILE:"
+                if travel_type == 'domestic':
+                    prompt += "\n- Focus on domestic travel benefits, domestic lounge access, and domestic airline partnerships"
+                    prompt += "\n- Prioritize cards with strong domestic travel rewards and domestic airport lounge access"
+                elif travel_type == 'international':
+                    prompt += "\n- Emphasize international travel benefits, global lounge access, and international airline partnerships"
+                    prompt += "\n- Highlight foreign transaction fee waivers, international insurance coverage, and global acceptance"
+                elif travel_type == 'both':
+                    prompt += "\n- Provide comprehensive travel analysis covering both domestic and international benefits"
+                    prompt += "\n- Compare domestic vs international earning rates and redemption options"
+                
+                if lounge_access == 'family':
+                    prompt += "\n- Highlight family lounge access benefits (guest access, family travel insurance, etc.)"
+                elif lounge_access == 'solo':
+                    prompt += "\n- Focus on individual lounge access benefits and solo traveler perks"
+                elif lounge_access == 'with_guests':
+                    prompt += "\n- Emphasize guest access policies and complimentary guest benefits"
 
+            # Fee willingness and card tier recommendations
             fee_willingness = getattr(user_preferences, 'fee_willingness', None)
-            if fee_willingness in ['5000-10000', '10000+']:
-                preference_summary.append("can afford luxury cards")
+            if fee_willingness:
+                prompt += "\n\nFEE TOLERANCE & CARD TIER GUIDANCE:"
+                if fee_willingness in ['5000-10000', '10000+']:
+                    prompt += "\n- User can afford premium/luxury cards - highlight premium benefits and high-value features"
+                    prompt += "\n- Focus on value proposition: how premium benefits justify higher annual fees"
+                    prompt += "\n- Compare premium cards primarily, mention lower-tier alternatives only if specifically relevant"
+                elif fee_willingness in ['1000-2500', '2500-5000']:
+                    prompt += "\n- User prefers mid-tier cards - balance benefits with reasonable annual fees"
+                    prompt += "\n- Highlight cost-effective value propositions and fee-to-benefit ratios"
+                elif fee_willingness == '0':
+                    prompt += "\n- User strongly prefers no annual fee cards - focus on free cards and fee waivers"
+                    prompt += "\n- Emphasize any fee waiver conditions and lifetime free benefits"
 
+            # Spending category optimization
             spend_categories = getattr(user_preferences, 'spend_categories', None)
             if spend_categories:
-                preference_summary.append(f"spends on {', '.join(spend_categories)}")
+                prompt += "\n\nSPENDING PATTERN OPTIMIZATION:"
+                prompt += f"\n- Primary spending categories: {', '.join(spend_categories)}"
+                prompt += "\n- Prioritize cards with accelerated earning rates in these specific categories"
+                prompt += "\n- Compare category-specific caps, exclusions, and earning rates across cards"
+                prompt += "\n- Suggest spending strategies to maximize rewards in preferred categories"
 
-            if preference_summary:
-                prompt += f" Prioritize recommendations for a user who {', '.join(preference_summary)}."
+            # Current cards context - NOW ENABLED for better personalization
+            current_cards = getattr(user_preferences, 'current_cards', None)
+            if current_cards:
+                prompt += "\n\nEXISTING CARD PORTFOLIO ANALYSIS:"
+                prompt += f"\n- User currently has: {', '.join(current_cards)}"
+                prompt += "\n- CRITICAL: Since user has multiple cards, compare performance across their existing portfolio"
+                prompt += "\n- Show which of their current cards is best for the specific query"
+                prompt += "\n- Provide specific recommendations on how to optimize usage across their portfolio"
+                prompt += "\n- If recommending spending strategy, focus on their current cards"
+
+            # Final personalization instruction
+            prompt += "\n\nPERSONALIZATION REQUIREMENTS:"
+            prompt += "\n- Explain WHY specific cards match this user's profile"
+            prompt += "\n- Prioritize most relevant benefits first in your response"
+            prompt += "\n- Include specific examples relevant to their preferences"
+            prompt += "\n- Consider their preferences in final recommendations"
+            
+            logger.info("✅ [LLM_PREFS] Enhanced user preference context added to system prompt")
         else:
-            logger.info("⚠️ [LLM_PREFS] No user preferences provided or preferences are empty")
+            logger.info("⚠️ [LLM_PREFS] No user preferences provided - using generic recommendations")
+        
+        # Log the complete system prompt for debugging
+        logger.info(f"🎯 [LLM_PROMPT] === COMPLETE SYSTEM PROMPT ===")
+        logger.info(f"🎯 [LLM_PROMPT] System prompt length: {len(prompt)} characters")
+        logger.info(f"🎯 [LLM_PROMPT] Full system prompt:\n{prompt}")
+        logger.info(f"🎯 [LLM_PROMPT] === END SYSTEM PROMPT ===")
         
         return prompt
     

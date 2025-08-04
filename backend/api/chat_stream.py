@@ -116,7 +116,8 @@ async def chat_stream_endpoint(
         # Card selector removed - process all queries directly for better user experience
         
         # Check if we should suggest follow-up questions for generic queries
-        enhanced_query, initial_metadata = query_enhancer_service.enhance_query(request.message, user_preferences)
+        # Use search-focused query enhancement (no user preferences in search)
+        enhanced_search_query, initial_metadata = query_enhancer_service.enhance_search_query(request.message)
         followup_questions = []
         
         if initial_metadata.get('suggest_followup', False):
@@ -140,7 +141,7 @@ async def chat_stream_endpoint(
                     query_logger=query_logger,
                     followup_questions=followup_questions,
                     user_preferences=user_preferences,
-                    pre_enhanced_query=enhanced_query,
+                    pre_enhanced_query=enhanced_search_query,
                     pre_metadata=initial_metadata
                 )
             except Exception as e:
@@ -201,11 +202,11 @@ def process_query_stream(
         
         # Use pre-enhanced query if available, otherwise enhance now
         if pre_enhanced_query and pre_metadata:
-            enhanced_question, metadata = pre_enhanced_query, pre_metadata
-            logger.info(f"Using pre-enhanced query: {enhanced_question[:100]}...")
+            enhanced_search_query, metadata = pre_enhanced_query, pre_metadata
+            logger.info(f"Using pre-enhanced search query: {enhanced_search_query[:100]}...")
         else:
-            # Pass user preferences to query enhancer for personalized enhancement
-            enhanced_question, metadata = query_enhancer_service.enhance_query(question, user_preferences)
+            # Use search-focused enhancement (no user preferences in search query)
+            enhanced_search_query, metadata = query_enhancer_service.enhance_search_query(question)
         
         # Determine search filters and handle multiple cards in comparison queries
         search_card_filter = None
@@ -227,7 +228,7 @@ def process_query_stream(
             logger.info(f"Detected comparison query - removing card filter for comprehensive search")
         
         # Apply additional enhancements to the already enhanced query
-        final_search_query = enhanced_question
+        final_search_query = enhanced_search_query
         
         # Enhance search for calculation queries to include milestone data
         # But skip for complex comparison queries to avoid overwhelming search
@@ -272,13 +273,16 @@ def process_query_stream(
         )
         yield f"data: {search_status_chunk.model_dump_json()}\n\n"
         
+        # Use default top_k - let semantic search work naturally
+        search_top_k = top_k
+        
         # Search documents
         logger.info(f"Searching documents with FINAL query: {final_search_query}")
         logger.info(f"Original query was: {question}")
-        logger.info(f"QueryEnhancer output was: {enhanced_question}")
+        logger.info(f"QueryEnhancer output was: {enhanced_search_query}")
         relevant_docs = retriever_service.search_similar_documents(
             query_text=final_search_query,
-            top_k=top_k,
+            top_k=search_top_k,
             card_filter=search_card_filter,
             use_mmr=True
         )
@@ -307,8 +311,14 @@ def process_query_stream(
         logger.info(f"Starting LLM streaming with model: {model_to_use}")
         
         # Start streaming response
+        # NOTE: Pass original question to LLM for context, user_preferences for personalization
+        logger.info(f"🎯 [LLM_CONTEXT] === PASSING TO LLM ===")
+        logger.info(f"🎯 [LLM_CONTEXT] Original question: '{question}'")
+        logger.info(f"🎯 [LLM_CONTEXT] User preferences: {user_preferences}")
+        logger.info(f"🎯 [LLM_CONTEXT] User preferences will be integrated into LLM system prompt for personalization")
+        
         for chunk_text, is_final, usage_info in llm_service.generate_answer_stream(
-            question=enhanced_question,
+            question=question,  # Use original question, not search query
             context_documents=relevant_docs,
             card_name=card_context,
             model_choice=model_to_use,
@@ -336,8 +346,8 @@ def process_query_stream(
                 # CRITICAL: Add original query to metadata for frontend ambiguity detection
                 final_metadata["original_query"] = question
                 
-                # Add user preference info to enhanced question for debugging visibility
-                debug_enhanced_question = enhanced_question
+                # Add user preference info to enhanced search query for debugging visibility
+                debug_enhanced_question = enhanced_search_query
                 
                 final_chunk = StreamChunk(
                     type="complete",

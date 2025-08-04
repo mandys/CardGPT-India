@@ -112,6 +112,7 @@ npm install
 - **Smart Comparisons**: AI-driven card recommendations
 - **Complex Calculations**: Automatic milestone and spending analysis
 - **Natural Language**: Ask questions in plain English
+- **Personalized Responses**: AI leverages user preferences (travel, spending, current cards, preferred banks) for tailored recommendations and focused answers.
 
 ### 🎨 **Modern Interface**
 - **Streaming Responses**: Real-time word-by-word generation
@@ -124,6 +125,20 @@ npm install
 - **Milestone Tracking**: Annual spend thresholds and bonuses
 - **Multi-Card Comparison**: Side-by-side analysis
 - **Optimization Suggestions**: Spending strategy recommendations
+
+## 👤 **User Preferences & Personalization**
+CardGPT now offers robust user preference management to deliver highly personalized credit card recommendations.
+
+- **Interactive Preference Setup**:
+    - **Welcome Modal**: First-time users are guided through a quick setup process to define their travel style, fee willingness, and spending categories.
+    - **Settings Panel**: Users can access and modify their preferences anytime via a dedicated "Manage Preferences" section in the settings modal.
+    - **Unified Experience**: The options presented in the initial setup, settings panel, and refinement buttons are consistent for a seamless user experience.
+
+- **Contextual Refinement Buttons**:
+    - **Dynamic Suggestions**: After receiving an AI response, if key preferences are missing or ambiguous for the current query, a "Make this more personal" box appears with quick refinement buttons.
+    - **Targeted Options**: These buttons offer one-click options to set preferences like travel type, fee willingness, and spending categories (e.g., "I spend on travel", "₹0 fee cards only").
+    - **Card Selection**: A "Manage my cards" button is now available, which directly opens the full preferences modal to the "Cards & Banks" section, allowing users to easily input their current cards or preferred banks from a pre-populated list of supported cards.
+    - **Intelligent Triggering**: The refinement box intelligently appears when preferences are not fully set or when the query could benefit from more personalized context (e.g., a generic recommendation query).
 
 ### 💡 **Smart Tips System**
 - **Contextual Intelligence**: AI-powered tip suggestions based on user query context
@@ -254,15 +269,32 @@ npx tsc --noEmit
 ├── cardgpt-ui/                      # React Frontend
 │   ├── src/
 │   │   ├── components/             # React components
-│   │   │   ├── ChatInterface.tsx   # Main chat interface
-│   │   │   ├── MessageBubble.tsx   # Chat message display
+│   │   │   ├── Auth/               # Authentication UI components
+│   │   │   │   ├── AuthModal.tsx
+│   │   │   │   ├── GoogleSignIn.tsx
+│   │   │   │   ├── UserButton.tsx
+│   │   │   │   └── UserProfile.tsx
+│   │   │   ├── Chat/               # Chat-related UI components
+│   │   │   │   ├── ChatInterface.tsx   # Main chat interface
+│   │   │   │   └── MessageBubble.tsx   # Chat message display
+│   │   │   ├── Preferences/        # User preference management components
+│   │   │   │   ├── PreferenceRefinementButtons.tsx # Dynamic preference buttons
+│   │   │   │   ├── PreferenceSidebar.tsx   # Sidebar for managing preferences
+│   │   │   │   └── UserPreferencesModal.tsx # Modal for initial preference setup
+│   │   │   ├── Settings/           # Application settings components
+│   │   │   │   ├── PreferenceDebug.tsx     # Debug component for preferences
+│   │   │   │   ├── SettingsModal.tsx       # Main settings modal
+│   │   │   │   └── SettingsPanel.tsx       # Panel within settings modal
 │   │   │   ├── TipDisplay.tsx      # Individual tip component
 │   │   │   └── TipsContainer.tsx   # Smart tips container
 │   │   ├── services/               # API and service layer
 │   │   │   └── api.ts             # Backend API client
 │   │   ├── hooks/                  # Custom React hooks
 │   │   │   ├── useChat.ts         # Chat state management
+│   │   │   ├── usePreferences.ts  # User preferences logic and state
 │   │   │   └── useTips.ts         # Tips logic and state
+│   │   ├── stores/                 # Zustand stores for global state
+│   │   │   └── usePreferenceStore.ts # Store for user preferences
 │   │   ├── data/
 │   │   │   └── tips.json          # Tips database (50+ contextual tips)
 │   │   └── types/                  # TypeScript type definitions
@@ -278,7 +310,6 @@ npx tsc --noEmit
 ├── faq-common-questions.jsonl      # Pre-built comparison answers (85-95% confidence)
 ├── .incremental_state.json         # Change tracking state (auto-generated)
 └── README.md                       # Project documentation
-```
 
 ### Adding New Credit Cards
 

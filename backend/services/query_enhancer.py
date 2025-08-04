@@ -203,12 +203,12 @@ class QueryEnhancer:
         logger.info(f"=== END DIRECT COMPARISON DEBUG ===")
         return None
 
-    def enhance_query(self, query: str, user_preferences: Dict = None) -> Tuple[str, Dict[str, any]]:
+    def enhance_search_query(self, query: str) -> Tuple[str, Dict[str, any]]:
         """
-        Enhance query with category and card detection, plus other metadata
+        Enhance query for search retrieval only - focuses on search intent without user preferences
         
         Returns:
-            Tuple of (enhanced_query, metadata)
+            Tuple of (enhanced_search_query, metadata)
         """
         card_detected = self.detect_card_name(query)
         category = self.detect_category(query)
@@ -231,23 +231,15 @@ class QueryEnhancer:
             'suggest_followup': is_generic_recommendation and not spend_amount
         }
         
-        logger.info(f"Query metadata: {metadata}")
-        logger.info(f"User preferences received: {user_preferences}")
+        logger.info(f"Search query metadata: {metadata}")
         
-        # Enhance the query with explicit category information
+        # Enhance the query with explicit category information for search
         enhanced_query = query
-        
-        # Add preference-aware enhancement FIRST (highest priority)
-        if user_preferences:
-            preference_context = self._build_preference_context(user_preferences, query, is_travel_query, is_generic_recommendation)
-            if preference_context:
-                enhanced_query += f"\n\n{preference_context}"
-                logger.info(f"Added preference context: {preference_context}")
         
         # Handle direct card-to-card comparisons first (highest priority)
         if direct_comparison:
             card1, card2 = direct_comparison
-            logger.info(f"=== QUERY ENHANCEMENT DEBUG ===")
+            logger.info(f"=== SEARCH QUERY ENHANCEMENT DEBUG ===")
             logger.info(f"Direct comparison detected: {direct_comparison}")
             logger.info(f"Original enhanced_query: '{enhanced_query}'")
             
@@ -255,8 +247,8 @@ class QueryEnhancer:
             # The search engine will match aliases automatically, so we just need to
             # ensure both card terms are in the query for balanced retrieval
             enhanced_query += f" {card1} {card2}"
-            logger.info(f"Enhanced query after adding card names: '{enhanced_query}'")
-            logger.info(f"=== END QUERY ENHANCEMENT DEBUG ===")
+            logger.info(f"Enhanced search query after adding card names: '{enhanced_query}'")
+            logger.info(f"=== END SEARCH QUERY ENHANCEMENT DEBUG ===")
         
         # Detect spend distribution queries
         is_distribution_query = any(word in query.lower() for word in ['split', 'distribution', 'monthly', 'breakdown', 'categories'])
@@ -276,8 +268,6 @@ class QueryEnhancer:
         elif is_travel_query and not card_detected:
             # Add specific card names and travel terms to ensure balanced retrieval
             enhanced_query += f" travel rewards miles points lounge access Atlas EPM Premier Infinia"
-        # elif is_generic_recommendation and not card_detected:
-        #     enhanced_query += f"\n\nIMPORTANT: This is a generic recommendation query. Analyze ALL available cards systematically and provide balanced comparison. Do not limit analysis to first few cards in context. Include key differentiators for each card."
         elif category and spend_amount:
             # Make category explicit in the query with simple guidance
             if category in ['hotel', 'flight']:
@@ -285,7 +275,7 @@ class QueryEnhancer:
             elif category == 'utility':
                 enhanced_query += f" utility spending rates surcharge"
             elif category == 'insurance':
-                enhanced_query += f" insurance spending rewards rates caps exclusions"
+                enhanced_query += f" insurance spending rewards rates caps exclusions policy premium benefits coverage"
             elif category in ['fuel', 'rent', 'government']:
                 enhanced_query += f" {category} spending exclusions rates"
             elif category == 'education':
@@ -296,6 +286,9 @@ class QueryEnhancer:
         elif category == 'education' and not spend_amount:
             # Handle education category comparisons - now using RAG retrieval instead of hardcoded responses
             enhanced_query += f" education spending rewards comparison rates caps surcharge"
+        elif category == 'insurance' and not spend_amount:
+            # Handle insurance category comparisons - use natural language terms
+            enhanced_query += f" insurance spending rewards comparison rates caps exclusions policy premium benefits coverage"
         elif category == 'milestone':
             # Handle milestone queries separately (they often don't have spend amounts)
             enhanced_query += f" milestone benefits spending thresholds annual rewards"
@@ -307,10 +300,92 @@ class QueryEnhancer:
         elif spend_amount and not category:
             enhanced_query += f" base rate calculation milestones spending threshold"
         
-        logger.info(f"=== FINAL ENHANCEMENT RESULT ===")
-        logger.info(f"Final enhanced query: '{enhanced_query}'")
+        logger.info(f"=== FINAL SEARCH ENHANCEMENT RESULT ===")
+        logger.info(f"Final enhanced search query: '{enhanced_query}'")
         logger.info(f"Final metadata: {metadata}")
-        logger.info(f"=== END FINAL ENHANCEMENT RESULT ===")
+        logger.info(f"=== END FINAL SEARCH ENHANCEMENT RESULT ===")
+        
+        return enhanced_query, metadata
+    
+    def build_preference_context(self, user_preferences: Dict = None) -> str:
+        """
+        Build user preference context for LLM personalization
+        
+        Returns:
+            Formatted preference context string for LLM
+        """
+        if not user_preferences:
+            logger.info("⚠️ [PREFERENCE_CONTEXT] No user preferences provided")
+            return ""
+            
+        logger.info(f"🎯 [PREFERENCE_CONTEXT] Building context from preferences: {user_preferences}")
+        context_parts = []
+
+        # Travel preferences
+        if user_preferences.travel_type:
+            if user_preferences.travel_type == 'domestic':
+                context_parts.append("travels domestically")
+            elif user_preferences.travel_type == 'international':
+                context_parts.append("travels internationally")
+            elif user_preferences.travel_type == 'both':
+                context_parts.append("travels both domestically and internationally")
+            
+        if user_preferences.lounge_access:
+            if user_preferences.lounge_access == 'family':
+                context_parts.append("travels with family")
+            elif user_preferences.lounge_access == 'solo':
+                context_parts.append("travels solo")
+            elif user_preferences.lounge_access == 'with_guests':
+                context_parts.append("travels with guests")
+
+        # Fee willingness
+        if user_preferences.fee_willingness:
+            if user_preferences.fee_willingness in ['5000-10000', '10000+']:
+                context_parts.append("can afford luxury cards")
+
+        # Spending categories
+        if user_preferences.spend_categories:
+            context_parts.append(f"spends on {', '.join(user_preferences.spend_categories)}")
+
+        # Current cards (when enabled)
+        # if user_preferences.current_cards:
+        #     context_parts.append(f"currently uses {', '.join(user_preferences.current_cards)}")
+
+        # Preferred banks (when enabled)
+        # if user_preferences.preferred_banks:
+        #     context_parts.append(f"prefers banks like {', '.join(user_preferences.preferred_banks)}")
+
+        if context_parts:
+            preference_context = f"USER PREFERENCE CONTEXT: While answering the question, make sure you prioritize user preferences - like they {', '.join(context_parts)}."
+            logger.info(f"✅ [PREFERENCE_CONTEXT] Built context: {preference_context}")
+            return preference_context
+        else:
+            logger.info("⚠️ [PREFERENCE_CONTEXT] No valid preference context built")
+            return ""
+
+    def enhance_query(self, query: str, user_preferences: Dict = None) -> Tuple[str, Dict[str, any]]:
+        """
+        Legacy method for backward compatibility - combines search and preference enhancement
+        
+        Returns:
+            Tuple of (enhanced_query_with_preferences, metadata)
+        """
+        logger.info(f"🔄 [LEGACY_ENHANCE] Using legacy enhance_query method")
+        
+        # Get search-focused enhancement
+        enhanced_search_query, metadata = self.enhance_search_query(query)
+        
+        # Add preference context if provided
+        preference_context = self.build_preference_context(user_preferences)
+        
+        if preference_context:
+            enhanced_query = f"{enhanced_search_query}\n\n{preference_context}"
+            logger.info(f"📝 [LEGACY_ENHANCE] Added preference context to search query")
+        else:
+            enhanced_query = enhanced_search_query
+        
+        logger.info(f"User preferences received: {user_preferences}")
+        logger.info(f"Query metadata: {metadata}")
         
         return enhanced_query, metadata
     
@@ -345,9 +420,9 @@ class QueryEnhancer:
         """
         return self.needs_card_selector(query)
     
-    def get_available_cards(self) -> list[str]:
-        """Get list of available cards from our data directory"""
-        return list(self.card_patterns.keys())
+    # def get_available_cards(self) -> list[str]:
+    #     """Get list of available cards from our data directory"""
+    #     return list(self.card_patterns.keys())
     
     def get_followup_questions(self, query: str) -> list[str]:
         """Generate contextual follow-up questions for generic queries"""
@@ -411,4 +486,4 @@ class QueryEnhancer:
         if not context_parts:
             return ""
 
-        return f"USER PREFERENCE CONTEXT: Prioritize recommendations for a user who {', '.join(context_parts)}."
+        return f"USER PREFERENCE CONTEXT: While answering the question, make sure you prioritize user preferences - like they {', '.join(context_parts)}."

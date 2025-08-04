@@ -84,7 +84,12 @@ class VertexRetriever:
         # Note: Query enhancement is now handled by QueryEnhancer service
         # Vertex retriever focuses on search execution only
         
-        logger.info(f"Executing search with enhanced query: {enhanced_query}")
+        logger.info(f"🔍 [SEARCH_DEBUG] === VERTEX AI SEARCH REQUEST ===")
+        logger.info(f"🔍 [SEARCH_DEBUG] Original query: '{query_text}'")
+        logger.info(f"🔍 [SEARCH_DEBUG] Enhanced query: '{enhanced_query}'")
+        logger.info(f"🔍 [SEARCH_DEBUG] Card filter: {card_filter}")
+        logger.info(f"🔍 [SEARCH_DEBUG] Top-k: {top_k}")
+        logger.info(f"🔍 [SEARCH_DEBUG] Expecting 4 cards: HDFC Infinia, Axis Atlas, ICICI EPM, HSBC Premier")
         
         request = discoveryengine.SearchRequest(
             serving_config=self.serving_config,
@@ -108,32 +113,6 @@ class VertexRetriever:
             response = self.client.search(request)
             results = self._process_response(response)
             
-            # For comparison queries, ensure balanced representation from multiple cards
-            if not card_filter and "infinia" in query_text.lower() and "atlas" in query_text.lower():
-                logger.info("Applying balanced search for comparison query")
-                results = self._balance_comparison_results(results, top_k)
-            
-            # If card_filter is specified, post-process results to filter by card name
-            if card_filter and results:
-                # Import here to avoid circular import
-                from services.query_enhancer import QueryEnhancer
-                enhancer = QueryEnhancer()
-                
-                # Get the actual card name from mapping
-                actual_card_name = enhancer.card_name_mapping.get(card_filter, card_filter)
-                
-                filtered_results = []
-                for result in results:
-                    card_name = result.get('cardName', '')
-                    # Check if this document matches the requested card
-                    if (actual_card_name.lower() in card_name.lower() or 
-                        card_filter.lower() in card_name.lower() or 
-                        any(word in card_name.lower() for word in card_filter.lower().split())):
-                        filtered_results.append(result)
-                
-                logger.info(f"Post-filtered results: {len(filtered_results)}/{len(results)} documents match '{card_filter}' (mapped to '{actual_card_name}')")
-                return filtered_results[:top_k]
-            
             return results
             
         except google_exceptions.GoogleAPIError as e:
@@ -146,6 +125,20 @@ class VertexRetriever:
         
         logger.info(f"=== DEBUGGING VERTEX AI RESPONSE ===")
         logger.info(f"Total results: {len(response.results)}")
+        
+        # Track card coverage for debugging missing cards issue
+        cards_found = set()
+        card_name_mapping = {
+            'HDFC Infinia Credit Card': 'HDFC Infinia',
+            'Axis Bank Atlas Credit Card': 'Axis Atlas', 
+            'ICICI Bank Emeralde Private Metal Credit Card': 'ICICI EPM',
+            'HSBC Premier Credit Card': 'HSBC Premier',
+            # Handle variations in card names from different data versions
+            'Emeralde Private Metal Credit Card': 'ICICI EPM',
+            'Axis Atlas Credit Card': 'Axis Atlas',
+            'HDFC Infinia': 'HDFC Infinia',
+            'HSBC Premier': 'HSBC Premier'
+        }
         
         for i, result in enumerate(response.results):
             logger.info(f"\n--- RESULT {i+1} ---")
@@ -235,6 +228,13 @@ class VertexRetriever:
             card_name = struct_data.get('cardName', 'Unknown Card')
             section = struct_data.get('section', 'details')
             
+            # Track which cards are found for coverage analysis
+            if card_name in card_name_mapping:
+                cards_found.add(card_name_mapping[card_name])
+                logger.info(f"✅ [CARD_TRACKING] Found {card_name_mapping[card_name]} data")
+            elif card_name != 'Unknown Card':
+                logger.warning(f"⚠️ [CARD_TRACKING] Found unmapped card: {card_name}")
+            
             logger.info(f"Final extracted: cardName='{card_name}', section='{section}', content_length={len(content)}")
             
             processed_results.append({
@@ -244,65 +244,32 @@ class VertexRetriever:
                 'similarity': result_dict.get('relevanceScore', 0.8),
             })
         
+        # Card coverage analysis - critical for debugging missing card issue
+        all_expected_cards = set(['HDFC Infinia', 'Axis Atlas', 'ICICI EPM', 'HSBC Premier'])
+        missing_cards = all_expected_cards - cards_found
+        
+        logger.info(f"=== CARD COVERAGE ANALYSIS ===")
+        logger.info(f"🎯 [COVERAGE] Cards found in results: {sorted(list(cards_found))}")
+        if missing_cards:
+            logger.warning(f"❌ [COVERAGE] Missing cards: {sorted(list(missing_cards))}")
+            logger.warning(f"🚨 [COVERAGE] CRITICAL: ICICI EPM missing from search results!" if 'ICICI EPM' in missing_cards else "")
+        else:
+            logger.info(f"✅ [COVERAGE] All 4 cards present in search results!")
+        logger.info(f"📊 [COVERAGE] Card coverage: {len(cards_found)}/4 cards ({len(cards_found)/4*100:.1f}%)")
+        
         logger.info(f"=== END DEBUGGING ===")
         logger.info(f"Successfully processed {len(processed_results)} documents.")
         return processed_results
         
-    def get_available_cards(self) -> List[str]:
-        """Returns the list of available credit cards."""
-        return [
-            "Axis Atlas",
-            "ICICI EPM", 
-            "HSBC Premier"
-        ]
+    # def get_available_cards(self) -> List[str]:
+    #     """Returns the list of available credit cards."""
+    #     return [
+    #         "Axis Atlas",
+    #         "ICICI EPM", 
+    #         "HSBC Premier"
+    #     ]
 
-    def _balance_comparison_results(self, results: List[Dict], top_k: int) -> List[Dict]:
-        """Balance search results for comparison queries to ensure fair representation"""
-        if not results:
-            return results
-        
-        # Separate results by card
-        infinia_docs = []
-        atlas_docs = []
-        other_docs = []
-        
-        for result in results:
-            card_name = result.get('cardName', '').lower()
-            if 'infinia' in card_name:
-                infinia_docs.append(result)
-            elif 'atlas' in card_name:
-                atlas_docs.append(result)
-            else:
-                other_docs.append(result)
-        
-        logger.info(f"Before balancing: Infinia={len(infinia_docs)}, Atlas={len(atlas_docs)}, Other={len(other_docs)}")
-        
-        # For comparison queries, aim for 40% Infinia, 40% Atlas, 20% other
-        target_infinia = max(1, int(top_k * 0.4))
-        target_atlas = max(1, int(top_k * 0.4)) 
-        target_other = max(0, top_k - target_infinia - target_atlas)
-        
-        # Select balanced results
-        balanced_results = []
-        balanced_results.extend(infinia_docs[:target_infinia])
-        balanced_results.extend(atlas_docs[:target_atlas])
-        balanced_results.extend(other_docs[:target_other])
-        
-        # If we still need more results, fill from remaining docs
-        remaining_slots = top_k - len(balanced_results)
-        if remaining_slots > 0:
-            remaining_docs = infinia_docs[target_infinia:] + atlas_docs[target_atlas:] + other_docs[target_other:]
-            balanced_results.extend(remaining_docs[:remaining_slots])
-        
-        logger.info(f"After balancing: Total={len(balanced_results)}, Target was {top_k}")
-        
-        # Log the final balance
-        final_infinia = sum(1 for r in balanced_results if 'infinia' in r.get('cardName', '').lower())
-        final_atlas = sum(1 for r in balanced_results if 'atlas' in r.get('cardName', '').lower())
-        final_other = len(balanced_results) - final_infinia - final_atlas
-        logger.info(f"Final balance: Infinia={final_infinia}, Atlas={final_atlas}, Other={final_other}")
-        
-        return balanced_results[:top_k]
+    
 
     def _fallback_response(self, query: str) -> List[Dict]:
         """Provides a fallback response on API failure."""

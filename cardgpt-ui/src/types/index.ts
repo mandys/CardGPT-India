@@ -89,7 +89,13 @@ export interface ChatState {
 }
 
 export type QueryMode = 'General Query' | 'Specific Card' | 'Compare Cards';
-export type CardFilter = 'None' | 'Axis Atlas' | 'ICICI EPM' | 'HSBC Premier'| 'HDFC Infinia';
+
+// CardFilter type - dynamically loaded from backend configuration
+// This will be replaced by the centralized card configuration system
+export type CardFilter = 'None' | string;
+
+// Re-export centralized card types
+export * from './cards';
 
 // User Preference Types
 export interface UserPreferences {

@@ -6,6 +6,7 @@ Preprocesses user queries to detect categories and ensure correct earning rates 
 import re
 from typing import Dict, Tuple, Optional
 import logging
+from services.card_config import get_card_config
 
 logger = logging.getLogger(__name__)
 
@@ -13,21 +14,32 @@ class QueryEnhancer:
     """Enhances user queries to improve LLM accuracy for credit card calculations"""
     
     def __init__(self):
-        # Card name detection patterns
-        self.card_patterns = {
-            'Axis Atlas': ['axis atlas', 'atlas', 'axis', 'axis bank atlas'],
-            'ICICI EPM': ['icici epm', 'epm', 'emeralde private', 'icici bank emeralde', 'icici', 'emeralde'],
-            'HSBC Premier': ['hsbc premier', 'premier', 'hsbc'],
-            'HDFC Infinia': ['hdfc infinia', 'infinia', 'hdfc bank infinia', 'hdfc']
-        }
+        # Get card configuration service
+        self.card_config = get_card_config()
         
-        # Mapping from user-friendly names to actual card names in data
-        self.card_name_mapping = {
-            'ICICI EPM': 'ICICI Bank Emeralde Private Metal Credit Card',
-            'Axis Atlas': 'Axis Bank Atlas Credit Card',
-            'HSBC Premier': 'HSBC Premier Credit Card',
-            'HDFC Infinia': 'HDFC Infinia Credit Card'
-        }
+        # Build card patterns and mappings from configuration
+        self._build_card_patterns()
+        
+        # Initialize other patterns
+        self._initialize_patterns()
+    
+    def _build_card_patterns(self):
+        """Build card patterns and mappings from centralized configuration"""
+        self.card_patterns = {}
+        self.card_name_mapping = {}
+        
+        for card in self.card_config.get_all_active_cards():
+            display_name = card["display_name"]
+            aliases = card.get("aliases", [])
+            jsonl_name = card["jsonl_name"]
+            
+            # Build pattern mapping (display_name -> aliases)
+            self.card_patterns[display_name] = aliases
+            
+            # Build name mapping (display_name -> jsonl_name)
+            self.card_name_mapping[display_name] = jsonl_name
+    
+    def _initialize_patterns(self):
         
         # Category detection patterns
         self.category_patterns = {
@@ -69,7 +81,9 @@ class QueryEnhancer:
             ],
             'government': [
                 'government', 'tax', 'municipal', 'challan',
-                'income tax', 'gst', 'fine'
+                'income tax', 'gst', 'fine', 'government spend', 
+                'government payment', 'government bills', 'tax payment',
+                'municipal payment', 'government fees'
             ],
             'rent': [
                 'rent', 'rental', 'house rent', 'apartment rent'
@@ -276,8 +290,12 @@ class QueryEnhancer:
                 enhanced_query += f" utility spending rates surcharge"
             elif category == 'insurance':
                 enhanced_query += f" insurance spending rewards rates caps exclusions policy premium benefits coverage"
-            elif category in ['fuel', 'rent', 'government']:
-                enhanced_query += f" {category} spending exclusions rates"
+            elif category == 'fuel':
+                enhanced_query += f" fuel spending exclusions rates surcharge"
+            elif category == 'rent':
+                enhanced_query += f" rent rental spending exclusions rates"
+            # elif category == 'government':
+            #     enhanced_query += f" government tax municipal spending exclusions rates payment bills fees"
             elif category == 'education':
                 enhanced_query += f" education spending rates surcharge"
         elif category in ['hotel', 'flight'] and not spend_amount:
@@ -289,6 +307,12 @@ class QueryEnhancer:
         elif category == 'insurance' and not spend_amount:
             # Handle insurance category comparisons - use natural language terms
             enhanced_query += f" insurance spending rewards comparison rates caps exclusions policy premium benefits coverage"
+        # elif category == 'government' and not spend_amount:
+        #     # Handle government category comparisons - comprehensive government payment terms
+        #     enhanced_query += f" government tax municipal spending exclusions rates payment bills fees comparison rewards"
+        elif category in ['fuel', 'rent'] and not spend_amount:
+            # Handle fuel and rent category comparisons
+            enhanced_query += f" {category} spending exclusions rates comparison rewards"
         elif category == 'milestone':
             # Handle milestone queries separately (they often don't have spend amounts)
             enhanced_query += f" milestone benefits spending thresholds annual rewards"
@@ -391,18 +415,26 @@ class QueryEnhancer:
     
     def get_category_guidance(self, category: str) -> str:
         """Get general guidance for specific spending categories"""
-        guidance = {
+        # Load category summaries from centralized configuration
+        guidance = {}
+        
+        # Load configured category summaries
+        for category in ['insurance', 'education']:
+            summary = self.card_config.get_category_summary(category)
+            if summary:
+                guidance[category] = summary
+        
+        # Add other generic guidance
+        guidance.update({
             'hotel': 'Look for accelerated earning rates for hotel bookings. Check for monthly caps on accelerated rates.',
             'flight': 'Look for accelerated earning rates for flight bookings. Check for monthly caps on accelerated rates.',
             'fuel': 'Commonly excluded from earning rewards on most cards. Check exclusion lists.',
             'utility': 'May be excluded or have earning caps. Check for surcharge fees above spending thresholds.',
             'rent': 'Commonly excluded from earning rewards on most cards. Check exclusion lists.',
             'government': 'Commonly excluded from earning rewards on most cards. Check exclusion lists.',
-            'insurance': 'HSBC Premier and HDFC Infinia earn rewards on insurance spending, ICICI EPM has caps, Axis Atlas excludes insurance completely.',
-            'education': 'HSBC Premier earns 3 points per ₹100, HDFC Infinia excludes education, ICICI EPM earns 6 points per ₹200 with caps, Axis Atlas earns 2 EDGE Miles per ₹100 with 1% surcharge via third-party apps.',
             'grocery': 'May have earning caps or accelerated rates depending on the card.',
             'dining': 'Often treated as general spending, but some cards may have accelerated rates.'
-        }
+        })
         
         return guidance.get(category, 'Check the card-specific earning rates and exclusions for this category.')
     

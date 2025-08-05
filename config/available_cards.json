@@ -1,0 +1,172 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2025-08-05",
+  "supported_cards": [
+    {
+      "id": "axis_atlas",
+      "display_name": "Axis Atlas",
+      "full_name": "Axis Bank Atlas Credit Card",
+      "jsonl_name": "Axis Bank Atlas Credit Card",
+      "short_name": "Atlas",
+      "bank": "Axis Bank",
+      "aliases": ["axis atlas", "atlas", "axis", "axis bank atlas"],
+      "reward_currency": "EDGE Miles",
+      "reward_format": "X EDGE Miles/₹100",
+      "color_scheme": {
+        "primary": "from-red-500 to-red-600",
+        "secondary": "red",
+        "gradient": "from-red-500 to-red-600"
+      },
+      "category_info": {
+        "insurance": {
+          "status": "excluded",
+          "description": "EXCLUDES insurance completely (0 rewards)"
+        },
+        "education": {
+          "status": "included",
+          "description": "2 EDGE Miles per ₹100 (base rate) with 1% surcharge via third-party apps"
+        },
+        "overlimit": {
+          "fee": "2.5% (min ₹500)",
+          "section": "other_fees"
+        }
+      },
+      "milestones": {
+        "annual": [
+          {"threshold": 300000, "reward": 2500, "currency": "EDGE Miles"},
+          {"threshold": 750000, "reward": 2500, "currency": "EDGE Miles"},
+          {"threshold": 1500000, "reward": 5000, "currency": "EDGE Miles"}
+        ]
+      },
+      "travel_benefits": {
+        "direct_booking_rate": "5 EDGE Miles/₹100 (5%)",
+        "description": "Strong direct travel booking rewards"
+      },
+      "active": true,
+      "priority": 1
+    },
+    {
+      "id": "hdfc_infinia",
+      "display_name": "HDFC Infinia",
+      "full_name": "HDFC Infinia Credit Card",
+      "jsonl_name": "HDFC Infinia Credit Card",
+      "short_name": "Infinia",
+      "bank": "HDFC Bank",
+      "aliases": ["hdfc infinia", "infinia", "hdfc bank infinia", "hdfc", "hdfc premium", "infinia visa"],
+      "reward_currency": "Reward Points",
+      "reward_format": "X Reward Points per ₹150",
+      "color_scheme": {
+        "primary": "from-purple-500 to-purple-600",
+        "secondary": "purple",
+        "gradient": "from-purple-500 to-purple-600"
+      },
+      "category_info": {
+        "insurance": {
+          "status": "included",
+          "description": "Earns general rate (5 points per ₹150) with daily cap of 5,000 RP"
+        },
+        "education": {
+          "status": "excluded",
+          "description": "Check exclusions section - education may be excluded or have specific conditions"
+        },
+        "overlimit": {
+          "fee": "Not applicable",
+          "section": "other_fees"
+        }
+      },
+      "travel_benefits": {
+        "smartbuy_hotels": "10X points on hotels via SmartBuy portal",
+        "smartbuy_flights": "5X points on flights via SmartBuy portal",
+        "description": "Premium travel earning rates through SmartBuy portal"
+      },
+      "accelerated_categories": {
+        "medicine_healthcare": {
+          "rate": "10X Reward Points (33% return rate)",
+          "platforms": ["PharmEasy"],
+          "monthly_cap": 15000,
+          "cap_spend_amount": 45000
+        },
+        "fashion_lifestyle": {
+          "rate": "5X Reward Points (16% return rate)",
+          "platforms": ["Myntra", "Nykaa"],
+          "monthly_cap": 15000,
+          "cap_spend_amount": 90000
+        }
+      },
+      "active": true,
+      "priority": 2
+    },
+    {
+      "id": "hsbc_premier",
+      "display_name": "HSBC Premier",
+      "full_name": "HSBC Premier Credit Card",
+      "jsonl_name": "HSBC Premier Credit Card",
+      "short_name": "Premier",
+      "bank": "HSBC",
+      "aliases": ["hsbc premier", "premier", "hsbc", "hsbc premier credit card", "premier credit card", "hsbc travel card"],
+      "reward_currency": "Reward Points",
+      "reward_format": "X points per ₹100",
+      "color_scheme": {
+        "primary": "from-blue-500 to-blue-600",
+        "secondary": "blue",
+        "gradient": "from-blue-500 to-blue-600"
+      },
+      "category_info": {
+        "insurance": {
+          "status": "included",
+          "description": "3 points per ₹100 with monthly cap of ₹1,00,000 spending"
+        },
+        "education": {
+          "status": "included",
+          "description": "3 points per ₹100 for education spending up to monthly limits"
+        }
+      },
+      "travel_benefits": {
+        "global_benefits": "Comprehensive global benefits and competitive forex rates",
+        "description": "Strong international travel features"
+      },
+      "active": true,
+      "priority": 3
+    },
+    {
+      "id": "icici_epm",
+      "display_name": "ICICI EPM",
+      "full_name": "ICICI Bank Emeralde Private Metal Credit Card",
+      "jsonl_name": "ICICI Bank Emeralde Private Metal Credit Card",
+      "short_name": "EPM",
+      "bank": "ICICI Bank",
+      "aliases": ["icici epm", "epm", "emeralde private", "icici bank emeralde", "icici", "emeralde", "emeralde private metal", "icici emeralde", "private metal", "emeralde credit card", "icici private metal", "epm credit card"],
+      "reward_currency": "Reward Points",
+      "reward_format": "X points per ₹200",
+      "color_scheme": {
+        "primary": "from-green-500 to-green-600",
+        "secondary": "green",
+        "gradient": "from-green-500 to-green-600"
+      },
+      "category_info": {
+        "insurance": {
+          "status": "capped",
+          "description": "5,000 Reward Points (MCC 6300, 5960) - fixed reward amount"
+        },
+        "education": {
+          "status": "included",
+          "description": "6 points per ₹200 with caps for education MCC codes (8220, 8241, 8249, 8211, 8299, 8244, 8493, 8494, 7911)"
+        },
+        "overlimit": {
+          "fee": "No overlimit charges (excluded as Emeralde Private Metal card)",
+          "section": "exclusions"
+        }
+      },
+      "general_earning": {
+        "rate": "6 points per ₹200",
+        "monthly_cap": 5000
+      },
+      "active": true,
+      "priority": 4
+    }
+  ],
+  "category_summaries": {
+    "insurance": "HSBC Premier and HDFC Infinia earn rewards on insurance spending, ICICI EPM has caps, Axis Atlas excludes insurance completely.",
+    "education": "HSBC Premier earns 3 points per ₹100, HDFC Infinia excludes education, ICICI EPM earns 6 points per ₹200 with caps, Axis Atlas earns 2 EDGE Miles per ₹100 with 1% surcharge via third-party apps."
+  }
+}

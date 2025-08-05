@@ -1,6 +1,7 @@
 import React from 'react';
 import { Settings, Zap, CreditCard, Search, User } from 'lucide-react';
 import { ModelInfo, QueryMode, CardFilter } from '../../types';
+import { useCardDisplayNames } from '../../hooks/useCardConfig';
 import ModelSelector from './ModelSelector';
 import QueryModeSelector from './QueryModeSelector';
 import { ThemeToggle } from './ThemeToggle';
@@ -35,7 +36,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onShowPreferences,
   onShowPreferencesSidebar,
 }) => {
-  const supportedCards: CardFilter[] = ['None', 'Axis Atlas', 'ICICI EPM', 'HSBC Premier', 'HDFC Infinia'];
+  // Get card filter options from centralized configuration
+  const { filterOptions: supportedCards, loading: cardsLoading } = useCardDisplayNames();
 
   return (
     <div className="h-full flex flex-col">
@@ -90,14 +92,18 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <select
             value={cardFilter}
             onChange={(e) => onCardFilterChange(e.target.value as CardFilter)}
-            disabled={isLoading}
+            disabled={isLoading || cardsLoading}
             className="w-full input-field text-sm"
           >
-            {supportedCards.map((card) => (
-              <option key={card} value={card}>
-                {card}
-              </option>
-            ))}
+            {cardsLoading ? (
+              <option>Loading cards...</option>
+            ) : (
+              supportedCards.map((card) => (
+                <option key={card} value={card}>
+                  {card}
+                </option>
+              ))
+            )}
           </select>
           <p className="text-xs text-gray-500 mt-1">
             Only for Specific Card mode

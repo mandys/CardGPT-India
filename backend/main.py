@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 
 # Import our models and API routes
 from models import HealthResponse, ErrorResponse, ConfigResponse, ModelInfo
-from api import chat, config, health, admin, chat_stream, auth, preferences
+from api import chat, config, health, admin, chat_stream, auth, preferences, cards
 
 # Load environment variables
 load_dotenv()
@@ -182,6 +182,7 @@ app.include_router(health.router, prefix="/api", tags=["health"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(auth.router, prefix="/api", tags=["auth"])
 app.include_router(preferences.router, prefix="/api", tags=["preferences"])
+app.include_router(cards.router, tags=["cards"])
 
 # Root endpoint
 @app.get("/")

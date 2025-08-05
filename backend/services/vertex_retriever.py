@@ -11,6 +11,7 @@ from google.api_core import exceptions as google_exceptions
 from google.protobuf.json_format import MessageToDict
 from google.auth import default
 from google.oauth2 import service_account
+from services.card_config import get_card_config
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,9 @@ class VertexRetriever:
         self.project_id = project_id
         self.location = location
         self.data_store_id = data_store_id
+        
+        # Get card configuration service
+        self.card_config = get_card_config()
         
         # Set up authentication
         credentials = self._get_credentials()
@@ -89,12 +93,14 @@ class VertexRetriever:
         logger.info(f"🔍 [SEARCH_DEBUG] Enhanced query: '{enhanced_query}'")
         logger.info(f"🔍 [SEARCH_DEBUG] Card filter: {card_filter}")
         logger.info(f"🔍 [SEARCH_DEBUG] Top-k: {top_k}")
-        logger.info(f"🔍 [SEARCH_DEBUG] Expecting 4 cards: HDFC Infinia, Axis Atlas, ICICI EPM, HSBC Premier")
+        # Get expected cards from configuration
+        expected_cards = self.card_config.get_display_names()
+        logger.info(f"🔍 [SEARCH_DEBUG] Expecting {len(expected_cards)} cards: {', '.join(expected_cards)}")
         
         request = discoveryengine.SearchRequest(
             serving_config=self.serving_config,
             query=enhanced_query,
-            page_size=top_k,
+            page_size=20,
             # filter=filter_str  # Disabled until data store update
             # Explicitly request document content
             content_search_spec=discoveryengine.SearchRequest.ContentSearchSpec(
@@ -128,17 +134,51 @@ class VertexRetriever:
         
         # Track card coverage for debugging missing cards issue
         cards_found = set()
-        card_name_mapping = {
-            'HDFC Infinia Credit Card': 'HDFC Infinia',
-            'Axis Bank Atlas Credit Card': 'Axis Atlas', 
-            'ICICI Bank Emeralde Private Metal Credit Card': 'ICICI EPM',
-            'HSBC Premier Credit Card': 'HSBC Premier',
-            # Handle variations in card names from different data versions
-            'Emeralde Private Metal Credit Card': 'ICICI EPM',
-            'Axis Atlas Credit Card': 'Axis Atlas',
-            'HDFC Infinia': 'HDFC Infinia',
-            'HSBC Premier': 'HSBC Premier'
-        }
+        # Get card name mapping from centralized configuration
+        card_name_mapping = self.card_config.get_card_name_mapping()
+        
+        # Add comprehensive mappings for variations in card names
+        for card in self.card_config.get_all_active_cards():
+            display_name = card["display_name"]
+            
+            # Map display name to itself
+            card_name_mapping[display_name] = display_name
+            
+            # Map all aliases to display name
+            for alias in card.get("aliases", []):
+                card_name_mapping[alias] = display_name
+                card_name_mapping[alias.title()] = display_name  # Title case
+                card_name_mapping[alias.upper()] = display_name  # Upper case
+            
+            # Map short name and bank combinations
+            if "short_name" in card:
+                card_name_mapping[card["short_name"]] = display_name
+            
+            # Map full name variations
+            full_name = card["full_name"]
+            card_name_mapping[full_name] = display_name
+            
+            # Handle specific known variations from JSONL data
+            if display_name == "ICICI EPM":
+                card_name_mapping["Emeralde Private Metal Credit Card"] = display_name
+                card_name_mapping["ICICI Bank Emeralde Private Metal Credit Card"] = display_name
+                card_name_mapping["emeralde private metal"] = display_name
+                card_name_mapping["EPM"] = display_name
+            elif display_name == "Axis Atlas":
+                card_name_mapping["Axis Atlas Credit Card"] = display_name
+                card_name_mapping["Axis Bank Atlas Credit Card"] = display_name
+                card_name_mapping["atlas"] = display_name
+            elif display_name == "HSBC Premier":
+                card_name_mapping["HSBC Premier Credit Card"] = display_name
+                card_name_mapping["premier"] = display_name
+                card_name_mapping["hsbc"] = display_name
+            elif display_name == "HDFC Infinia":
+                card_name_mapping["HDFC Infinia Credit Card"] = display_name
+                card_name_mapping["infinia"] = display_name
+                card_name_mapping["hdfc"] = display_name
+        
+        logger.info(f"🔧 [MAPPING] Built card name mapping with {len(card_name_mapping)} entries")
+        logger.info(f"🔧 [MAPPING] Sample mappings: {dict(list(card_name_mapping.items())[:5])}")
         
         for i, result in enumerate(response.results):
             logger.info(f"\n--- RESULT {i+1} ---")
@@ -229,11 +269,20 @@ class VertexRetriever:
             section = struct_data.get('section', 'details')
             
             # Track which cards are found for coverage analysis
+            logger.info(f"🔍 [CARD_EXTRACTION] Raw card name from search: '{card_name}'")
+            
             if card_name in card_name_mapping:
-                cards_found.add(card_name_mapping[card_name])
-                logger.info(f"✅ [CARD_TRACKING] Found {card_name_mapping[card_name]} data")
+                mapped_name = card_name_mapping[card_name]
+                cards_found.add(mapped_name)
+                logger.info(f"✅ [CARD_TRACKING] Mapped '{card_name}' → '{mapped_name}'")
             elif card_name != 'Unknown Card':
-                logger.warning(f"⚠️ [CARD_TRACKING] Found unmapped card: {card_name}")
+                logger.warning(f"⚠️ [CARD_TRACKING] Found unmapped card: '{card_name}'")
+                # Try partial matching with aliases
+                for mapping_key, mapped_value in card_name_mapping.items():
+                    if card_name.lower() in mapping_key.lower() or mapping_key.lower() in card_name.lower():
+                        cards_found.add(mapped_value)
+                        logger.info(f"🔧 [CARD_TRACKING] Partial match: '{card_name}' → '{mapped_value}' via '{mapping_key}'")
+                        break
             
             logger.info(f"Final extracted: cardName='{card_name}', section='{section}', content_length={len(content)}")
             
@@ -245,7 +294,7 @@ class VertexRetriever:
             })
         
         # Card coverage analysis - critical for debugging missing card issue
-        all_expected_cards = set(['HDFC Infinia', 'Axis Atlas', 'ICICI EPM', 'HSBC Premier'])
+        all_expected_cards = set(self.card_config.get_display_names())
         missing_cards = all_expected_cards - cards_found
         
         logger.info(f"=== CARD COVERAGE ANALYSIS ===")

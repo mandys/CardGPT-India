@@ -9,6 +9,7 @@ from typing import List, Dict, Any
 import logging
 import json
 import re
+from services.card_config import get_card_config
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,8 @@ class LLMService:
     
     def __init__(self, gemini_api_key: str):
         """Initialize the LLM service with Gemini API key"""
+        # Get card configuration service
+        self.card_config = get_card_config()
         # Initialize Gemini
         self.gemini_available = False
         if gemini_api_key:
@@ -389,12 +392,15 @@ CRITICAL: If the context contains information relevant to the question, use it t
 CRITICAL: Focus ONLY on information about the {card_name} card. Do NOT compare it with other cards unless the original question explicitly asks for a comparison with other SPECIFIC cards (e.g., 'Compare {card_name} with Axis Atlas'). If the question is general (e.g., 'best card for X'), but a card_name is provided, still focus only on {card_name}.
 """
         else:
-            prompt += """
+            # Get available cards dynamically
+            available_cards = ', '.join(self.card_config.get_display_names())
+            
+            prompt += f"""
 CRITICAL FOR COMPARISONS: When comparing cards, look for ALL card names in the context. If documents exist for both cards (even with different section names), use information from BOTH cards. Look carefully at the "Source Document" headers to identify which card each section belongs to.
 
 FAIR COMPARISON REQUIREMENTS:
 - EQUAL TREATMENT: Give equal consideration to ALL cards present in the context, not just the first few mentioned
-- COMPREHENSIVE ANALYSIS: For travel queries, systematically analyze ALL cards (Axis Atlas, ICICI EPM, HSBC Premier, HDFC Infinia) for travel benefits, earning rates, and features
+- COMPREHENSIVE ANALYSIS: For travel queries, systematically analyze ALL cards ({available_cards}) for travel benefits, earning rates, and features
 - NO BIAS: Do not favor certain cards over others - provide balanced analysis of all options
 - COMPLETE COVERAGE: When user asks generic questions like "which card for travel", ensure ALL available cards are discussed with their strengths and weaknesses
 """

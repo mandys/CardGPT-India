@@ -310,8 +310,8 @@ def process_query_stream(
         
         logger.info(f"Starting LLM streaming with model: {model_to_use}")
         
-        # Start streaming response
-        # NOTE: Pass original question to LLM for context, user_preferences for personalization
+        # Enhanced Gemini optimizations are now integrated into the main LLM service
+        # The regular LLM flow will use optimized prompts automatically
         logger.info(f"🎯 [LLM_CONTEXT] === PASSING TO LLM ===")
         logger.info(f"🎯 [LLM_CONTEXT] Original question: '{question}'")
         logger.info(f"🎯 [LLM_CONTEXT] User preferences: {user_preferences}")
@@ -512,6 +512,18 @@ async def log_response_stream(query_logger, session_id: str, start_time: float, 
         
     except Exception as e:
         logger.error(f"Failed to log streaming response: {e}")
+
+def is_current_info_query(query: str) -> bool:
+    """Detect if query asks for current/latest information"""
+    current_keywords = [
+        'latest', 'current', 'new', 'recent', 'today', 'this month', 
+        'this year', '2024', '2025', 'now', 'currently', 'updated',
+        'offer', 'promotion', 'bonus', 'deal', 'announcement',
+        'devaluation', 'change', 'launch', 'launched'
+    ]
+    
+    query_lower = query.lower()
+    return any(keyword in query_lower for keyword in current_keywords)
 
 def get_client_ip(request: Request) -> str:
     """Extract client IP address from request"""

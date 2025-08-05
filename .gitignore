@@ -136,3 +136,7 @@ service-account-key.json
 data/axis-atlas-new.txt
 data/hdfc-infinia-new.txt
 data/icici-epm.txt
+data/scraped-data/hdfc-infinia-new.txt
+data/scraped-data/axis-atlas-new.json
+data/scraped-data/icici-epm.txt
+data/scraped-data/hsbc-premier.json

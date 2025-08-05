@@ -100,7 +100,7 @@ class VertexRetriever:
         request = discoveryengine.SearchRequest(
             serving_config=self.serving_config,
             query=enhanced_query,
-            page_size=20,
+            page_size=top_k,
             # filter=filter_str  # Disabled until data store update
             # Explicitly request document content
             content_search_spec=discoveryengine.SearchRequest.ContentSearchSpec(

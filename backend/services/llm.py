@@ -111,8 +111,16 @@ class LLMService:
         # Google Gemini only architecture
         if not model_choice.startswith("gemini"):
             raise ValueError(f"Only Gemini models are supported. Requested: {model_choice}")
-            
-        return self._generate_gemini_answer(system_prompt, user_prompt, model_choice, max_tokens, temperature)
+        
+        # Generate answer using hybrid approach
+        answer, usage_info = self._generate_gemini_answer(system_prompt, user_prompt, model_choice, max_tokens, temperature)
+        
+        # Add hybrid metadata
+        usage_info["hybrid_intelligence"] = True
+        usage_info["cardgpt_version"] = "2.0"
+        logger.info(f"🔗 Hybrid CardGPT: Generated response with RAG + Gemini intelligence")
+        
+        return answer, usage_info
     
     def generate_answer_stream(
         self, 
@@ -167,8 +175,9 @@ class LLMService:
             yield (f"Error: Only Gemini models are supported. Requested: {model_choice}", True, {"tokens": 0, "cost": 0, "model": model_choice})
             return
             
-        yield from self._generate_gemini_answer_stream(system_prompt, user_prompt, model_choice, max_tokens, temperature)
+        yield from self._generate_gemini_answer_stream(system_prompt, user_prompt, model_choice, max_tokens, temperature, question)
     
+
     def _generate_gemini_answer(self, system_prompt: str, user_prompt: str, model: str, max_tokens: int, temperature: float):
         """Generate answer using Gemini models"""
         if not self.gemini_available:
@@ -240,7 +249,7 @@ class LLMService:
             
             return f"Error generating answer: {error_msg}", {"tokens": 0, "cost": 0, "model": model}
     
-    def _generate_gemini_answer_stream(self, system_prompt: str, user_prompt: str, model: str, max_tokens: int, temperature: float):
+    def _generate_gemini_answer_stream(self, system_prompt: str, user_prompt: str, model: str, max_tokens: int, temperature: float, question: str = ""):
         """Generate streaming answer using Gemini models"""
         if not self.gemini_available:
             yield ("Gemini not available. Please check API key.", True, {"tokens": 0, "cost": 0, "model": model})
@@ -305,6 +314,11 @@ class LLMService:
             }
             
             logger.info(f"Generated streaming answer using {model}: ~{int(input_tokens)} input + ~{int(output_tokens)} output tokens, {chunk_count} chunks")
+            
+            # Add hybrid metadata
+            usage_info["hybrid_intelligence"] = True
+            usage_info["cardgpt_version"] = "2.0"
+            logger.info(f"🔗 Hybrid CardGPT: Generated streaming response with RAG + Gemini intelligence")
             
             # Yield final usage information
             yield ("", True, usage_info)  # True = final
@@ -382,193 +396,69 @@ class LLMService:
         return final_context
     
     def _create_system_prompt(self, card_name: str = None, is_calculation: bool = False, user_preferences: Dict = None) -> str:
-        """Create a concise system prompt for the LLM with user preference context"""
-        prompt = """You are a helpful credit card expert. Answer questions clearly and accurately based on the provided context.
-
-CRITICAL: If the context contains information relevant to the question, use it to provide a comprehensive answer. NEVER claim information is missing if it exists in the context.
-"""
-        if card_name:
-            prompt += f"""
-CRITICAL: Focus ONLY on information about the {card_name} card. Do NOT compare it with other cards unless the original question explicitly asks for a comparison with other SPECIFIC cards (e.g., 'Compare {card_name} with Axis Atlas'). If the question is general (e.g., 'best card for X'), but a card_name is provided, still focus only on {card_name}.
-"""
-        else:
-            # Get available cards dynamically
-            available_cards = ', '.join(self.card_config.get_display_names())
-            
-            prompt += f"""
-CRITICAL FOR COMPARISONS: When comparing cards, look for ALL card names in the context. If documents exist for both cards (even with different section names), use information from BOTH cards. Look carefully at the "Source Document" headers to identify which card each section belongs to.
-
-FAIR COMPARISON REQUIREMENTS:
-- EQUAL TREATMENT: Give equal consideration to ALL cards present in the context, not just the first few mentioned
-- COMPREHENSIVE ANALYSIS: For travel queries, systematically analyze ALL cards ({available_cards}) for travel benefits, earning rates, and features
-- NO BIAS: Do not favor certain cards over others - provide balanced analysis of all options
-- COMPLETE COVERAGE: When user asks generic questions like "which card for travel", ensure ALL available cards are discussed with their strengths and weaknesses
-"""
-        prompt += """
-For earning rate comparisons:
-- Look for "rate_general", "earning_rate", "travel", "hotel", "flight", "capping_per_statement_cycle", "reward_capping" sections in the context
-- For education queries: Look for "Education:" entries in context - these show specific reward points earned for education spending
-- Base earning rates are expressed as "X points per ₹Y spent" OR "X EDGE Miles/₹Y" OR "X miles per ₹Y"
-- REWARD TYPES BY CARD:
-  * Axis Atlas: Uses "EDGE Miles" (e.g., "2 EDGE Miles/₹100", "5 EDGE Miles/₹100")
-  * ICICI EPM: Uses "Reward Points" (e.g., "6 points per ₹200") 
-  * HSBC Premier: Uses "Reward points" (e.g., "3 points per ₹100")
-- CRITICAL CATEGORY MAPPINGS:
-  * Flight/airline spending = "Direct Airlines", "Airlines", "Air Travel", "Flight" categories
-  * Hotel spending = "Direct Hotels", "Hotels", "Hotel Booking" categories  
-  * Travel = encompasses flights, hotels, and general travel bookings
-- When user asks about "flight spend" or "airline spend", look for travel earning rates that include "Direct Airlines"
-- For insurance spending: Check "capping_per_statement_cycle", "reward_capping", OR "others" section for limits, NOT "insurance" benefits section
-- CRITICAL INSURANCE LOGIC: If you see insurance caps (like "5,000 RP/day"), this means the card DOES earn rewards at the general rate UP TO that cap
-- Check for both general rates and category-specific rates
-- If a card mentions travel/hotel categories but shows same rate as general, that's the actual rate
-- CRITICAL: Insurance spending ≠ Insurance benefits/coverage. Look for earning caps, not coverage amounts.
-
-EARNING RATE COMPARISON LOGIC (CRITICAL):
-- NEVER compare base rates to category-specific rates - this is misleading
-- Example: Don't compare "Infinia 3.33% base" vs "Atlas 5% travel" - compare "Infinia 10X hotels/5X flights via SmartBuy" vs "Atlas 5% travel"
-- For general spend comparisons, use base rates: Infinia 3.33% (5/₹150) vs Atlas 2% (2/₹100)
-- For travel spend comparisons, use travel rates: Infinia 10X/5X SmartBuy vs Atlas 5% direct
-- Atlas 5% travel rate applies ONLY to travel categories, NOT general spend
-- When user asks "which is better", specify FOR WHAT TYPE OF SPENDING
-
-For calculations:
-- Apply earning rates: "X points per ₹Y" → (spend ÷ Y) × X
-- Check caps and exclusions
-- **CRITICAL**: Look for spending thresholds (₹4L, ₹8L, etc.) in context - apply ALL benefits where user spend ≥ threshold
-- Show step-by-step math with milestone bonuses
-
-For informational queries:
-- Extract all relevant details from context
-- Include specific numbers, dates, and conditions
-- Don't truncate important information
-- If you see earning information for one card but not another, carefully re-read the context as the information may be there but in a different format
-- CRITICAL FOR EDUCATION QUERIES: If context shows "Education: 1,000 Reward Points" or similar, this means the card DOES earn rewards for education spending - never claim information is missing
-
-CARD NAME RECOGNITION:
-- "Axis Bank Atlas Credit Card" = "Axis Atlas" (uses EDGE Miles as reward currency)
-- "ICICI Bank Emeralde Private Metal Credit Card" = "ICICI EPM" (uses Reward Points)
-- "HSBC Premier Credit Card" = "HSBC Premier" (uses Reward points)
-- "HDFC Infinia Credit Card" = "HDFC Infinia" (uses Reward Points)
-- When users ask about "Axis Atlas", look for documents labeled "Axis Bank Atlas Credit Card" and search for "EDGE Miles" rates
-- When users ask about "ICICI EPM", look for documents labeled "ICICI Bank Emeralde Private Metal Credit Card" 
-- NEVER claim a card's information is missing if there are documents for that card in the context
-- PAY SPECIAL ATTENTION: Axis Atlas reward information uses "EDGE Miles" terminology, not "points"
-
-HDFC INFINIA TRAVEL BENEFITS (CRITICAL):
-- HDFC Infinia has PREMIUM travel earning rates through SmartBuy portal:
-  * Hotels via SmartBuy: 10X reward points (exceptional rate)
-  * Flights via SmartBuy: 5X reward points (premium rate)
-  * These are MUCH HIGHER than the base rate of 3.33% (5 points/₹150)
-- For travel comparisons, emphasize Infinia's SmartBuy advantage: "While Axis Atlas offers 5 EDGE Miles/₹100 (5%) on direct travel bookings, HDFC Infinia provides 10X points on hotels and 5X points on flights via SmartBuy portal, which significantly outperforms Atlas for travel spending."
-- General spend: Infinia earns 5 points per ₹150 (3.33%) - this is the BASE rate, NOT the travel rate
-- NEVER compare Infinia's base rate to Atlas's travel rate - compare travel-to-travel rates
-
-INSURANCE SPENDING SPECIFIC GUIDANCE:
-- HDFC Infinia: Earns general rate (5 points per ₹150) with daily cap of 5,000 RP
-- HSBC Premier: Earns 3 points per ₹100 with monthly cap of ₹1,00,000 spending
-- ICICI EPM: Earns general rate (6 points per ₹200) with monthly cap of 5,000 points
-- Axis Atlas: EXCLUDES insurance completely (0 rewards)
-
-EDUCATION SPENDING SPECIFIC GUIDANCE:
-- AXIS ATLAS: Education fees earn 2 EDGE Miles per ₹100 (base rate) with 1% surcharge via third-party apps - Education is NOT excluded from rewards
-- ICICI EPM: Look for "Education:" in context documents - shows exact reward points earned (e.g., "Education: 1,000 Reward Points") for education MCC codes (8220, 8241, 8249, 8211, 8299, 8244, 8493, 8494, 7911)
-- HSBC Premier: Earns 3 points per ₹100 for education spending up to monthly limits
-- HDFC Infinia: Check exclusions section - education may be excluded or have specific conditions
-- CRITICAL: If you see "Education: X Reward Points" or "Education: X points per ₹Y" in context, the card DOES earn rewards for education spending - always include the specific number (e.g., "1,000 Reward Points")
-
-FEE AND CHARGE INFORMATION:
-- CRITICAL: Always search ALL context documents for fee information before claiming it's not available
-- Look for overlimit charges in "Other Fees:", "Overlimit:", sections
-- Axis Atlas: Overlimit 2.5% (min ₹500) - found in other_fees section
-- HDFC Infinia: Overlimit "Not applicable" - found in other_fees section  
-- ICICI EPM: No overlimit charges (excluded as Emeralde Private Metal card)
-- If you see fee information in context, use it - do not claim information is missing
-
-CRITICAL MILESTONE IDENTIFICATION FOR AXIS ATLAS:
-- **Annual Spend Milestones**: Look for "Milestones:" section with spend thresholds (₹3L=2500 miles, ₹7.5L=2500 miles, ₹15L=5000 miles)
-- **Tier-based Milestone Miles**: These are different - found in tier structure sections (Silver/Gold/Platinum milestone miles)
-- For calculations, use ANNUAL SPEND MILESTONES only: ₹3L→2500, ₹7.5L→2500, ₹15L→5000
-- Do NOT confuse tier "Milestone Miles" with annual spending milestone bonuses
-
-CALCULATION REQUIREMENTS:
-- Show step-by-step math with milestone bonuses
-- Double-check arithmetic
-- Include currency in results"""
+        """Create an optimized hybrid system prompt for CardGPT"""
         
-        # Enhanced user preference context integration
+        # Use hybrid CardGPT approach
+        prompt = """You are CardGPT, a knowledgeable assistant about Indian credit cards.
+
+HYBRID INTELLIGENCE INSTRUCTIONS:
+- Your PRIMARY source is the provided context from our trusted internal database
+- If the context fully answers the query, use only that information
+- If the context is incomplete, you may supplement with your own knowledge of Indian credit cards
+- CLEARLY indicate what comes from provided sources vs. your own knowledge
+- Do not hallucinate - only supplement when genuinely helpful
+- For current/latest queries, acknowledge your knowledge cutoff and suggest verification
+
+RESPONSE FORMAT:
+- Start with information from provided context
+- If supplementing, clearly mark: "From my knowledge:" or "Based on general understanding:"
+- End current/promotional queries with verification note"""
+
+        # Card focus logic
+        if card_name:
+            prompt += f"\nFOCUS: Answer specifically about {card_name} unless comparison is explicitly requested."
+        else:
+            prompt += """
+COMPARISON REQUIREMENTS:
+- Equal treatment of all cards in context
+- Comprehensive analysis for travel/benefit queries  
+- Balanced recommendations based on user needs"""
+
+        # Essential calculation logic (streamlined)
+        prompt += """
+EARNING RATES & CALCULATIONS:
+- Base rates: "X points per ₹Y" → (spend ÷ Y) × X
+- REWARD CURRENCIES: Atlas=EDGE Miles, EPM=Reward Points, Premier=Reward points, Infinia=Reward Points
+- Apply milestone bonuses: ₹3L→2500, ₹7.5L→2500, ₹15L→5000 (Atlas)
+- Show step-by-step math with milestone calculations
+
+CRITICAL CATEGORIES:
+- Travel: flight/hotel bookings, includes "Direct Airlines/Hotels"  
+- Insurance: general rate applies WITH caps (not excluded unless stated)
+- Education: 2 EDGE Miles/₹100 (Atlas), specific amounts in context (EPM)"""
+        
+        # User personalization (streamlined)
         logger.info(f"🔍 [LLM_PREFS] Checking user preferences: {user_preferences}")
-        logger.info(f"🔍 [LLM_PREFS] User preferences type: {type(user_preferences)}")
         if user_preferences:
-            logger.info(f"🎯 [LLM_PREFS] Adding enhanced user preferences to LLM prompt: {user_preferences}")
-            prompt += "\n\n=== USER PERSONALIZATION CONTEXT ==="
-            prompt += "\nTailor your response and recommendations based on this user's specific profile and preferences:"
-
-            # Travel-specific personalization
-            travel_type = getattr(user_preferences, 'travel_type', None)
-            lounge_access = getattr(user_preferences, 'lounge_access', None)
+            prompt += "\n\nUSER CONTEXT: Tailor recommendations to user's profile:"
             
-            if travel_type or lounge_access:
-                prompt += "\n\nTRAVEL PROFILE:"
-                if travel_type == 'domestic':
-                    prompt += "\n- Focus on domestic travel benefits, domestic lounge access, and domestic airline partnerships"
-                    prompt += "\n- Prioritize cards with strong domestic travel rewards and domestic airport lounge access"
-                elif travel_type == 'international':
-                    prompt += "\n- Emphasize international travel benefits, global lounge access, and international airline partnerships"
-                    prompt += "\n- Highlight foreign transaction fee waivers, international insurance coverage, and global acceptance"
-                elif travel_type == 'both':
-                    prompt += "\n- Provide comprehensive travel analysis covering both domestic and international benefits"
-                    prompt += "\n- Compare domestic vs international earning rates and redemption options"
+            travel_type = getattr(user_preferences, 'travel_type', None)
+            if travel_type:
+                prompt += f"\n- Travel: {travel_type} focus"
                 
-                if lounge_access == 'family':
-                    prompt += "\n- Highlight family lounge access benefits (guest access, family travel insurance, etc.)"
-                elif lounge_access == 'solo':
-                    prompt += "\n- Focus on individual lounge access benefits and solo traveler perks"
-                elif lounge_access == 'with_guests':
-                    prompt += "\n- Emphasize guest access policies and complimentary guest benefits"
-
-            # Fee willingness and card tier recommendations
             fee_willingness = getattr(user_preferences, 'fee_willingness', None)
             if fee_willingness:
-                prompt += "\n\nFEE TOLERANCE & CARD TIER GUIDANCE:"
-                if fee_willingness in ['5000-10000', '10000+']:
-                    prompt += "\n- User can afford premium/luxury cards - highlight premium benefits and high-value features"
-                    prompt += "\n- Focus on value proposition: how premium benefits justify higher annual fees"
-                    prompt += "\n- Compare premium cards primarily, mention lower-tier alternatives only if specifically relevant"
-                elif fee_willingness in ['1000-2500', '2500-5000']:
-                    prompt += "\n- User prefers mid-tier cards - balance benefits with reasonable annual fees"
-                    prompt += "\n- Highlight cost-effective value propositions and fee-to-benefit ratios"
-                elif fee_willingness == '0':
-                    prompt += "\n- User strongly prefers no annual fee cards - focus on free cards and fee waivers"
-                    prompt += "\n- Emphasize any fee waiver conditions and lifetime free benefits"
-
-            # Spending category optimization
+                prompt += f"\n- Fee tolerance: {fee_willingness}"
+                
             spend_categories = getattr(user_preferences, 'spend_categories', None)
             if spend_categories:
-                prompt += "\n\nSPENDING PATTERN OPTIMIZATION:"
-                prompt += f"\n- Primary spending categories: {', '.join(spend_categories)}"
-                prompt += "\n- Prioritize cards with accelerated earning rates in these specific categories"
-                prompt += "\n- Compare category-specific caps, exclusions, and earning rates across cards"
-                prompt += "\n- Suggest spending strategies to maximize rewards in preferred categories"
-
-            # Current cards context - NOW ENABLED for better personalization
+                prompt += f"\n- Primary spend: {', '.join(spend_categories)}"
+                
             current_cards = getattr(user_preferences, 'current_cards', None)
             if current_cards:
-                prompt += "\n\nEXISTING CARD PORTFOLIO ANALYSIS:"
-                prompt += f"\n- User currently has: {', '.join(current_cards)}"
-                prompt += "\n- CRITICAL: Since user has multiple cards, compare performance across their existing portfolio"
-                prompt += "\n- Show which of their current cards is best for the specific query"
-                prompt += "\n- Provide specific recommendations on how to optimize usage across their portfolio"
-                prompt += "\n- If recommending spending strategy, focus on their current cards"
-
-            # Final personalization instruction
-            prompt += "\n\nPERSONALIZATION REQUIREMENTS:"
-            prompt += "\n- Explain WHY specific cards match this user's profile"
-            prompt += "\n- Prioritize most relevant benefits first in your response"
-            prompt += "\n- Include specific examples relevant to their preferences"
-            prompt += "\n- Consider their preferences in final recommendations"
-            
-            logger.info("✅ [LLM_PREFS] Enhanced user preference context added to system prompt")
+                prompt += f"\n- Current cards: {', '.join(current_cards)} - optimize across portfolio"
+                
+            logger.info("✅ [LLM_PREFS] Streamlined user preferences added")
         else:
             logger.info("⚠️ [LLM_PREFS] No user preferences provided - using generic recommendations")
         
@@ -581,56 +471,21 @@ CALCULATION REQUIREMENTS:
         return prompt
     
     def _create_user_prompt(self, question: str, context: str, is_calculation: bool = False) -> str:
-        """Create a user prompt with enhanced calculation guidance"""
-        base_prompt = f"""Answer this question: "{question}"
+        """Create a hybrid user prompt with clear source attribution"""
+        base_prompt = f"""Below are documents retrieved from our trusted internal database:
 
-Context:
-{context}"""
+{context}
+
+Please answer the user's query using the content above. If the content above does not fully address the query, you may use your own trained knowledge to supplement the answer.
+Clearly mark which parts are based on source data and which are from your own understanding.
+
+User Query:
+{question}"""
 
         if is_calculation:
             base_prompt += """
 
-🧮 **CALCULATION MODE:**
-
-STEPS:
-1. **Amount**: Convert to actual numbers (₹1L = ₹1,00,000, ₹3L = ₹3,00,000, ₹7.5L = ₹7,50,000, ₹15L = ₹15,00,000)
-2. **Base Calculation**: Apply earning rate from context
-3. **Apply Caps**: Check monthly/cycle limits if any
-4. **Find Milestones**: CRITICAL - Step-by-step milestone validation
-   - **SEARCH FOR**: Look for "Milestones:" in context (format: {'spend': '₹3L', 'miles': 2500})
-   - **FOR AXIS ATLAS**: Annual milestones are ₹3L=2500, ₹7.5L=2500, ₹15L=5000 miles
-   - Convert user spend to numbers: ₹3,00,000 = 300000
-   - Convert each milestone to numbers: ₹3L = 300000, ₹7.5L = 750000, ₹15L = 1500000
-   - Check EACH milestone individually:
-     * IF 300000 ≥ 300000 (₹3L) → YES, apply ₹3L milestone bonus (+2500 miles)
-     * IF 300000 ≥ 750000 (₹7.5L) → NO, do not apply ₹7.5L milestone bonus
-     * IF 300000 ≥ 1500000 (₹15L) → NO, do not apply ₹15L milestone bonus
-   - NEVER assume spend exceeds higher milestones without explicit number comparison
-5. **Final Total**: Base + applicable milestones + any fees
-
-KEY RULES:
-- MATHEMATICAL VALIDATION: Before applying any milestone, verify the numbers
-  * ₹3,00,000 spend can ONLY qualify for ₹3L milestone (300000 ≥ 300000 ✅)
-  * ₹3,00,000 spend CANNOT qualify for ₹7.5L milestone (300000 < 750000 ❌)
-- Compare actual numbers, not shorthand (₹3L = ₹3,00,000 = 300000)  
-- If you apply ₹7.5L bonus to ₹3L spend, that's a mathematical ERROR
-- Show math: (spend ÷ rate) × multiplier = result
-
-FORMAT: "🧮 **Detailed Calculation:**" with clear steps
-
-AXIS ATLAS MILESTONE EXAMPLE:
-For ₹3L hotel spend:
-1. Base calculation: ₹2L at 5 EDGE Miles/₹100 = 10,000 miles
-2. Excess: ₹1L at 2 EDGE Miles/₹100 = 2,000 miles 
-3. Milestone check: ₹3,00,000 ≥ ₹3L threshold → +2,500 milestone bonus
-4. Total: 10,000 + 2,000 + 2,500 = 14,500 EDGE Miles"""
-        else:
-            base_prompt += """
-
-For informational queries:
-- Extract all relevant details from context
-- Include specific numbers, dates, and conditions
-- Be comprehensive but concise"""
+🧮 CALCULATION REQUIRED: Show step-by-step math with milestone bonuses applied correctly."""
 
         return base_prompt
     

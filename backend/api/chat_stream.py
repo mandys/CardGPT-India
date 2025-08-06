@@ -83,7 +83,9 @@ async def chat_stream_endpoint(
             raise HTTPException(status_code=503, detail="Services not available")
         
         # Get user preferences
-        user_preferences = await get_user_preferences(http_request, authorization, request)
+        user_preferences_obj = await get_user_preferences(http_request, authorization, request)
+        # Convert Pydantic model to dictionary for LLM service
+        user_preferences = user_preferences_obj.model_dump() if user_preferences_obj else None
         print(f"🔍 [STREAM] Retrieved user preferences: {user_preferences}")
         print(f"🔍 [STREAM] Authorization header passed: {'Present' if authorization else 'None'}")
         

@@ -442,19 +442,19 @@ CRITICAL CATEGORIES:
         if user_preferences:
             prompt += "\n\nUSER CONTEXT: Tailor recommendations to user's profile:"
             
-            travel_type = getattr(user_preferences, 'travel_type', None)
+            travel_type = user_preferences.get('travel_type', None)
             if travel_type:
                 prompt += f"\n- Travel: {travel_type} focus"
                 
-            fee_willingness = getattr(user_preferences, 'fee_willingness', None)
+            fee_willingness = user_preferences.get('fee_willingness', None)
             if fee_willingness:
                 prompt += f"\n- Fee tolerance: {fee_willingness}"
                 
-            spend_categories = getattr(user_preferences, 'spend_categories', None)
+            spend_categories = user_preferences.get('spend_categories', None)
             if spend_categories:
                 prompt += f"\n- Primary spend: {', '.join(spend_categories)}"
                 
-            current_cards = getattr(user_preferences, 'current_cards', None)
+            current_cards = user_preferences.get('current_cards', None)
             if current_cards:
                 prompt += f"\n- Current cards: {', '.join(current_cards)} - optimize across portfolio"
                 

@@ -100,6 +100,8 @@ class ChatStreamRequest(BaseModel):
     query_mode: str = Field("General Query", description="Query mode (General Query, Specific Card, Compare Cards)")
     card_filter: Optional[str] = Field(None, description="Card filter for specific card queries")
     top_k: int = Field(10, ge=1, le=15, description="Number of search results to retrieve")
+    user_preferences: Optional[Dict[str, Any]] = Field(None, description="User preferences for personalization")
+    session_id: Optional[str] = Field(None, description="Session ID for preference tracking")
 
 # Authentication Models
 class GoogleAuthRequest(BaseModel):

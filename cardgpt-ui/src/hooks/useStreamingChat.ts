@@ -78,6 +78,10 @@ export const useStreamingChatStore = create<StreamingChatState>((set, get) => ({
       // Get current preferences from the preference store
       const preferenceState = usePreferenceStore.getState();
       const currentPreferences = preferenceState.preferences || undefined;
+      const sessionId = preferenceState.getSessionId();
+      
+      console.log(`🔍 [CHAT] Using session ID for chat request: ${sessionId}`);
+      console.log(`🔍 [CHAT] Current preferences:`, currentPreferences);
       
       await streamingApiClient.sendMessageStream(
         {
@@ -87,7 +91,7 @@ export const useStreamingChatStore = create<StreamingChatState>((set, get) => ({
           card_filter: state.settings.cardFilter === 'None' ? undefined : state.settings.cardFilter,
           top_k: state.settings.topK,
           user_preferences: currentPreferences,
-          session_id: preferenceState.getSessionId(),
+          session_id: sessionId,
         },
         // onChunk: Update message content progressively
         (chunk: string) => {

@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 
 # Import our models and API routes
 from models import HealthResponse, ErrorResponse, ConfigResponse, ModelInfo
-from api import chat, config, health, admin, chat_stream, preferences, cards, query_limits
+from api import config, health, admin, chat_stream, preferences, cards, query_limits
 
 # Load environment variables
 load_dotenv()
@@ -159,7 +159,7 @@ def get_services():
     return app_state
 
 # Include API routes
-app.include_router(chat.router, prefix="/api", tags=["chat"])
+# Chat router removed - using chat_stream.router instead
 app.include_router(chat_stream.router, prefix="/api", tags=["chat"])
 app.include_router(config.router, prefix="/api", tags=["config"])
 app.include_router(health.router, prefix="/api", tags=["health"])

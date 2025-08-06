@@ -216,7 +216,7 @@ class ApiClient {
   /**
    * Helper method to get session ID from localStorage
    */
-  private getSessionId(): string {
+  getSessionId(): string {
     let sessionId = localStorage.getItem('session_id');
     if (!sessionId) {
       sessionId = 'session_' + Math.random().toString(36).substring(2, 15);

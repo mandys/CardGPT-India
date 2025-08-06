@@ -1,7 +1,7 @@
 import React from 'react';
 import { MessageCircle, Settings, BarChart3, User } from 'lucide-react';
 import { useSidebar } from '../../hooks/useSidebar';
-import { useAuth } from '../../contexts/AuthContext';
+import { useUser } from '@clerk/clerk-react';
 
 interface MobileBottomNavProps {
   onClearChat?: () => void;
@@ -17,7 +17,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   onShowSignIn,
 }) => {
   const { isMobile } = useSidebar();
-  const { isAuthenticated, user } = useAuth();
+  const { isSignedIn, user } = useUser();
 
   // Only show on mobile
   if (!isMobile) return null;
@@ -57,18 +57,18 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           onClick={onShowSignIn}
           className="flex flex-col items-center p-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 transition-colors"
         >
-          {isAuthenticated && user?.picture ? (
+          {isSignedIn && user?.imageUrl ? (
             <img
-              src={user.picture}
-              alt={user.name || 'Profile'}
+              src={user.imageUrl}
+              alt={user.fullName || 'Profile'}
               className="w-5 h-5 rounded-full border border-gray-300"
             />
           ) : (
             <User className="w-5 h-5" />
           )}
           <span className="text-xs mt-1 truncate max-w-12">
-            {isAuthenticated && user?.name ? 
-              user.name.split(' ')[0] : 
+            {isSignedIn && user?.fullName ? 
+              user.fullName.split(' ')[0] : 
               'Sign-in'
             }
           </span>

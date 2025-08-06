@@ -1,7 +1,7 @@
 import React from 'react';
 import { DollarSign, Cpu, Hash, BarChart3 } from 'lucide-react';
 import { UsageInfo } from '../../types';
-import { useAuth } from '../../contexts/AuthContext';
+import { useUser } from '@clerk/clerk-react';
 
 interface CostDisplayProps {
   llmUsage: UsageInfo;
@@ -14,7 +14,7 @@ const CostDisplay: React.FC<CostDisplayProps> = ({
   embeddingUsage, 
   totalCost 
 }) => {
-  const { isAuthenticated, stats, queryLimit } = useAuth();
+  const { isSignedIn } = useUser();
   const formatCost = (cost: number) => {
     const USD_TO_INR = 86; // 1 USD = 86 INR (approximate)
     const inrCost = cost * USD_TO_INR;
@@ -108,15 +108,15 @@ const CostDisplay: React.FC<CostDisplayProps> = ({
             Query Usage
           </div>
           <div className="space-y-1">
-            {isAuthenticated ? (
+            {isSignedIn ? (
               <>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Today:</span>
-                  <span className="font-mono">{stats?.today_queries || 0}</span>
+                  <span className="font-mono">-</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Total:</span>
-                  <span className="font-mono">{stats?.total_queries || 0}</span>
+                  <span className="font-mono">-</span>
                 </div>
                 <div className="flex justify-between border-t pt-1">
                   <span className="text-gray-500">Plan:</span>
@@ -129,20 +129,16 @@ const CostDisplay: React.FC<CostDisplayProps> = ({
               <>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Used:</span>
-                  <span className="font-mono">{queryLimit?.current_count || 0}</span>
+                  <span className="font-mono">-</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Limit:</span>
-                  <span className="font-mono">{queryLimit?.limit || 5}</span>
+                  <span className="font-mono">-</span>
                 </div>
                 <div className="flex justify-between border-t pt-1">
                   <span className="text-gray-500">Remaining:</span>
-                  <span className={`font-mono font-medium ${
-                    (queryLimit?.remaining || 0) > 0 
-                      ? 'text-green-600 dark:text-green-400' 
-                      : 'text-red-600 dark:text-red-400'
-                  }`}>
-                    {queryLimit?.remaining || 0}
+                  <span className="font-mono font-medium text-green-600 dark:text-green-400">
+                    -
                   </span>
                 </div>
               </>

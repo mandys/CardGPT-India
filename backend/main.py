@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 
 # Import our models and API routes
 from models import HealthResponse, ErrorResponse, ConfigResponse, ModelInfo
-from api import chat, config, health, admin, chat_stream, auth, preferences, cards
+from api import chat, config, health, admin, chat_stream, preferences, cards, query_limits
 
 # Load environment variables
 load_dotenv()
@@ -31,20 +31,15 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 Starting Credit Card Assistant API...")
     
     try:
-        # Initialize database first (for Railway PostgreSQL)
-        logger.info("🗄️ Initializing database...")
-        from services.auth_service import AuthService
-        
+        # Initialize database for query limits (independent SQLite)
+        logger.info("🗄️ Initializing query limits database...")
+        from api.query_limits import init_query_limits_db
         try:
-            # Initialize auth service (this creates tables automatically)
-            auth_service = AuthService()
-            if auth_service.test_database_connection():
-                logger.info("✅ Database initialized successfully")
-            else:
-                logger.warning("⚠️ Database connection test failed")
+            init_query_limits_db()
+            logger.info("✅ Query limits database initialized successfully")
         except Exception as e:
-            logger.error(f"❌ Database initialization error: {e}")
-            # Continue startup anyway, so auth issues don't break the entire app
+            logger.error(f"❌ Query limits database initialization error: {e}")
+            # Continue startup anyway, so database issues don't break the entire app
         
         # Initialize other services
         from services.llm import LLMService
@@ -83,23 +78,12 @@ async def lifespan(app: FastAPI):
         )
         app_state["query_logger"] = QueryLogger(logging_config)
         
-        # Initialize auth service and database
-        from services.auth_service import AuthService
-        auth_service = AuthService()
-        app_state["auth_service"] = auth_service
-        
         # Initialize preference service
         from services.preference_service import PreferenceService
         preference_service = PreferenceService()
         app_state["preference_service"] = preference_service
         
-        # Log appropriate database info based on type
-        if auth_service.use_postgres:
-            logger.info(f"🔑 Auth service initialized with PostgreSQL database")
-            logger.info(f"🎯 Preference service initialized with PostgreSQL database")
-        else:
-            logger.info(f"🔑 Auth service initialized with SQLite database at: {auth_service.db_path}")
-            logger.info(f"🎯 Preference service initialized with SQLite database")
+        logger.info(f"🎯 Preference service initialized with SQLite database")
         
         logger.info("✅ All services initialized successfully")
         
@@ -180,8 +164,8 @@ app.include_router(chat_stream.router, prefix="/api", tags=["chat"])
 app.include_router(config.router, prefix="/api", tags=["config"])
 app.include_router(health.router, prefix="/api", tags=["health"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
-app.include_router(auth.router, prefix="/api", tags=["auth"])
 app.include_router(preferences.router, prefix="/api", tags=["preferences"])
+app.include_router(query_limits.router, prefix="/api", tags=["query_limits"])
 app.include_router(cards.router, tags=["cards"])
 
 # Root endpoint

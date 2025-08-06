@@ -4,7 +4,7 @@
   "private": true,
   "description": "Modern React UI for Credit Card Assistant",
   "dependencies": {
-    "@react-oauth/google": "^0.12.2",
+    "@clerk/clerk-react": "^5.38.1",
     "@tanstack/react-query": "^4.36.0",
     "@types/node": "^16.18.0",
     "@types/react": "^18.0.0",

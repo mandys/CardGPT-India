@@ -41,18 +41,8 @@ def get_preference_service():
         logger.warning("⚠️ [DEPS] Preference service not in app_state, creating fallback instance")
         return PreferenceService()
 
-def get_auth_service():
-    """Dependency to get auth service"""
-    logger.info("🔧 [DEPS] Getting auth service")
-    from main import app_state
-    if "auth_service" in app_state:
-        logger.info("✅ [DEPS] Found auth service in app_state")
-        return app_state["auth_service"]
-    else:
-        # Fallback: create a new instance
-        logger.warning("⚠️ [DEPS] Auth service not in app_state, creating fallback instance")
-        from services.auth_service import AuthService
-        return AuthService()
+# NOTE: Auth service disabled - using Clerk for authentication now
+# Authenticated preferences are temporarily disabled until Clerk integration is complete
 
 def get_session_id(request: Request) -> str:
     """Get or create session ID for guest users"""
@@ -61,28 +51,11 @@ def get_session_id(request: Request) -> str:
         session_id = str(uuid.uuid4())
     return session_id
 
-def get_user_from_auth(authorization: Optional[str], auth_service) -> Optional[dict]:
-    """Extract user info from JWT token"""
-    if not authorization or not authorization.startswith("Bearer "):
-        return None
-    
-    token = authorization.split(" ")[1]
-    return auth_service.verify_jwt_token(token)
+# DISABLED: Old JWT auth system removed, Clerk handles authentication now
 
-@router.post("/preferences", response_model=UserPreferenceResponse)
-async def create_or_update_preferences(
-    request: UserPreferenceRequest,
-    authorization: Optional[str] = Header(None),
-    preference_service: PreferenceService = Depends(get_preference_service),
-    auth_service = Depends(get_auth_service)
-):
-    """Create or update user preferences for authenticated users"""
-    try:
-        # Get user info from JWT token
-        user_info = get_user_from_auth(authorization, auth_service)
-        
-        if not user_info:
-            raise HTTPException(status_code=401, detail="Authentication required")
+# DISABLED: Authenticated preferences temporarily disabled until Clerk integration
+# @router.post("/preferences", response_model=UserPreferenceResponse)
+# async def create_or_update_preferences(...):
         
         user_id = str(user_info['user_id'])
         

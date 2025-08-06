@@ -31,21 +31,11 @@ async def get_user_preferences(request: Request, authorization: Optional[str] = 
     try:
         from main import app_state
         preference_service = app_state.get("preference_service")
-        auth_service = app_state.get("auth_service")
         
         if not preference_service:
             return None
             
-        # Check if user is authenticated
-        if authorization and authorization.startswith("Bearer "):
-            token = authorization.split(" ")[1]
-            try:
-                if auth_service:
-                    user = auth_service.get_current_user(token)
-                    if user:
-                        return preference_service.get_user_preferences(user.id)
-            except Exception:
-                pass  # Fall back to session preferences
+        # Use session preferences (Clerk authentication handled on frontend)
         
         # Fall back to session preferences
         session_id = get_session_id(request)

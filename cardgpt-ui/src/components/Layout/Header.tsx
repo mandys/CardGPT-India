@@ -1,7 +1,9 @@
 import React from 'react';
 import { CreditCard, RefreshCw, AlertCircle, Menu, X } from 'lucide-react';
+import { UserButton } from '@clerk/clerk-react';
 import { useSidebar } from '../../hooks/useSidebar';
-import UserButton from '../Auth/UserButton';
+import QueryLimitBadge from '../Chat/QueryLimitBadge';
+import useQueryLimits from '../../hooks/useQueryLimits';
 
 interface HeaderProps {
   isConnected: boolean;
@@ -12,6 +14,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ isConnected, onRefresh, isLoading = false, onShowAuth }) => {
   const { isOpen, isMobile, toggleSidebar } = useSidebar();
+  const { status, openSignIn } = useQueryLimits();
 
   return (
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 lg:px-6 py-4">
@@ -66,8 +69,22 @@ const Header: React.FC<HeaderProps> = ({ isConnected, onRefresh, isLoading = fal
             <span>Refresh</span>
           </button>
           
+          {/* Query Limit Badge - Hidden on mobile, only for guests */}
+          {status.isGuest && status.canQuery && (
+            <div className="hidden md:block">
+              <QueryLimitBadge
+                remaining={status.remaining}
+                total={status.total}
+                isGuest={status.isGuest}
+                canQuery={status.canQuery}
+                message={status.message}
+                onSignIn={openSignIn}
+              />
+            </div>
+          )}
+          
           {/* User Authentication */}
-          <UserButton onShowAuth={onShowAuth} />
+          <UserButton afterSignOutUrl="/" />
           
           {/* Warning if disconnected - Hidden on mobile */}
           {!isConnected && (

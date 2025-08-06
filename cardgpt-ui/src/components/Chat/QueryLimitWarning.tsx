@@ -1,16 +1,16 @@
 import React from 'react';
 import { AlertTriangle, Crown, LogIn } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useUser } from '@clerk/clerk-react';
 
 interface QueryLimitWarningProps {
   onSignIn: () => void;
 }
 
 const QueryLimitWarning: React.FC<QueryLimitWarningProps> = ({ onSignIn }) => {
-  const { queryLimit, isAuthenticated } = useAuth();
+  const { isSignedIn } = useUser();
 
-  // Don't show if authenticated or if they can still query
-  if (isAuthenticated || !queryLimit || queryLimit.can_query) {
+  // Don't show if signed in
+  if (isSignedIn) {
     return null;
   }
 
@@ -23,7 +23,7 @@ const QueryLimitWarning: React.FC<QueryLimitWarningProps> = ({ onSignIn }) => {
             Daily Query Limit Reached
           </h3>
           <p className="text-amber-700 dark:text-amber-300 text-sm mb-3">
-            You've used all {queryLimit.limit} free queries today. Sign in with Google to get unlimited access to our credit card assistant!
+            Sign in to get unlimited access to our credit card assistant with personalized recommendations!
           </p>
           
           <div className="flex flex-col sm:flex-row gap-2">

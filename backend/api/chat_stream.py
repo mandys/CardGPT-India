@@ -40,34 +40,15 @@ async def get_user_preferences(request: Request, authorization: Optional[str] = 
     try:
         from main import app_state
         preference_service = app_state.get("preference_service")
-        auth_service = app_state.get("auth_service")
         
-        logger.info(f"🔍 [CHAT_PREFS] Services - Preference: {'Present' if preference_service else 'None'}, Auth: {'Present' if auth_service else 'None'}")
+        logger.info(f"🔍 [CHAT_PREFS] Services - Preference: {'Present' if preference_service else 'None'}")
         
         if not preference_service:
             logger.warning("⚠️ [CHAT_PREFS] No preference service available")
             return None
             
-        # Check if user is authenticated
-        if authorization and authorization.startswith("Bearer "):
-            token = authorization.split(" ")[1]
-            logger.info(f"🔍 [CHAT_PREFS] Processing authenticated user with token: {token[:20]}...")
-            try:
-                if auth_service:
-                    # Use the same method as the preferences API
-                    user_info = auth_service.verify_jwt_token(token)
-                    logger.info(f"🔍 [CHAT_PREFS] Auth service returned user info: {user_info}")
-                    if user_info and user_info.get('user_id'):
-                        user_id = str(user_info['user_id'])
-                        prefs_result = preference_service.get_user_preferences(user_id)
-                        logger.info(f"🔍 [CHAT_PREFS] Retrieved authenticated user preferences: {prefs_result}")
-                        if prefs_result and prefs_result.preferences:
-                            return prefs_result.preferences
-            except Exception as e:
-                logger.warning(f"⚠️ [CHAT_PREFS] Auth failed, falling back to session: {e}")
-                pass  # Fall back to session preferences
-        
-        # Fall back to session preferences using proper session ID
+        # Use session preferences (Clerk authentication is handled on frontend)
+        # For now, all preferences are session-based until we integrate Clerk user IDs
         session_id = get_session_id(request, chat_request)
         logger.info(f"🔍 [CHAT_PREFS] Getting session preferences for session: {session_id}")
         prefs = preference_service.get_session_preferences(session_id)

@@ -2,9 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { GoogleOAuthProvider } from '@react-oauth/google';
+import { ClerkProvider } from '@clerk/clerk-react';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { AuthProvider } from './contexts/AuthContext';
 import LandingPage from './components/Landing/LandingPage';
 import MainLayout from './components/Layout/MainLayout';
 import PrivacyPolicy from './components/Pages/PrivacyPolicy';
@@ -21,7 +20,12 @@ const queryClient = new QueryClient({
   },
 });
 
-const GOOGLE_CLIENT_ID = "910315304252-im8oclg36n7dun7hjs2atkv8p2ln7ng7.apps.googleusercontent.com";
+// Import your Clerk Publishable Key
+const PUBLISHABLE_KEY = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY;
+
+if (!PUBLISHABLE_KEY) {
+  throw new Error('Add your Clerk Publishable Key to the .env file')
+}
 
 const App: React.FC = () => {
   // Add error boundary and debugging
@@ -33,31 +37,29 @@ const App: React.FC = () => {
 
   try {
     return (
-      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
         <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <ThemeProvider>
-              <Router>
-                <div className="App">
-                  <Routes>
-                    {/* Landing Page - Default Route */}
-                    <Route path="/" element={<LandingPage />} />
-                    
-                    {/* Chat Interface */}
-                    <Route path="/chat" element={<MainLayout />} />
-                    
-                    {/* Privacy Policy */}
-                    <Route path="/privacy" element={<PrivacyPolicy />} />
-                    
-                    {/* Redirect any unknown routes to landing page */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </div>
-              </Router>
-            </ThemeProvider>
-          </AuthProvider>
+          <ThemeProvider>
+            <Router>
+              <div className="App">
+                <Routes>
+                  {/* Landing Page - Default Route */}
+                  <Route path="/" element={<LandingPage />} />
+                  
+                  {/* Chat Interface */}
+                  <Route path="/chat" element={<MainLayout />} />
+                  
+                  {/* Privacy Policy */}
+                  <Route path="/privacy" element={<PrivacyPolicy />} />
+                  
+                  {/* Redirect any unknown routes to landing page */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </div>
+            </Router>
+          </ThemeProvider>
         </QueryClientProvider>
-      </GoogleOAuthProvider>
+      </ClerkProvider>
     );
   } catch (error) {
     console.error('💥 App Error:', error);

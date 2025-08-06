@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import { ChatMessage } from '../../types';
-import { useAuth } from '../../contexts/AuthContext';
 import MessageBubble from './MessageBubble';
-import QueryLimitWarning from './QueryLimitWarning';
+import QueryLimitBadge from './QueryLimitBadge';
+import useQueryLimits from '../../hooks/useQueryLimits';
 
 interface ChatInterfaceProps {
   messages: ChatMessage[];
@@ -29,10 +29,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [inputMessage, setInputMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { queryLimit, isAuthenticated } = useAuth();
-
-  // Check if input should be disabled due to query limit
-  const inputDisabled = Boolean(queryLimit && !queryLimit.can_query && !isAuthenticated);
+  
+  // Query limits hook (for UI display only - logic handled in MainLayout)
+  const { status, openSignIn } = useQueryLimits();
+  
+  // Input disabled if cannot query
+  const inputDisabled = !status.canQuery;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -45,6 +47,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (inputMessage.trim() && !isLoading) {
+      // Query limiting now handled in MainLayout.handleSendMessage
       onSendMessage(inputMessage.trim());
       setInputMessage('');
     }
@@ -107,14 +110,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 </button>
               ))}
             </div>
-            
-            {/* Query Limit Warning */}
-            <QueryLimitWarning onSignIn={() => onShowAuth?.()} />
           </div>
         ) : (
           <>
-            {/* Query Limit Warning for existing chat */}
-            <QueryLimitWarning onSignIn={() => onShowAuth?.()} />
             
             {messages.map((message) => (
               <MessageBubble 
@@ -153,17 +151,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       {/* Input Area */}
       <div className="glass-card m-4 p-4 border-0">
-        {inputDisabled && (
-          <div className="mb-3 flex items-center justify-center">
-            <div className="text-sm text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-3 py-2 rounded-lg border border-orange-200 dark:border-orange-800">
-              ⚠️ Daily limit reached ({queryLimit?.current_count}/{queryLimit?.limit} queries). 
-              <button 
-                onClick={() => onShowAuth?.()} 
-                className="ml-1 text-orange-700 dark:text-orange-300 underline hover:text-orange-800 dark:hover:text-orange-200"
-              >
-                Sign in for unlimited access
-              </button>
-            </div>
+        {/* Query Limit Status */}
+        {status.isGuest && (
+          <div className="mb-3">
+            <QueryLimitBadge
+              remaining={status.remaining}
+              total={status.total}
+              isGuest={status.isGuest}
+              canQuery={status.canQuery}
+              message={status.message}
+              onSignIn={openSignIn}
+              className={!status.canQuery ? "w-full" : ""}
+            />
           </div>
         )}
         <form onSubmit={handleSubmit} className="flex space-x-2">

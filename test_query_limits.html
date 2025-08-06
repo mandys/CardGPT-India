@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Query Limits Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .badge { display: inline-block; padding: 8px 16px; margin: 8px; border-radius: 20px; border: 1px solid; }
+        .badge.can-query { background: #e1f5fe; border-color: #0277bd; color: #01579b; }
+        .badge.no-query { background: #ffeaa7; border-color: #fdcb6e; color: #e17055; }
+        .exhausted { background: #ff6b6b; color: white; padding: 12px; border-radius: 8px; margin: 10px 0; }
+        button { padding: 10px 20px; background: #6c5ce7; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #5f3dc4; }
+        .log { background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0; font-family: monospace; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Query Limits System Test</h1>
+    <p>This page tests the localStorage-based guest query limit system that integrates with Clerk.</p>
+
+    <div id="status"></div>
+    <div id="controls">
+        <button onclick="checkStatus()">Check Status</button>
+        <button onclick="simulateQuery()">Simulate Query</button>
+        <button onclick="resetCount()">Reset Count</button>
+        <button onclick="testMultipleQueries()">Test 5 Queries</button>
+    </div>
+
+    <div id="log"></div>
+
+    <script>
+        const GUEST_QUERY_LIMIT = 2;
+        const QUERY_COUNT_KEY = "guest_query_count";
+        const DAILY_RESET_KEY = "query_count_date";
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML = `<div class="log">[${timestamp}] ${message}</div>` + logDiv.innerHTML;
+        }
+
+        function getGuestQueryCount() {
+            const today = new Date().toDateString();
+            const storedDate = localStorage.getItem(DAILY_RESET_KEY);
+            
+            // Reset count if it's a new day
+            if (storedDate !== today) {
+                localStorage.setItem(DAILY_RESET_KEY, today);
+                localStorage.setItem(QUERY_COUNT_KEY, "0");
+                return 0;
+            }
+            
+            return parseInt(localStorage.getItem(QUERY_COUNT_KEY) || "0", 10);
+        }
+
+        function incrementGuestQueryCount() {
+            const count = getGuestQueryCount() + 1;
+            localStorage.setItem(QUERY_COUNT_KEY, count.toString());
+            return count;
+        }
+
+        function resetGuestCount() {
+            localStorage.setItem(QUERY_COUNT_KEY, "0");
+            localStorage.setItem(DAILY_RESET_KEY, new Date().toDateString());
+        }
+
+        function updateStatus() {
+            const used = getGuestQueryCount();
+            const remaining = Math.max(0, GUEST_QUERY_LIMIT - used);
+            const canQuery = remaining > 0;
+            
+            const statusDiv = document.getElementById('status');
+            
+            if (!canQuery) {
+                statusDiv.innerHTML = `
+                    <div class="exhausted">
+                        <h3>🚫 Free Queries Exhausted</h3>
+                        <p>You've used all ${GUEST_QUERY_LIMIT} free queries today. Sign in for unlimited access!</p>
+                        <button onclick="alert('Would redirect to Clerk sign-in')">Sign In</button>
+                    </div>
+                `;
+            } else {
+                statusDiv.innerHTML = `
+                    <div class="badge ${canQuery ? 'can-query' : 'no-query'}">
+                        ⚡ ${remaining} free quer${remaining === 1 ? 'y' : 'ies'} left
+                        ${remaining <= 1 ? '<button onclick="alert(\'Would open Clerk sign-up\')" style="margin-left: 10px; padding: 4px 8px; font-size: 12px;">👑 Upgrade</button>' : ''}
+                    </div>
+                `;
+            }
+        }
+
+        function checkStatus() {
+            updateStatus();
+            const used = getGuestQueryCount();
+            log(`Status checked: Used ${used}/${GUEST_QUERY_LIMIT} queries`);
+        }
+
+        function simulateQuery() {
+            const currentCount = getGuestQueryCount();
+            if (currentCount >= GUEST_QUERY_LIMIT) {
+                log(`❌ Query blocked: Limit reached (${currentCount}/${GUEST_QUERY_LIMIT})`);
+                alert('Query limit reached! Sign in to continue.');
+                return false;
+            }
+
+            const newCount = incrementGuestQueryCount();
+            log(`✅ Query allowed: ${newCount}/${GUEST_QUERY_LIMIT} used`);
+            updateStatus();
+            return true;
+        }
+
+        function resetCount() {
+            resetGuestCount();
+            log('🔄 Query count reset to 0');
+            updateStatus();
+        }
+
+        function testMultipleQueries() {
+            log('🧪 Testing 5 consecutive queries...');
+            for (let i = 1; i <= 5; i++) {
+                const allowed = simulateQuery();
+                if (!allowed) {
+                    log(`🛑 Stopped at query ${i} due to limit`);
+                    break;
+                }
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatus();
+            log('📱 Guest query limits system initialized');
+            log(`💾 Using localStorage keys: ${QUERY_COUNT_KEY}, ${DAILY_RESET_KEY}`);
+        });
+    </script>
+</body>
+</html>

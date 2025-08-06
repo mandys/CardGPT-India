@@ -1,7 +1,7 @@
 import React from 'react';
 import { Menu } from 'lucide-react';
 import { useSidebar } from '../../hooks/useSidebar';
-import UserButton from '../Auth/UserButton';
+import { UserButton } from '@clerk/clerk-react';
 
 interface MobileHeaderProps {
   isConnected: boolean;
@@ -43,7 +43,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         
         {/* Right: User Button Only */}
         <div className="flex-shrink-0">
-          <UserButton onShowAuth={onShowAuth} />
+          <UserButton afterSignOutUrl="/" />
         </div>
       </div>
     </header>

@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+// Authentication handled by individual components
 import Header from './Header';
 import Sidebar from './Sidebar';
 import MobileBottomNav from './MobileBottomNav';
 import ChatInterface from '../Chat/ChatInterface';
 import SettingsModal from '../Settings/SettingsModal';
-import AuthModal from '../Auth/AuthModal';
-import UserProfile from '../Auth/UserProfile';
 import { UserPreferencesModal, PreferenceSidebar } from '../Preferences';
 import { usePreferences } from '../../hooks/usePreferences';
+import useQueryLimits from '../../hooks/useQueryLimits';
 import { useStreamingChatStore } from '../../hooks/useStreamingChat';
 import { useSidebar } from '../../hooks/useSidebar';
-import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../services/api';
 import { QueryMode, CardFilter } from '../../types';
 
@@ -20,12 +19,10 @@ const MainLayout: React.FC = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
   const [isPreferencesModalOpen, setIsPreferencesModalOpen] = useState(false);
   const [isPreferencesSidebarOpen, setIsPreferencesSidebarOpen] = useState(false);
   const [hasUserDismissedModal, setHasUserDismissedModal] = useState(false);
-  const [initialPreferenceModalStep, setInitialPreferenceModalStep] = useState(0); // New state
+  const [initialPreferenceModalStep, setInitialPreferenceModalStep] = useState(0);
   
   const {
     messages,
@@ -42,7 +39,7 @@ const MainLayout: React.FC = () => {
   } = useStreamingChatStore();
   
   const { isOpen, isMobile } = useSidebar();
-  const { isAuthenticated, queryLimit, incrementQuery, checkQueryLimit } = useAuth();
+  const { checkAndIncrementQuery } = useQueryLimits();
   const { 
     updatePreferences, 
     preferences, 
@@ -118,25 +115,16 @@ const MainLayout: React.FC = () => {
       return;
     }
     
-    // Check if user can make a query
-    if (queryLimit && !queryLimit.can_query) {
-      setIsAuthModalOpen(true);
-      return;
-    }
-    
-    // Increment query count before sending
-    const canProceed = await incrementQuery();
+    // Check query limits before sending (covers all entry points)
+    const canProceed = await checkAndIncrementQuery();
     if (!canProceed) {
-      setIsAuthModalOpen(true);
+      // Query limit reached - user will see the badge status update
+      console.log('Query limit reached for:', message.substring(0, 50) + '...');
       return;
     }
     
     // Note: User preferences are now collected via post-response refinement buttons
-    
     await sendMessageStream(message);
-    
-    // Refresh query limit after sending
-    await checkQueryLimit();
   };
 
   const handleExampleClick = (example: string) => {
@@ -280,7 +268,7 @@ const MainLayout: React.FC = () => {
         isConnected={isConnected}
         onRefresh={handleRefresh}
         isLoading={isRefreshing}
-        onShowAuth={() => setIsAuthModalOpen(true)}
+        onShowAuth={() => {}}
       />
       
       {/* Main Content */}
@@ -310,7 +298,7 @@ const MainLayout: React.FC = () => {
             onSendMessage={handleSendMessage}
             onExampleClick={handleExampleClick}
             onCardSelection={handleCardSelection}
-            onShowAuth={() => setIsAuthModalOpen(true)}
+            onShowAuth={() => {}}
             onPreferenceRefinement={handlePreferenceRefinement}
           />
         </div>
@@ -322,9 +310,7 @@ const MainLayout: React.FC = () => {
         onShowSettings={() => setIsSettingsModalOpen(true)}
         onShowAnalytics={() => {/* TODO: Implement analytics view */}}
         onShowSignIn={() => {
-          if (isAuthenticated) {
-            setIsUserProfileOpen(true);
-          }
+          // Auth handled by Clerk UserButton in Header
         }}
       />
       
@@ -346,20 +332,7 @@ const MainLayout: React.FC = () => {
         onShowPreferencesSidebar={() => setIsPreferencesSidebarOpen(true)}
       />
       
-      {/* Auth Modal */}
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-      />
       
-      {/* User Profile Modal */}
-      {isUserProfileOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="max-w-md w-full">
-            <UserProfile onClose={() => setIsUserProfileOpen(false)} />
-          </div>
-        </div>
-      )}
 
       {/* User Preferences Modal */}
       <UserPreferencesModal

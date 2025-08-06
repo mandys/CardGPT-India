@@ -33,10 +33,20 @@ async def health_check():
         else:
             service_status["query_enhancer"] = False
             
-        # Check auth service and database
-        from services.auth_service import AuthService
-        auth_service = AuthService()
-        service_status["database"] = auth_service.test_database_connection()
+        # Check query limits database
+        from api.query_limits import DATABASE_PATH
+        import sqlite3
+        import os
+        try:
+            if os.path.exists(DATABASE_PATH):
+                conn = sqlite3.connect(DATABASE_PATH)
+                conn.execute("SELECT 1")
+                conn.close()
+                service_status["query_limits_db"] = True
+            else:
+                service_status["query_limits_db"] = False
+        except Exception:
+            service_status["query_limits_db"] = False
             
         # Overall status
         overall_status = "healthy" if all(service_status.values()) else "degraded"

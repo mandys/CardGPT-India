@@ -83,7 +83,10 @@ class QueryEnhancer:
                 'government', 'tax', 'municipal', 'challan',
                 'income tax', 'gst', 'fine', 'government spend', 
                 'government payment', 'government bills', 'tax payment',
-                'municipal payment', 'government fees'
+                'municipal payment', 'government fees', 'tax payments',
+                'government spending', 'best card for tax', 'tax bill',
+                'municipality', 'civic', 'government services',
+                'property tax', 'advance tax', 'tds', 'government dues'
             ],
             'rent': [
                 'rent', 'rental', 'house rent', 'apartment rent'
@@ -279,9 +282,9 @@ class QueryEnhancer:
             else:
                 enhanced_query += f" comparison all cards Atlas EPM Premier Infinia rewards rates"
         # Handle travel queries specially (lower priority than generic comparisons)
-        elif is_travel_query and not card_detected:
-            # Add specific card names and travel terms to ensure balanced retrieval
-            enhanced_query += f" travel rewards miles points lounge access Atlas EPM Premier Infinia"
+        # elif is_travel_query and not card_detected:
+        #     # Add specific card names and travel terms to ensure balanced retrieval
+        #     enhanced_query += f" travel rewards miles points lounge access Atlas EPM Premier Infinia"
         elif category and spend_amount:
             # Make category explicit in the query with simple guidance
             if category in ['hotel', 'flight']:
@@ -294,8 +297,8 @@ class QueryEnhancer:
                 enhanced_query += f" fuel spending exclusions rates surcharge"
             elif category == 'rent':
                 enhanced_query += f" rent rental spending exclusions rates"
-            # elif category == 'government':
-            #     enhanced_query += f" government tax municipal spending exclusions rates payment bills fees"
+            elif category == 'government':
+                enhanced_query += f" government tax municipal spending exclusions rates payment bills fees rewards"
             elif category == 'education':
                 enhanced_query += f" education spending rates surcharge"
         elif category in ['hotel', 'flight'] and not spend_amount:
@@ -307,9 +310,9 @@ class QueryEnhancer:
         elif category == 'insurance' and not spend_amount:
             # Handle insurance category comparisons - use natural language terms
             enhanced_query += f" insurance spending rewards comparison rates caps exclusions policy premium benefits coverage"
-        # elif category == 'government' and not spend_amount:
-        #     # Handle government category comparisons - comprehensive government payment terms
-        #     enhanced_query += f" government tax municipal spending exclusions rates payment bills fees comparison rewards"
+        elif category == 'government' and not spend_amount:
+            # Handle government category comparisons - comprehensive government payment terms
+            enhanced_query += f" government tax municipal spending exclusions rates payment bills fees comparison rewards"
         elif category in ['fuel', 'rent'] and not spend_amount:
             # Handle fuel and rent category comparisons
             enhanced_query += f" {category} spending exclusions rates comparison rewards"
@@ -431,7 +434,7 @@ class QueryEnhancer:
             'fuel': 'Commonly excluded from earning rewards on most cards. Check exclusion lists.',
             'utility': 'May be excluded or have earning caps. Check for surcharge fees above spending thresholds.',
             'rent': 'Commonly excluded from earning rewards on most cards. Check exclusion lists.',
-            'government': 'Commonly excluded from earning rewards on most cards. Check exclusion lists.',
+            'government': 'Tax and government payments are commonly excluded from earning rewards on most cards. Check reward point sections for exclusions and any special rates or surcharges.',
             'grocery': 'May have earning caps or accelerated rates depending on the card.',
             'dining': 'Often treated as general spending, but some cards may have accelerated rates.'
         })

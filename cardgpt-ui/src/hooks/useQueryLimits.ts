@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useUser, useClerk } from '@clerk/clerk-react';
 
 interface QueryLimitStatus {
@@ -21,6 +21,13 @@ const GUEST_QUERY_LIMIT = 2;
 const QUERY_COUNT_KEY = "guest_query_count";
 const DAILY_RESET_KEY = "query_count_date";
 
+// Global state synchronization for all hook instances
+const globalStateListeners = new Set<() => void>();
+
+const notifyGlobalStateChange = () => {
+  globalStateListeners.forEach(listener => listener());
+};
+
 export const useQueryLimits = (): QueryLimitHook => {
   const { isSignedIn, user } = useUser();
   const { openSignIn } = useClerk();
@@ -30,6 +37,7 @@ export const useQueryLimits = (): QueryLimitHook => {
     total: GUEST_QUERY_LIMIT,
     isGuest: true,
   });
+  const forceRefreshRef = useRef<() => void>();
 
   // Guest query management functions
   const getGuestQueryCount = useCallback((): number => {
@@ -55,6 +63,8 @@ export const useQueryLimits = (): QueryLimitHook => {
     try {
       const count = getGuestQueryCount() + 1;
       localStorage.setItem(QUERY_COUNT_KEY, count.toString());
+      // Notify all hook instances of the change
+      setTimeout(() => notifyGlobalStateChange(), 0);
       return count;
     } catch (error) {
       console.warn('Error updating localStorage:', error);
@@ -66,6 +76,8 @@ export const useQueryLimits = (): QueryLimitHook => {
     try {
       localStorage.setItem(QUERY_COUNT_KEY, "0");
       localStorage.setItem(DAILY_RESET_KEY, new Date().toDateString());
+      // Notify all hook instances of the change
+      setTimeout(() => notifyGlobalStateChange(), 0);
     } catch (error) {
       console.warn('Error resetting localStorage:', error);
     }
@@ -183,10 +195,12 @@ export const useQueryLimits = (): QueryLimitHook => {
       }
 
       incrementGuestQueryCount();
-      await refreshStatus();
+      // Force immediate status update
+      const newStatus = calculateGuestStatus();
+      setStatus(newStatus);
       return true;
     }
-  }, [isSignedIn, user, getGuestQueryCount, incrementGuestQueryCount, refreshStatus]);
+  }, [isSignedIn, user, getGuestQueryCount, incrementGuestQueryCount, refreshStatus, calculateGuestStatus]);
 
   // Initialize status on mount and when auth changes
   useEffect(() => {
@@ -199,6 +213,20 @@ export const useQueryLimits = (): QueryLimitHook => {
       resetGuestCount();
     }
   }, [isSignedIn, resetGuestCount]);
+
+  // Register global state listener for cross-component synchronization
+  useEffect(() => {
+    const forceRefresh = () => {
+      refreshStatus();
+    };
+    
+    forceRefreshRef.current = forceRefresh;
+    globalStateListeners.add(forceRefresh);
+    
+    return () => {
+      globalStateListeners.delete(forceRefresh);
+    };
+  }, [refreshStatus]);
 
   return {
     status,

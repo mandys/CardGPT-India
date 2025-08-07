@@ -15,12 +15,18 @@ from dotenv import load_dotenv
 from models import HealthResponse, ErrorResponse, ConfigResponse, ModelInfo
 from api import config, health, admin, chat_stream, preferences, cards, query_limits
 
-# Load environment variables
-load_dotenv()
-
-# Configure logging
+# Configure logging first
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Load environment variables based on environment
+environment = os.getenv("ENVIRONMENT", "development")
+if environment == "production":
+    load_dotenv(".env.production")
+    logger.info("🌐 Loaded production environment configuration")
+else:
+    load_dotenv(".env.local")
+    logger.info("🔧 Loaded local development environment configuration")
 
 # Global services will be initialized on startup
 app_state = {}
@@ -31,14 +37,19 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 Starting Credit Card Assistant API...")
     
     try:
-        # Initialize database for query limits (independent SQLite)
-        logger.info("🗄️ Initializing query limits database...")
-        from api.query_limits import init_query_limits_db
+        # Initialize Supabase database service
+        logger.info("🗄️ Initializing Supabase database service...")
+        from services.supabase_service import SupabaseService
         try:
-            init_query_limits_db()
-            logger.info("✅ Query limits database initialized successfully")
+            supabase_service = SupabaseService()
+            # Test connection
+            if supabase_service.test_connection():
+                app_state["supabase_service"] = supabase_service
+                logger.info("✅ Supabase service initialized successfully")
+            else:
+                raise Exception("Supabase connection test failed")
         except Exception as e:
-            logger.error(f"❌ Query limits database initialization error: {e}")
+            logger.error(f"❌ Supabase service initialization error: {e}")
             # Continue startup anyway, so database issues don't break the entire app
         
         # Initialize other services
@@ -59,6 +70,9 @@ async def lifespan(app: FastAPI):
         gcp_location = os.getenv("VERTEX_AI_LOCATION") or os.getenv("GCP_LOCATION", "global")
         gcp_data_store_id = os.getenv("VERTEX_AI_DATA_STORE_ID") or os.getenv("GCP_DATA_STORE_ID")
         
+        logger.info(f"🔧 Environment check - Supabase URL: {os.getenv('SUPABASE_URL')[:50]}..." if os.getenv('SUPABASE_URL') else "🔧 No SUPABASE_URL found")
+        logger.info(f"🔧 Environment check - Supabase Key: {os.getenv('SUPABASE_KEY')[:20]}..." if os.getenv('SUPABASE_KEY') else "🔧 No SUPABASE_KEY found")
+        
         if not gcp_project_id or not gcp_data_store_id:
             raise ValueError("Google Cloud project ID and data store ID are required")
         
@@ -67,23 +81,23 @@ async def lifespan(app: FastAPI):
         app_state["retriever_service"] = VertexRetriever(gcp_project_id, gcp_location, gcp_data_store_id)
         app_state["query_enhancer_service"] = QueryEnhancer()
         
-        # Initialize query logger
+        # Initialize query logger with Supabase
         logging_config = LoggingConfig(
             enabled=os.getenv("ENABLE_QUERY_LOGGING", "true").lower() == "true",
-            db_path=os.getenv("QUERY_LOG_DB_PATH", "logs/query_logs.db"),
+            db_path=os.getenv("QUERY_LOG_DB_PATH", "logs/query_logs.db"),  # Not used with Supabase
             retention_days=int(os.getenv("LOG_RETENTION_DAYS", "90")),
             anonymize_after_days=int(os.getenv("ANONYMIZE_AFTER_DAYS", "30")),
             hash_salt=os.getenv("HASH_SALT_SECRET", "default-salt-change-in-production"),
             gdpr_compliance_mode=os.getenv("GDPR_COMPLIANCE_MODE", "true").lower() == "true"
         )
-        app_state["query_logger"] = QueryLogger(logging_config)
+        app_state["query_logger"] = QueryLogger(logging_config, app_state.get("supabase_service"))
         
-        # Initialize preference service
+        # Initialize preference service with Supabase
         from services.preference_service import PreferenceService
-        preference_service = PreferenceService()
+        preference_service = PreferenceService(app_state.get("supabase_service"))
         app_state["preference_service"] = preference_service
         
-        logger.info(f"🎯 Preference service initialized with SQLite database")
+        logger.info(f"🎯 Preference service initialized with Supabase database")
         
         logger.info("✅ All services initialized successfully")
         

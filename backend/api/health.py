@@ -33,20 +33,16 @@ async def health_check():
         else:
             service_status["query_enhancer"] = False
             
-        # Check query limits database
-        from api.query_limits import DATABASE_PATH
-        import sqlite3
-        import os
+        # Check Supabase database connection
         try:
-            if os.path.exists(DATABASE_PATH):
-                conn = sqlite3.connect(DATABASE_PATH)
-                conn.execute("SELECT 1")
-                conn.close()
-                service_status["query_limits_db"] = True
+            if "supabase_service" in app_state and app_state["supabase_service"] is not None:
+                supabase_service = app_state["supabase_service"]
+                service_status["supabase"] = supabase_service.test_connection()
             else:
-                service_status["query_limits_db"] = False
-        except Exception:
-            service_status["query_limits_db"] = False
+                service_status["supabase"] = False
+        except Exception as e:
+            print(f"Supabase health check error: {e}")
+            service_status["supabase"] = False
             
         # Overall status
         overall_status = "healthy" if all(service_status.values()) else "degraded"

@@ -6,7 +6,7 @@ import Sidebar from './Sidebar';
 import MobileBottomNav from './MobileBottomNav';
 import ChatInterface from '../Chat/ChatInterface';
 import SettingsModal from '../Settings/SettingsModal';
-import { UserPreferencesModal, PreferenceSidebar } from '../Preferences';
+import { OnboardingModal } from '../Onboarding';
 import { usePreferences } from '../../hooks/usePreferences';
 import useQueryLimits from '../../hooks/useQueryLimits';
 import { useStreamingChatStore } from '../../hooks/useStreamingChat';
@@ -19,10 +19,8 @@ const MainLayout: React.FC = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [isPreferencesModalOpen, setIsPreferencesModalOpen] = useState(false);
-  const [isPreferencesSidebarOpen, setIsPreferencesSidebarOpen] = useState(false);
+  const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
   const [hasUserDismissedModal, setHasUserDismissedModal] = useState(false);
-  const [initialPreferenceModalStep, setInitialPreferenceModalStep] = useState(0);
   
   const {
     messages,
@@ -68,9 +66,9 @@ const MainLayout: React.FC = () => {
     }
   }, [location.state, isConnected]);
 
-  // First-time user welcome modal
+  // First-time user onboarding modal (streamlined)
   useEffect(() => {
-    console.log('🔍 Preference modal check:', { hasLoadedInitial, isEmpty, completionPercentage, preferences });
+    console.log('🔍 Onboarding check:', { hasLoadedInitial, isEmpty, completionPercentage, preferences });
     // Only show if preferences have loaded and user has very few preferences
     // Also check if preferences is null or has no meaningful data
     const hasNoPrefData = !preferences || Object.keys(preferences).length === 0 || 
@@ -78,10 +76,10 @@ const MainLayout: React.FC = () => {
                           (!preferences.spend_categories || preferences.spend_categories.length === 0));
     
     if (hasLoadedInitial && (isEmpty || hasNoPrefData) && completionPercentage <= 10 && !hasUserDismissedModal) {
-      console.log('✅ Showing preference modal for first-time user');
+      console.log('✅ Showing streamlined onboarding modal for first-time user');
       // Small delay to let the interface settle
       const timer = setTimeout(() => {
-        setIsPreferencesModalOpen(true);
+        setIsOnboardingModalOpen(true);
       }, 1000);
       return () => clearTimeout(timer);
     }
@@ -221,13 +219,9 @@ const MainLayout: React.FC = () => {
         return;
       }
 
-      // Special case: if preference is 'show_card_selection_modal', open the preferences modal
+      // Special case: if preference is 'show_card_selection_modal', open the onboarding modal
       if (preference === 'show_card_selection_modal') {
-        setIsPreferencesModalOpen(true);
-        // Optionally, set a state to indicate which step to open to in the modal
-        // For now, the modal will open to the first step, but we can enhance this later.
-        // The 'cards' step is at index 3 in UserPreferencesModal.tsx
-        setInitialPreferenceModalStep(3); 
+        setIsOnboardingModalOpen(true);
         return;
       }
       
@@ -285,6 +279,7 @@ const MainLayout: React.FC = () => {
           topK={settings.topK}
           onTopKChange={handleTopKChange}
           isLoading={isLoading}
+          onShowOnboarding={() => setIsOnboardingModalOpen(true)}
         />
         
         {/* Chat Interface */}
@@ -328,35 +323,25 @@ const MainLayout: React.FC = () => {
         topK={settings.topK}
         onTopKChange={handleTopKChange}
         isLoading={isLoading}
-        onShowPreferences={() => setIsPreferencesModalOpen(true)}
-        onShowPreferencesSidebar={() => setIsPreferencesSidebarOpen(true)}
+        onShowOnboarding={() => setIsOnboardingModalOpen(true)}
       />
       
       
 
-      {/* User Preferences Modal */}
-      <UserPreferencesModal
-        isOpen={isPreferencesModalOpen}
+      {/* Streamlined Onboarding Modal (for new users) */}
+      <OnboardingModal
+        isOpen={isOnboardingModalOpen}
         onClose={() => {
-          setIsPreferencesModalOpen(false);
+          setIsOnboardingModalOpen(false);
           setHasUserDismissedModal(true); // Track that user dismissed modal
-          setInitialPreferenceModalStep(0); // Reset step on close
         }}
         onComplete={(preferences) => {
           updatePreferences(preferences);
-          setIsPreferencesModalOpen(false);
+          setIsOnboardingModalOpen(false);
           setHasUserDismissedModal(true); // Track completion as dismissal too
-          setInitialPreferenceModalStep(0); // Reset step on complete
         }}
-        triggerContext={isEmpty ? "welcome" : "manual"}
-        initialStep={initialPreferenceModalStep} // Pass the initial step
       />
 
-      {/* Preferences Sidebar */}
-      <PreferenceSidebar
-        isOpen={isPreferencesSidebarOpen}
-        onClose={() => setIsPreferencesSidebarOpen(false)}
-      />
     </div>
   );
 };

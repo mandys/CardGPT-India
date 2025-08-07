@@ -5,7 +5,6 @@ import { useCardDisplayNames } from '../../hooks/useCardConfig';
 import ModelSelector from './ModelSelector';
 import QueryModeSelector from './QueryModeSelector';
 import { ThemeToggle } from './ThemeToggle';
-import { PreferenceDebug } from './PreferenceDebug';
 
 interface SettingsPanelProps {
   models: ModelInfo[];
@@ -18,8 +17,7 @@ interface SettingsPanelProps {
   topK: number;
   onTopKChange: (topK: number) => void;
   isLoading?: boolean;
-  onShowPreferences?: () => void;
-  onShowPreferencesSidebar?: () => void;
+  onShowOnboarding?: () => void;
 }
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({
@@ -33,8 +31,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   topK,
   onTopKChange,
   isLoading = false,
-  onShowPreferences,
-  onShowPreferencesSidebar,
+  onShowOnboarding,
 }) => {
   // Get card filter options from centralized configuration
   const { filterOptions: supportedCards, loading: cardsLoading } = useCardDisplayNames();
@@ -141,32 +138,35 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">User Preferences</label>
           </div>
           <div className="space-y-2">
-            {onShowPreferences && (
-              <button
-                onClick={onShowPreferences}
-                className="w-full btn-secondary text-sm py-2 px-3 flex items-center justify-between"
-              >
-                <span>Setup Preferences</span>
-                <span className="text-xs text-gray-500">Quick setup</span>
-              </button>
-            )}
-            {onShowPreferencesSidebar && (
-              <button
-                onClick={onShowPreferencesSidebar}
-                className="w-full btn-outline text-sm py-2 px-3 flex items-center justify-between"
-              >
-                <span>Manage Preferences</span>
-                <span className="text-xs text-gray-500">Full control</span>
-              </button>
+            {onShowOnboarding ? (
+              <>
+                <button
+                  onClick={onShowOnboarding}
+                  className="w-full btn-primary text-sm py-2 px-3 flex items-center justify-between"
+                >
+                  <span>Setup Preferences</span>
+                  <span className="text-xs text-white opacity-90">3 steps</span>
+                </button>
+                <button
+                  onClick={onShowOnboarding}
+                  className="w-full btn-outline text-sm py-2 px-3 flex items-center justify-between"
+                >
+                  <span>Update Preferences</span>
+                  <span className="text-xs text-gray-500">Change settings</span>
+                </button>
+              </>
+            ) : (
+              <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
+                <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
+                  Preferences unavailable - onboarding handler not connected
+                </p>
+              </div>
             )}
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
             Set your spending habits and travel preferences for personalized recommendations
           </p>
         </div>
-
-        {/* Preference Debug Component */}
-        <PreferenceDebug />
       </div>
       
       {/* Footer */}

@@ -25,7 +25,6 @@ const QueryLimitBadge: React.FC<QueryLimitBadgeProps> = ({
     return null;
   }
 
-  const percentage = (remaining / total) * 100;
   const isLow = remaining <= 1;
   const isExhausted = remaining === 0;
 

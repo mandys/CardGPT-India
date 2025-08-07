@@ -6,6 +6,14 @@ A modern full-stack AI assistant for querying Indian credit card terms and condi
 
 ## 🌟 What's New (Major Updates)
 
+### 🗄️ **Complete Supabase Migration** (August 2025)
+- **Unified Database**: Migrated from SQLite/Railway PostgreSQL to Supabase for all environments
+- **Cloud-Native**: Managed PostgreSQL with automatic backups and scaling
+- **Environment Auto-Detection**: Seamless dev/prod switching with `.env.local` and `.env.production`
+- **GDPR Compliant**: Built-in privacy features, data retention, and PII hashing
+- **Real-time Ready**: Supabase infrastructure supports real-time features when needed
+- **Analytics Dashboard**: Enhanced query logging with daily statistics and insights
+
 ### ✨ **Clerk Authentication Integration** (August 2025)
 - **Freemium Model**: 2 free queries for guests, unlimited for authenticated users
 - **Modal Authentication**: Seamless sign-in/up without page redirects
@@ -54,7 +62,7 @@ A modern full-stack AI assistant for querying Indian credit card terms and condi
 - **Gemini API Key** (required - ultra-low cost model)
 - **Google Cloud Project** (for Vertex AI Search)
 - **Clerk Account** (free - for authentication)
-- **Database**: Auto-configured (SQLite locally, PostgreSQL in production)
+- **Database**: Supabase PostgreSQL (unified for all environments)
 
 ### 1. Clone & Setup
 ```bash
@@ -88,16 +96,36 @@ npm install
 ```
 
 ### 4. Environment Variables
+
+#### Backend (.env.local for development)
 ```bash
-# Backend (.env)
+# Supabase Configuration (New - Required)
+SUPABASE_URL="https://your-dev-project.supabase.co"
+SUPABASE_KEY="your-supabase-service-role-key"
+ENVIRONMENT="development"
+
+# Google AI & Search (Required)
 GEMINI_API_KEY="your-gemini-key-here"
 GOOGLE_CLOUD_PROJECT="your-gcp-project-id" 
 VERTEX_AI_DATA_STORE_ID="your-data-store-id"
 
-# Frontend (.env)
+# Authentication (Required)
+CLERK_SECRET_KEY="sk_test_your-clerk-secret"
+```
+
+#### Frontend (.env.local)
+```bash
 REACT_APP_CLERK_PUBLISHABLE_KEY="pk_test_your-clerk-key"
 REACT_APP_API_URL="http://localhost:8000"
 ```
+
+#### Supabase Setup (Required)
+1. **Create Supabase Projects**: Create separate dev and prod projects at [supabase.com](https://supabase.com)
+2. **Run Database Schema**: Execute `backend/supabase_schema.sql` in both project SQL editors
+3. **Get Credentials**: Copy URL and service role key from project settings
+4. **Configure Environment**: Update `.env.local` with your Supabase credentials
+
+See `backend/SUPABASE_MIGRATION_GUIDE.md` for detailed setup instructions.
 
 ## Architecture
 
@@ -112,7 +140,7 @@ REACT_APP_API_URL="http://localhost:8000"
 ┌─────────────▼───────────────────────────────────────┐
 │                   Backend                           │
 │   FastAPI + Hybrid Database + Query Limits API     │
-│   🔄 SQLite (local) + PostgreSQL (production)      │
+│   🗄️ Supabase PostgreSQL (dev + prod)             │
 └─────────────┬───────────────────────────────────────┘
               │ Enhanced Retrieval
 ┌─────────────▼───────────────────────────────────────┐
@@ -124,7 +152,7 @@ REACT_APP_API_URL="http://localhost:8000"
 
 ### 🔐 **Authentication System**
 - **Guest Users**: 2 free queries (localStorage tracking)
-- **Authenticated Users**: 100 daily queries (database tracking)
+- **Authenticated Users**: 100 daily queries (Supabase tracking)
 - **Clerk Integration**: Modal sign-in, no page redirects
 - **Query Limiting**: Centralized system covers all entry points
 - **Auto-Conversion**: Seamless upgrade flow when limits reached
@@ -168,7 +196,7 @@ REACT_APP_API_URL="http://localhost:8000"
 
 ### ✅ **Authentication & Limits**
 - **👥 Guest Mode**: 2 free queries with localStorage tracking
-- **🔐 Authenticated Mode**: 100 daily queries with database tracking  
+- **🔐 Authenticated Mode**: 100 daily queries with Supabase tracking  
 - **📱 Modal Sign-in**: No page redirects, seamless UX
 - **🔄 Query Tracking**: All entry points (manual, examples, tips, landing page)
 - **⏰ Daily Reset**: Automatic midnight UTC reset for all users
@@ -214,8 +242,7 @@ python generate_faq.py
 ### Project Structure (Updated)
 ```
 ├── backend/                    # FastAPI Backend
-│   ├── main.py                # Entry point with hybrid database
-│   ├── query_limits.db        # SQLite for query tracking
+│   ├── main.py                # Entry point with Supabase integration
 │   ├── api/                   # REST API endpoints
 │   │   ├── auth.py            # Legacy auth (being phased out)
 │   │   ├── chat.py            # Enhanced chat with streaming
@@ -272,7 +299,7 @@ python -m pytest                         # Backend tests
 - **Frontend**: Vercel (https://card-gpt-india-vercel.app)
 - **Backend**: Railway (https://cardgpt-india-production.up.railway.app)
 - **Authentication**: Clerk (managed service)
-- **Database**: PostgreSQL (Railway) + SQLite (local)
+- **Database**: Supabase PostgreSQL (unified dev + prod)
 - **Search**: Vertex AI Search (Google Cloud)
 - **AI Models**: Gemini 2.5 Flash-Lite (Google AI)
 
@@ -372,7 +399,7 @@ GET  /api/health            # Health check
 - ✅ Implemented freemium model (2 free + unlimited auth)
 - ✅ Modal authentication (no page redirects)
 - ✅ Centralized query limiting (all entry points covered)
-- ✅ Hybrid database system (SQLite + PostgreSQL)
+- ✅ Unified database system (Supabase PostgreSQL)
 
 ### 🧠 **August 2025 - Enhanced AI Architecture**
 - ✅ Gemini 2.5 Flash-Lite integration (95% cost reduction)

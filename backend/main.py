@@ -84,7 +84,6 @@ async def lifespan(app: FastAPI):
         # Initialize query logger with Supabase
         logging_config = LoggingConfig(
             enabled=os.getenv("ENABLE_QUERY_LOGGING", "true").lower() == "true",
-            db_path=os.getenv("QUERY_LOG_DB_PATH", "logs/query_logs.db"),  # Not used with Supabase
             retention_days=int(os.getenv("LOG_RETENTION_DAYS", "90")),
             anonymize_after_days=int(os.getenv("ANONYMIZE_AFTER_DAYS", "30")),
             hash_salt=os.getenv("HASH_SALT_SECRET", "default-salt-change-in-production"),

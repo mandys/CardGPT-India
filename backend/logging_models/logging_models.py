@@ -95,7 +95,6 @@ class QueryStatsEntry(BaseModel):
 class LoggingConfig(BaseModel):
     """Configuration for query logging system"""
     enabled: bool = Field(True, description="Whether logging is enabled")
-    db_path: str = Field("logs/query_logs.db", description="SQLite database path")
     retention_days: int = Field(90, description="Days to retain logs (GDPR compliance)")
     anonymize_after_days: int = Field(30, description="Days after which to anonymize data")
     hash_salt: str = Field(..., description="Salt for hashing PII")

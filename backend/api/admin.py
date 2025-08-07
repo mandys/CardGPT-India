@@ -159,7 +159,7 @@ async def get_logging_config(services=Depends(get_services)):
             "retention_days": config.retention_days,
             "anonymize_after_days": config.anonymize_after_days,
             "gdpr_compliance_mode": config.gdpr_compliance_mode,
-            "db_path": config.db_path
+            "database_type": "Supabase PostgreSQL"
         }
         
     except Exception as e:

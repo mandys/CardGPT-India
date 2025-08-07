@@ -32,7 +32,7 @@ A modern full-stack RAG (Retrieval-Augmented Generation) application for queryin
 - **Location**: `backend/` directory  
 - **Deployment**: Railway (https://cardgpt-india-production.up.railway.app)
 - **API Docs**: `/docs` endpoint with OpenAPI documentation
-- **Database**: Hybrid system - SQLite (local) + PostgreSQL (production)
+- **Database**: Supabase PostgreSQL (unified dev + prod environments)
 - **Services**: LLM, Vertex AI Search, Query Enhancement, Calculator, Authentication
 
 ### Data Pipeline
@@ -68,7 +68,7 @@ A modern full-stack RAG (Retrieval-Augmented Generation) application for queryin
 - **Production Deployment**: Vercel + Railway with CI/CD
 
 ### ✅ Advanced Features
-- **Hybrid Database System**: Auto-detects environment (SQLite local, PostgreSQL production)
+- **Unified Database System**: Supabase PostgreSQL for all environments with GDPR compliance
 - **Enhanced Query Processing**: Fixed education fee queries, improved context retrieval
 - **Simplified Query Enhancement**: 409 lines of dead code removed, single source of truth architecture
 - **Cost Optimization**: 60% token reduction, 20x cheaper than traditional models
@@ -91,16 +91,17 @@ cd cardgpt-ui && npm install && ./start_frontend.sh
 
 ### Environment Variables Required
 ```bash
-# Required
+# Supabase Database (NEW - Required)
+SUPABASE_URL="https://your-dev-project.supabase.co"
+SUPABASE_KEY="your-supabase-service-role-key" 
+ENVIRONMENT="development"  # or "production"
+
+# Google AI & Search (Required)
 GEMINI_API_KEY="your-gemini-key-here"
 GOOGLE_CLOUD_PROJECT="your-gcp-project-id"
 VERTEX_AI_DATA_STORE_ID="your-data-store-id"
 
-# Database (Auto-configured)
-# DATABASE_URL="postgresql://..."  # Railway auto-sets for production
-# query_limits.db automatically created locally
-
-# Authentication (Clerk - NEW)
+# Authentication (Clerk)
 REACT_APP_CLERK_PUBLISHABLE_KEY="pk_test_your-clerk-key"
 CLERK_SECRET_KEY="sk_test_your-clerk-secret"
 
@@ -153,14 +154,17 @@ gsutil cp card_data.jsonl gs://your-bucket/
 
 ```
 ├── backend/                    # FastAPI Backend
-│   ├── main.py                # Entry point with hybrid database initialization
-│   ├── auth.db                # SQLite database (local development)
+│   ├── main.py                # Entry point with Supabase integration
+│   ├── supabase_schema.sql    # Complete database schema for Supabase
+│   ├── SUPABASE_MIGRATION_GUIDE.md # Setup and migration guide
 │   ├── api/                   # Endpoints (chat, config, health, auth)
 │   │   ├── auth.py            # Authentication endpoints
 │   │   ├── chat.py            # Enhanced chat with education fee fixes
 │   │   └── ...
 │   ├── services/              # Business logic services
-│   │   ├── auth_service.py    # Hybrid database auth service
+│   │   ├── supabase_service.py # Unified database service
+│   │   ├── preference_service.py # User preferences with Supabase
+│   │   ├── query_logger.py    # GDPR-compliant logging with Supabase
 │   │   ├── llm.py             # Enhanced system prompts
 │   │   ├── vertex_retriever.py # Enhanced search (top_k=10)
 │   │   └── query_enhancer.py  # Education category enhancements
@@ -229,7 +233,7 @@ gsutil cp card_data.jsonl gs://your-bucket/
 ## Troubleshooting
 
 ### Common Issues
-- **Database initialization errors**: Check if Railway PostgreSQL is properly configured or SQLite permissions for local dev
+- **Database initialization errors**: Check Supabase configuration and ensure schema has been deployed
 - **Education fee queries incorrect**: System now properly handles education spending (2 EDGE Miles per ₹100 with 1% surcharge on Atlas)
 - **Insurance query ambiguity**: System now correctly distinguishes spending rewards vs benefits coverage
 - **Search returns 0 results**: Check VERTEX_AI_DATA_STORE_ID configuration and verify JSONL has 1023 chunks
@@ -248,7 +252,7 @@ python backend/check_gemini_models.py
 curl http://localhost:8000/api/health
 
 # Test database connection
-cd backend && python -c "from services.auth_service import AuthService; print(f'Database type: {AuthService().database_type}'); print(f'Tables exist: {AuthService().test_database_connection()}')"
+cd backend && python -c "from services.supabase_service import SupabaseService; s=SupabaseService(); print(f'Database type: {s.database_type}'); print(f'Connection test: {s.test_connection()}')"
 
 # Test education fee query accuracy
 curl -X POST http://localhost:8000/api/chat \
@@ -281,6 +285,17 @@ echo $GEMINI_API_KEY | head -c 10
 ---
 
 ## Recent Major Improvements Archive
+
+### 🗄️ **Phase 12: Complete Supabase Migration (CRITICAL - August 2025)**
+- **Problem Solved**: Complex hybrid database system (SQLite + Railway PostgreSQL) replaced with unified cloud solution
+- **Architecture Transformation**: All database operations now use Supabase for both dev and prod environments
+- **Database Unification**: Single PostgreSQL system with automatic environment detection (`.env.local` vs `.env.production`)
+- **GDPR Compliance**: Built-in privacy features, data retention policies, and PII hashing for query logging
+- **Cloud-Native Benefits**: Managed infrastructure, automatic backups, real-time capabilities, and advanced monitoring
+- **Development Experience**: Supabase dashboard for database management, simplified deployment, zero maintenance
+- **Services Refactored**: PreferenceService, QueryLimitsService, and QueryLogger all migrated to Supabase
+- **Schema Migration**: Complete SQL schema with Row Level Security (RLS), optimized indexes, and analytics tables
+- **Impact**: No frontend changes required, all existing API endpoints preserved, enhanced performance and reliability
 
 ### 🔧 **Phase 6: Query Enhancement Flow Simplification (CRITICAL - August 2025)**
 - **Problem Solved**: 409 lines of dead code eliminated across query enhancement system
@@ -316,12 +331,12 @@ echo $GEMINI_API_KEY | head -c 10
 - **Zero-Downtime Updates**: Change single JSON file, system updates only affected chunks
 - **Operational Benefits**: Automated change detection, selective updates, production-ready infrastructure
 
-### 🗄️ **Hybrid Database System (CRITICAL - July 2025)**
-- **Local Development**: SQLite database (`backend/auth.db`) - zero configuration required
-- **Production (Railway)**: Automatic PostgreSQL detection and connection pooling
-- **Auto-Detection**: Environment detection based on `DATABASE_URL` presence
-- **Backward Compatibility**: Existing local setups continue working unchanged
-- **Migration Path**: Seamless transition from SQLite-only to hybrid system
+### 🗄️ **Supabase Database Migration (CRITICAL - August 2025)**
+- **Unified Database**: Supabase PostgreSQL for all environments (dev and prod)
+- **Environment Auto-Detection**: Automatic switching based on `ENVIRONMENT` variable
+- **GDPR Compliance**: Built-in privacy features, data retention, and PII hashing
+- **Cloud-Native**: Managed infrastructure with automatic backups and scaling
+- **Developer Experience**: Supabase dashboard, real-time capabilities, zero maintenance
 
 ### 🎓 **Education Fee Query Fixes (CRITICAL)**
 - **Root Cause Fixed**: LLM no longer incorrectly assumes education fees are excluded
@@ -357,7 +372,8 @@ echo $GEMINI_API_KEY | head -c 10
 - **Phase 9**: Category Standardization (6 categories, 1023 chunks, zero hardcoded responses)
 - **Phase 10**: Infrastructure Improvements (incremental updates, FAQ system, 83% downtime reduction)
 - **Phase 11**: Query Enhancement Flow Simplification (409 lines removed, insurance fixes, single source of truth)
-- **Current**: Production-ready full-stack with simplified architecture, standardized categories, and intelligent infrastructure
+- **Phase 12**: Complete Supabase Migration (unified database, GDPR compliance, cloud-native infrastructure)
+- **Current**: Production-ready full-stack with Supabase database, simplified architecture, and cloud-native reliability
 
 This project demonstrates successful implementation of modern RAG architecture with enterprise reliability and ultra-low operational costs.
 

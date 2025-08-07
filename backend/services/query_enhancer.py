@@ -171,6 +171,11 @@ class QueryEnhancer:
                 enhanced_query += " insurance coverage benefits travel accident protection"
                 logger.info("Enhanced for insurance benefits/coverage (not spending)")
         
+        # Add government payment specific search terms for better Vertex AI matching
+        if category == 'government':
+            # Use terms that definitely work based on testing - focus on "excluded categories"
+            enhanced_query += " excluded categories reward points"
+            logger.info("Enhanced for government payment rewards with specific search terms")
         logger.info(f"Enhanced query: '{enhanced_query}', metadata: {metadata}")
         return enhanced_query, metadata
     

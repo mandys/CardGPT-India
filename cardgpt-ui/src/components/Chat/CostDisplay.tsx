@@ -30,6 +30,7 @@ const CostDisplay: React.FC<CostDisplayProps> = ({
 
   const getModelDisplayName = (model: string) => {
     const modelMap: Record<string, string> = {
+      'gemini-2.5-flash-lite': 'Gemini 2.5 Flash-Lite',
       'gemini-1.5-flash': 'Gemini Flash',
       'gemini-1.5-pro': 'Gemini Pro',
       'gpt-3.5-turbo': 'GPT-3.5',
@@ -68,7 +69,7 @@ const CostDisplay: React.FC<CostDisplayProps> = ({
             )}
             <div className="flex justify-between border-t pt-1">
               <span className="text-gray-500">Total:</span>
-              <span className="font-mono font-medium">{llmUsage.tokens.toLocaleString()}</span>
+              <span className="font-mono font-medium">{(llmUsage.total_tokens || llmUsage.tokens || 0).toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Cost:</span>
@@ -89,7 +90,7 @@ const CostDisplay: React.FC<CostDisplayProps> = ({
             <div className="space-y-1">
               <div className="flex justify-between">
                 <span className="text-gray-500">Tokens:</span>
-                <span className="font-mono">{embeddingUsage.tokens.toLocaleString()}</span>
+                <span className="font-mono">{(embeddingUsage.total_tokens || embeddingUsage.tokens || 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Cost:</span>

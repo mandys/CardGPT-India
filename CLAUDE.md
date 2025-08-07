@@ -36,11 +36,13 @@ A modern full-stack RAG (Retrieval-Augmented Generation) application for queryin
 - **Services**: LLM, Vertex AI Search, Query Enhancement, Calculator, Authentication
 
 ### Data Pipeline
-1. **Source**: JSON files in `data/` directory (not committed)
-2. **Transform**: `transform_to_jsonl.py` creates `card_data.jsonl` (1023 chunks with standardized category data)
-3. **Upload**: Google Cloud Storage bucket
-4. **Index**: Vertex AI Search data store
-5. **Query**: Enterprise-grade search with enhanced context retrieval (top_k=10)
+1. **Source**: JSON files in `data/scraped-data/` directory (comprehensive scraped data)
+2. **Transform**: `new_transform_to_jsonl.py` creates meaningful chunks from scraped data
+3. **Legacy**: `transform_to_jsonl.py` still supported for original JSON format
+4. **Upload**: Google Cloud Storage bucket
+5. **Index**: Vertex AI Search data store
+6. **Query**: Enterprise-grade search with enhanced context retrieval (top_k=10)
+7. **Result**: 1,023 chunks with standardized category data (488% increase from original)
 
 ## Supported Credit Cards
 
@@ -68,10 +70,11 @@ A modern full-stack RAG (Retrieval-Augmented Generation) application for queryin
 ### ✅ Advanced Features
 - **Hybrid Database System**: Auto-detects environment (SQLite local, PostgreSQL production)
 - **Enhanced Query Processing**: Fixed education fee queries, improved context retrieval
+- **Simplified Query Enhancement**: 409 lines of dead code removed, single source of truth architecture
 - **Cost Optimization**: 60% token reduction, 20x cheaper than traditional models
 - **Calculation Accuracy**: Step-by-step math with milestone logic
-- **Category Detection**: Hotel, utility, education, rent spending (with improved education handling)
-- **Authentication System**: Google OAuth with session management and query limits
+- **Category Detection**: 6 standardized categories with insurance ambiguity fixes
+- **Authentication System**: Clerk integration with freemium model (replaced Google OAuth)
 - **Responsive Design**: Collapsible sidebar, bottom navigation
 - **Debug Transparency**: Cost breakdown and source documents
 
@@ -95,16 +98,25 @@ VERTEX_AI_DATA_STORE_ID="your-data-store-id"
 
 # Database (Auto-configured)
 # DATABASE_URL="postgresql://..."  # Railway auto-sets for production
-# AUTH_DB_PATH="backend/auth.db"   # Local SQLite path (auto-created)
+# query_limits.db automatically created locally
 
-# Authentication (Production only)
+# Authentication (Clerk - NEW)
+REACT_APP_CLERK_PUBLISHABLE_KEY="pk_test_your-clerk-key"
+CLERK_SECRET_KEY="sk_test_your-clerk-secret"
+
+# Legacy Authentication (Being phased out)
 # JWT_SECRET="secure-secret-here"
 # GOOGLE_CLIENT_ID="your-google-client-id"
 ```
 
 ### Data Pipeline Setup
 ```bash
-# Transform data (now processes both card and common_terms sections + standardized categories)
+# NEW: Transform scraped data (comprehensive format)
+cd data/scraped-data/
+python new_transform_to_jsonl.py
+# Creates meaningful chunks from comprehensive scraped data
+
+# LEGACY: Transform original data (still supported)
 python transform_to_jsonl.py
 # Creates 1023 chunks with complete fee, surcharge, and category information
 
@@ -124,6 +136,8 @@ gsutil cp card_data.jsonl gs://your-bucket/
 - "Which cards give points on gold purchases?" → standardized gold/jewellery category analysis
 - "Compare government payment rewards across all cards" → detailed government/tax category breakdown
 - "Split ₹1L across rent, food, travel - which card better?" → category-wise analysis
+- "Insurance spending rewards on Atlas?" → correctly identifies spending vs benefits (FIXED)
+- "Insurance coverage benefits?" → properly returns coverage details, not spending rewards
 
 ### Complex Calculations  
 - **Step-by-step Math**: Detailed breakdown with arithmetic verification
@@ -157,6 +171,10 @@ gsutil cp card_data.jsonl gs://your-bucket/
 │   ├── src/hooks/            # State management
 │   └── package.json          # Node.js dependencies
 ├── data/                      # Credit card JSON files (NOT committed)
+│   └── scraped-data/          # NEW: Comprehensive scraped data
+│       ├── axis-atlas-new.json
+│       ├── hsbc-premier.json
+│       └── new_transform_to_jsonl.py  # NEW: Scraped data transformer
 ├── transform_to_jsonl.py      # Enhanced data pipeline (v2.0 with versioning)
 ├── incremental_update.py      # Smart delta generation system
 ├── generate_faq.py           # FAQ system generator
@@ -213,8 +231,10 @@ gsutil cp card_data.jsonl gs://your-bucket/
 ### Common Issues
 - **Database initialization errors**: Check if Railway PostgreSQL is properly configured or SQLite permissions for local dev
 - **Education fee queries incorrect**: System now properly handles education spending (2 EDGE Miles per ₹100 with 1% surcharge on Atlas)
+- **Insurance query ambiguity**: System now correctly distinguishes spending rewards vs benefits coverage
 - **Search returns 0 results**: Check VERTEX_AI_DATA_STORE_ID configuration and verify JSONL has 1023 chunks
-- **Authentication failures**: Verify JWT_SECRET and GOOGLE_CLIENT_ID are set in production
+- **Authentication failures**: Verify Clerk keys are set correctly (REACT_APP_CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY)
+- **Query enhancement errors**: Single source of truth now - all logic in query_enhancer.py, no duplicate processing
 - **Frontend build errors**: Clear node_modules, reinstall dependencies
 - **Backend not starting**: Verify GEMINI_API_KEY is set correctly
 - **CORS errors**: Ensure backend is running before frontend
@@ -234,6 +254,11 @@ cd backend && python -c "from services.auth_service import AuthService; print(f'
 curl -X POST http://localhost:8000/api/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "Do education fees earn rewards on Axis Atlas?", "model": "gemini-2.5-flash-lite"}'
+
+# Test insurance query disambiguation (NEW)
+curl -X POST http://localhost:8000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Insurance spending rewards on Atlas", "model": "gemini-2.5-flash-lite"}'
 
 # Verify environment
 echo $GEMINI_API_KEY | head -c 10
@@ -257,7 +282,20 @@ echo $GEMINI_API_KEY | head -c 10
 
 ## Recent Major Improvements Archive
 
-### 🎯 **Phase 4: Category Standardization Complete (CRITICAL - August 2025)**
+### 🔧 **Phase 6: Query Enhancement Flow Simplification (CRITICAL - August 2025)**
+- **Problem Solved**: 409 lines of dead code eliminated across query enhancement system
+- **Architecture Cleanup**: Single source of truth - query enhancer handles all enhancement logic  
+- **Code Reduction**: query_enhancer.py reduced from 525 → 166 lines (69% reduction)
+- **Duplication Elimination**: Removed 50+ lines of duplicate logic in chat_stream.py
+- **Insurance Query Fixes**: 
+  - "insurance spends/rewards" → Enhanced with spending/caps/premium keywords
+  - "insurance coverage/benefits" → Enhanced with coverage/protection keywords
+  - Resolves ambiguity where 'insurance spends' returned benefits instead of rewards
+- **Impact**: All 14/14 test cases pass, no breaking changes, cleaner architecture
+- **New Flow**: chat_stream.py → query_enhancer → retriever (no overrides)
+- **Benefits**: Better search targeting, correct document sections retrieved, simplified maintenance
+
+### 🎯 **Phase 5: Category Standardization Complete (CRITICAL - August 2025)**
 - **Problem Solved**: Eliminated all hardcoded responses for category queries in query_enhancer.py
 - **6 Categories Standardized**: education, fuel, utility, rent, gold/jewellery, government/tax
 - **Data Architecture Transformation**: 1023 chunks (up from 173 chunks - 488% increase)
@@ -266,7 +304,7 @@ echo $GEMINI_API_KEY | head -c 10
 - **Query Examples Working**: "Which cards give points on gold purchases?", "Compare government payment rewards"
 - **Reference**: See `plans/category_standardization_plan.md` for complete implementation details
 
-### 🚀 **Phase 5: Infrastructure Improvements Complete (CRITICAL - August 2025)**
+### 🚀 **Phase 4: Infrastructure Improvements Complete (CRITICAL - August 2025)**
 - **Problem Solved**: 20-30 minute downtime for JSON file updates reduced to <5 minutes (83% reduction)
 - **Incremental Update System**: Smart delta generation with hash-based change detection
 - **FAQ System**: 8 pre-built comparison answers with 85-95% confidence for complex queries
@@ -318,6 +356,15 @@ echo $GEMINI_API_KEY | head -c 10
 - **Phase 8**: Enhanced query processing and education fee fixes
 - **Phase 9**: Category Standardization (6 categories, 1023 chunks, zero hardcoded responses)
 - **Phase 10**: Infrastructure Improvements (incremental updates, FAQ system, 83% downtime reduction)
-- **Current**: Production-ready full-stack with standardized categories, intelligent infrastructure, and zero-downtime updates
+- **Phase 11**: Query Enhancement Flow Simplification (409 lines removed, insurance fixes, single source of truth)
+- **Current**: Production-ready full-stack with simplified architecture, standardized categories, and intelligent infrastructure
 
 This project demonstrates successful implementation of modern RAG architecture with enterprise reliability and ultra-low operational costs.
+
+## Development Environment
+
+### Local Server Configurations
+- **Frontend Server**: Running on port 3000
+- **Chatbot UI**: Accessible at http://localhost:3000/chat
+- **Backend Server**: Running on port 8000
+- **Backend Health Endpoint**: http://localhost:8000/api/health

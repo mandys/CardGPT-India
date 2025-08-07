@@ -25,6 +25,13 @@ A modern full-stack AI assistant for querying Indian credit card terms and condi
 - **Smart Delta Updates**: 83% faster updates with incremental changes
 - **FAQ System**: Pre-built answers for complex queries with 85-95% confidence
 
+### 🔧 **Query Enhancement Flow Simplification** (August 2025)
+- **Major Code Reduction**: 409 lines of dead code removed (69% reduction in query_enhancer.py)
+- **Architecture Cleanup**: Single source of truth - query enhancer handles all enhancement logic
+- **Insurance Query Fixes**: Resolved ambiguity between 'insurance spending' vs 'insurance benefits'
+- **Eliminated Duplication**: Removed duplicate logic in chat_stream.py (50+ lines)
+- **All Test Cases Pass**: 14/14 query scenarios validated with no breaking changes
+
 ## Table of Contents
 
 - [Quick Start (3 Minutes)](#quick-start-3-minutes)
@@ -170,7 +177,11 @@ REACT_APP_API_URL="http://localhost:8000"
 
 ### 1. Transform Scraped Data
 ```bash
-# Convert JSON files to structured JSONL chunks
+# NEW: Convert scraped JSON files to structured JSONL chunks
+cd data/scraped-data/
+python new_transform_to_jsonl.py
+
+# LEGACY: Convert original JSON files (still supported)
 python transform_to_jsonl.py
 
 # Output: 1,023 category-based chunks with metadata
@@ -226,6 +237,10 @@ python generate_faq.py
 │   ├── src/services/          # API client
 │   └── .env                   # Clerk configuration
 ├── data/                      # Credit card JSON (NOT committed)
+│   └── scraped-data/          # NEW: Comprehensive scraped data
+│       ├── axis-atlas-new.json
+│       ├── hsbc-premier.json
+│       └── new_transform_to_jsonl.py
 ├── plans/                     # Implementation plans
 ├── transform_to_jsonl.py      # Enhanced v2.0 with versioning  
 ├── incremental_update.py      # Smart delta updates (NEW)
@@ -371,6 +386,13 @@ GET  /api/health            # Health check
 - ✅ 6 standardized spending categories
 - ✅ Incremental update system (83% faster updates)
 - ✅ FAQ system with pre-built answers
+
+### 🔧 **August 2025 - Query Enhancement Simplification**
+- ✅ 409 lines of dead code removed (69% reduction)
+- ✅ Eliminated code duplication across components
+- ✅ Fixed insurance query ambiguity (spending vs benefits)
+- ✅ Single source of truth architecture
+- ✅ All 14 test cases validated
 
 ### 📊 **Performance Improvements**
 - ✅ Query response time: 1-3 seconds

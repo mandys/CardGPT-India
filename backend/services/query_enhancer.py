@@ -160,107 +160,18 @@ class QueryEnhancer:
         if category and spend_amount:
             enhanced_query += f" {category} spending rates"
         
+        # Fix insurance ambiguity: distinguish between spending on insurance vs insurance benefits
+        if category == 'insurance':
+            if any(word in query.lower() for word in ['spend', 'spending', 'spends', 'rewards', 'points', 'earn', 'rate']):
+                # This is about earning rewards when paying insurance premiums
+                enhanced_query += " insurance spending rewards caps monthly limit premium"
+                logger.info("Enhanced for insurance spending rewards (not benefits)")
+            elif any(word in query.lower() for word in ['coverage', 'benefit', 'travel insurance', 'accident', 'protection']):
+                # This is about insurance coverage provided by the card
+                enhanced_query += " insurance coverage benefits travel accident protection"
+                logger.info("Enhanced for insurance benefits/coverage (not spending)")
+        
         logger.info(f"Enhanced query: '{enhanced_query}', metadata: {metadata}")
         return enhanced_query, metadata
     
-    def build_preference_context(self, user_preferences: Dict = None) -> str:
-        """
-        Build user preference context for LLM personalization
-        
-        Returns:
-            Formatted preference context string for LLM
-        """
-        if not user_preferences:
-            logger.info("⚠️ [PREFERENCE_CONTEXT] No user preferences provided")
-            return ""
-            
-        logger.info(f"🎯 [PREFERENCE_CONTEXT] Building context from preferences: {user_preferences}")
-        context_parts = []
-
-        # Travel preferences
-        if user_preferences.travel_type:
-            if user_preferences.travel_type == 'domestic':
-                context_parts.append("travels domestically")
-            elif user_preferences.travel_type == 'international':
-                context_parts.append("travels internationally")
-            elif user_preferences.travel_type == 'both':
-                context_parts.append("travels both domestically and internationally")
-            
-        if user_preferences.lounge_access:
-            if user_preferences.lounge_access == 'family':
-                context_parts.append("travels with family")
-            elif user_preferences.lounge_access == 'solo':
-                context_parts.append("travels solo")
-            elif user_preferences.lounge_access == 'with_guests':
-                context_parts.append("travels with guests")
-
-        # Fee willingness
-        if user_preferences.fee_willingness:
-            if user_preferences.fee_willingness in ['5000-10000', '10000+']:
-                context_parts.append("can afford luxury cards")
-
-        # Spending categories
-        if user_preferences.spend_categories:
-            context_parts.append(f"spends on {', '.join(user_preferences.spend_categories)}")
-
-        # Current cards (when enabled)
-        # if user_preferences.current_cards:
-        #     context_parts.append(f"currently uses {', '.join(user_preferences.current_cards)}")
-
-        # Preferred banks (when enabled)
-        # if user_preferences.preferred_banks:
-        #     context_parts.append(f"prefers banks like {', '.join(user_preferences.preferred_banks)}")
-
-        if context_parts:
-            preference_context = f"USER PREFERENCE CONTEXT: While answering the question, make sure you prioritize user preferences - like they {', '.join(context_parts)}."
-            logger.info(f"✅ [PREFERENCE_CONTEXT] Built context: {preference_context}")
-            return preference_context
-        else:
-            logger.info("⚠️ [PREFERENCE_CONTEXT] No valid preference context built")
-            return ""
-
-    def enhance_query(self, query: str, user_preferences: Dict = None) -> Tuple[str, Dict[str, any]]:
-        """
-        Main query enhancement method - combines search and preference enhancement
-        
-        Returns:
-            Tuple of (enhanced_query_with_preferences, metadata)
-        """
-        # Get simplified search enhancement
-        enhanced_search_query, metadata = self.enhance_search_query(query)
-        
-        # Add preference context if provided
-        preference_context = self.build_preference_context(user_preferences)
-        
-        if preference_context:
-            enhanced_query = f"{enhanced_search_query}\n\n{preference_context}"
-        else:
-            enhanced_query = enhanced_search_query
-        
-        return enhanced_query, metadata
-    
-    def get_category_guidance(self, category: str) -> str:
-        """Get general guidance for specific spending categories"""
-        # Load category summaries from centralized configuration
-        guidance = {}
-        
-        # Load configured category summaries
-        for category in ['insurance', 'education']:
-            summary = self.card_config.get_category_summary(category)
-            if summary:
-                guidance[category] = summary
-        
-        # Add other generic guidance
-        guidance.update({
-            'hotel': 'Look for accelerated earning rates for hotel bookings. Check for monthly caps on accelerated rates.',
-            'flight': 'Look for accelerated earning rates for flight bookings. Check for monthly caps on accelerated rates.',
-            'fuel': 'Commonly excluded from earning rewards on most cards. Check exclusion lists.',
-            'utility': 'May be excluded or have earning caps. Check for surcharge fees above spending thresholds.',
-            'rent': 'Commonly excluded from earning rewards on most cards. Check exclusion lists.',
-            'government': 'Tax and government payments are commonly excluded from earning rewards on most cards. Check reward point sections for exclusions and any special rates or surcharges.',
-            'grocery': 'May have earning caps or accelerated rates depending on the card.',
-            'dining': 'Often treated as general spending, but some cards may have accelerated rates.'
-        })
-        
-        return guidance.get(category, 'Check the card-specific earning rates and exclusions for this category.')
     

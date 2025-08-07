@@ -98,13 +98,9 @@ async def chat_stream_endpoint(
         
         # Card selector removed - process all queries directly for better user experience
         
-        # Check if we should suggest follow-up questions for generic queries
         # Use search-focused query enhancement (no user preferences in search)
         enhanced_search_query, initial_metadata = query_enhancer_service.enhance_search_query(request.message)
-        followup_questions = []
-        
-        if initial_metadata.get('suggest_followup', False):
-            followup_questions = query_enhancer_service.get_followup_questions(request.message)
+        followup_questions = []  # Followup questions feature removed in simplified version
         
         # Process streaming query
         def generate_stream():
@@ -198,57 +194,13 @@ def process_query_stream(
         elif metadata.get('card_detected'):
             search_card_filter = metadata['card_detected']
         
-        # For comparison queries mentioning multiple cards, search without filter to get all cards
-        is_comparison_query = (
-            "compare" in question.lower() or 
-            metadata.get('direct_comparison') or
-            any(pattern in question.lower() for pattern in ["vs", "versus", "between", "better than", " or "])
-        )
-        
-        if is_comparison_query and any(card in question.lower() for card in ["atlas", "icici", "epm", "hsbc", "premier", "infinia", "hdfc"]):
+        # For comparison queries, remove card filter to get comprehensive results
+        if metadata.get('is_comparison') or metadata.get('direct_comparison'):
             search_card_filter = None  # Search all cards for comparison
-            # With document-level aliases, no need for hardcoded card name boosting
             logger.info(f"Detected comparison query - removing card filter for comprehensive search")
         
-        # Apply additional enhancements to the already enhanced query
+        # Use the enhanced query from query enhancer directly
         final_search_query = enhanced_search_query
-        
-        # Enhance search for calculation queries to include milestone data
-        # But skip for complex comparison queries to avoid overwhelming search
-        if (metadata.get('is_calculation_query', False) and 
-            not ("compare" in question.lower() and len(question) > 100)):
-            final_search_query += " milestone spend threshold bonus benefits"
-            logger.info(f"Added milestone terms to search query")
-        
-        # For ultra-complex queries (>200 chars), use simplified search terms
-        if len(question) > 200 and "compare" in question.lower():
-            # Extract just the card names and spending categories for search
-            simplified_query = "compare cards spending rewards "
-            question_lower = question.lower()
-            
-            # Add card names
-            if any(pattern in question_lower for pattern in ["axis", "atlas"]):
-                simplified_query += "Atlas "
-            if any(pattern in question_lower for pattern in ["icici", "epm"]):
-                simplified_query += "EPM "
-            if any(pattern in question_lower for pattern in ["hsbc", "premier"]):
-                simplified_query += "Premier "
-            
-            # Add key spending categories mentioned
-            if "rent" in question_lower:
-                simplified_query += "rent "
-            if "utility" in question_lower:
-                simplified_query += "utility "
-            if "grocery" in question_lower:
-                simplified_query += "grocery "
-            if "food" in question_lower:
-                simplified_query += "dining "
-            if "gift" in question_lower:
-                simplified_query += "gift "
-                
-            final_search_query = simplified_query.strip()
-            logger.info(f"Simplified ultra-complex query to: {final_search_query}")
-        
         # Send search status
         search_status_chunk = StreamChunk(
             type="status",

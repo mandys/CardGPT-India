@@ -127,6 +127,8 @@ allowed_origins = [
     "https://card-gpt-india.vercel.app",  # Correct Vercel domain (with hyphen)
     "https://cardgpt-india.vercel.app",   # Alternative domain
     "https://cardgpt-india-git-main-mandys.vercel.app",  # Git-specific domain
+    "https://askcardgpt.in",  # Custom domain
+    "https://www.askcardgpt.in",  # Custom domain with www
     "*"  # Allow all origins for now (can restrict later)
 ]
 

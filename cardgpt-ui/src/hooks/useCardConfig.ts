@@ -12,18 +12,8 @@ import {
   CardFilter 
 } from '../types/cards';
 
-// API base URL - auto-detect backend URL
-const getApiBaseUrl = () => {
-  if (typeof window !== 'undefined') {
-    // Client-side detection
-    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    return isDev ? 'http://localhost:8000' : 'https://cardgpt-india-production.up.railway.app';
-  }
-  // Server-side fallback
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-};
-
-const API_BASE_URL = getApiBaseUrl();
+// API base URL - use environment variable with fallback
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 interface UseCardConfigState {
   cards: CardConfig[];

@@ -226,13 +226,21 @@ class ApiClient {
   }
 
   /**
-   * Get preferences for current user (session-based only - Clerk integration pending)
+   * Get preferences for current user (authenticated or session-based)
    */
   async getCurrentUserPreferences(): Promise<UserPreferences | null> {
+    const token = localStorage.getItem('jwt_token');
+    
     try {
-      // Use session-based preferences only (authenticated endpoints not implemented yet)
-      const sessionId = this.getSessionId();
-      return await this.getSessionPreferences(sessionId);
+      if (token) {
+        // Authenticated user
+        const response = await this.getUserPreferences();
+        return response.preferences;
+      } else {
+        // Anonymous user
+        const sessionId = this.getSessionId();
+        return await this.getSessionPreferences(sessionId);
+      }
     } catch (error) {
       console.log('No preferences found or error retrieving preferences');
       return null;
@@ -240,13 +248,20 @@ class ApiClient {
   }
 
   /**
-   * Save preferences for current user (session-based only - Clerk integration pending)
+   * Save preferences for current user (authenticated or session-based)
    */
   async saveCurrentUserPreferences(preferences: UserPreferences): Promise<boolean> {
     try {
-      // Use session-based preferences only (authenticated endpoints not implemented yet)
-      const sessionId = this.getSessionId();
-      await this.saveSessionPreferences(preferences, sessionId);
+      const token = localStorage.getItem('jwt_token');
+      
+      if (token) {
+        // Authenticated user
+        await this.updateUserPreferences(preferences);
+      } else {
+        // Anonymous user
+        const sessionId = this.getSessionId();
+        await this.saveSessionPreferences(preferences, sessionId);
+      }
       return true;
     } catch (error) {
       console.error('Failed to save preferences:', error);

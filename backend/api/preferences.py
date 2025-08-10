@@ -48,8 +48,93 @@ def get_session_id(request: Request) -> str:
         session_id = str(uuid.uuid4())
     return session_id
 
-# NOTE: Authenticated preferences disabled until Clerk integration complete
-# Using session-based preferences for now
+# Authenticated preferences for Clerk users
+
+def get_clerk_user_id(authorization: Optional[str] = Header(None)) -> str:
+    """Extract Clerk user ID from Authorization header"""
+    if not authorization or not authorization.startswith('Bearer '):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
+    # For Clerk, the token contains the user ID
+    # In a real implementation, you'd validate the JWT and extract the user_id
+    # For now, we'll extract it directly (update this with proper JWT validation)
+    token = authorization.replace('Bearer ', '')
+    
+    # TODO: Add proper Clerk JWT validation here
+    # For now, assume the token format includes user_id
+    if not token:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    # Extract user_id from token (implement proper JWT decoding)
+    try:
+        # This is a placeholder - implement proper Clerk JWT validation
+        user_id = f"clerk_user_{hash(token) % 1000000}"  # Temporary user_id generation
+        return user_id
+    except Exception as e:
+        logger.error(f"Failed to extract user ID from token: {e}")
+        raise HTTPException(status_code=401, detail="Invalid authentication token")
+
+# Authenticated endpoints for Clerk users
+
+@router.get("/preferences")
+async def get_user_preferences(
+    user_id: str = Depends(get_clerk_user_id),
+    preference_service: PreferenceService = Depends(get_preference_service)
+):
+    """Get preferences for authenticated Clerk user"""
+    try:
+        prefs_response = preference_service.get_user_preferences(user_id)
+        
+        if not prefs_response:
+            logger.warning(f"⚠️ No preferences found for user: {user_id}")
+            # Return default preferences instead of 404
+            default_prefs = UserPreferences()
+            return UserPreferenceResponse(preferences=default_prefs)
+        
+        logger.info(f"✅ Retrieved user preferences for: {user_id}")
+        return prefs_response
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting user preferences: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get user preferences")
+
+@router.post("/preferences")
+async def save_user_preferences(
+    request: UserPreferenceRequest,
+    user_id: str = Depends(get_clerk_user_id),
+    preference_service: PreferenceService = Depends(get_preference_service)
+):
+    """Save preferences for authenticated Clerk user"""
+    try:
+        # Save user preferences
+        response = preference_service.save_user_preferences(user_id, request.preferences)
+        
+        logger.info(f"✅ User preferences saved: {user_id}")
+        return response
+        
+    except Exception as e:
+        logger.error(f"❌ Error saving user preferences: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to save user preferences")
+
+@router.delete("/preferences")
+async def clear_user_preferences(
+    user_id: str = Depends(get_clerk_user_id),
+    preference_service: PreferenceService = Depends(get_preference_service)
+):
+    """Clear preferences for authenticated Clerk user"""
+    try:
+        # Create empty preferences to clear existing ones
+        empty_preferences = UserPreferences()
+        preference_service.save_user_preferences(user_id, empty_preferences)
+        
+        logger.info(f"✅ User preferences cleared for: {user_id}")
+        return {"success": True, "message": "User preferences cleared successfully"}
+        
+    except Exception as e:
+        logger.error(f"❌ Error clearing user preferences: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to clear user preferences")
+
+# Session-based endpoints for anonymous users
 
 @router.post("/preferences/session")
 async def save_session_preferences(

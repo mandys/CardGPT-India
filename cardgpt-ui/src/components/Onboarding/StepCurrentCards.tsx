@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { CreditCard, Search, Loader } from 'lucide-react';
 
+// Use the same API URL logic as other components
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
 interface StepCurrentCardsProps {
   selectedCards: string[];
   onCardToggle: (cardName: string) => void;
@@ -26,7 +29,7 @@ const StepCurrentCards: React.FC<StepCurrentCardsProps> = ({
         setLoading(true);
         setError(null);
         
-        const response = await fetch('/api/cards/display-names');
+        const response = await fetch(`${API_BASE_URL}/api/cards/display-names`);
         if (!response.ok) {
           throw new Error(`Failed to fetch cards: ${response.status}`);
         }

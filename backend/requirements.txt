@@ -27,6 +27,9 @@ passlib[bcrypt]>=1.7.4
 google-auth>=2.23.0
 google-auth-oauthlib>=1.0.0
 google-auth-httplib2>=0.1.0
+# JWT validation for Clerk authentication
+PyJWT>=2.6.0
+cryptography>=3.4.8
 # Supabase database client
 supabase>=2.3.0
 

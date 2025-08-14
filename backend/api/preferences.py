@@ -51,28 +51,9 @@ def get_session_id(request: Request) -> str:
 # Authenticated preferences for Clerk users
 
 def get_clerk_user_id(authorization: Optional[str] = Header(None)) -> str:
-    """Extract Clerk user ID from Authorization header"""
-    if not authorization or not authorization.startswith('Bearer '):
-        raise HTTPException(status_code=401, detail="Authentication required")
-    
-    # For Clerk, the token contains the user ID
-    # In a real implementation, you'd validate the JWT and extract the user_id
-    # For now, we'll extract it directly (update this with proper JWT validation)
-    token = authorization.replace('Bearer ', '')
-    
-    # TODO: Add proper Clerk JWT validation here
-    # For now, assume the token format includes user_id
-    if not token:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
-    # Extract user_id from token (implement proper JWT decoding)
-    try:
-        # This is a placeholder - implement proper Clerk JWT validation
-        user_id = f"clerk_user_{hash(token) % 1000000}"  # Temporary user_id generation
-        return user_id
-    except Exception as e:
-        logger.error(f"Failed to extract user ID from token: {e}")
-        raise HTTPException(status_code=401, detail="Invalid authentication token")
+    """Extract Clerk user ID from Authorization header using proper JWT validation"""
+    from services.clerk_auth import clerk_auth
+    return clerk_auth.extract_user_id_from_request(authorization)
 
 # Authenticated endpoints for Clerk users
 

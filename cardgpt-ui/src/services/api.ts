@@ -143,8 +143,8 @@ class ApiClient {
   /**
    * Get user preferences (authenticated users only)
    */
-  async getUserPreferences(): Promise<UserPreferenceResponse> {
-    const token = localStorage.getItem('jwt_token');
+  async getUserPreferences(clerkToken?: string): Promise<UserPreferenceResponse> {
+    const token = clerkToken || localStorage.getItem('jwt_token');
     if (!token) {
       throw new Error('Authentication required');
     }
@@ -160,8 +160,8 @@ class ApiClient {
   /**
    * Create or update user preferences (authenticated users only)
    */
-  async updateUserPreferences(preferences: UserPreferences): Promise<UserPreferenceResponse> {
-    const token = localStorage.getItem('jwt_token');
+  async updateUserPreferences(preferences: UserPreferences, clerkToken?: string): Promise<UserPreferenceResponse> {
+    const token = clerkToken || localStorage.getItem('jwt_token');
     if (!token) {
       throw new Error('Authentication required');
     }
@@ -178,8 +178,8 @@ class ApiClient {
   /**
    * Clear user preferences (authenticated users only)
    */
-  async clearUserPreferences(): Promise<{ success: boolean; message: string }> {
-    const token = localStorage.getItem('jwt_token');
+  async clearUserPreferences(clerkToken?: string): Promise<{ success: boolean; message: string }> {
+    const token = clerkToken || localStorage.getItem('jwt_token');
     if (!token) {
       throw new Error('Authentication required');
     }
@@ -228,13 +228,13 @@ class ApiClient {
   /**
    * Get preferences for current user (authenticated or session-based)
    */
-  async getCurrentUserPreferences(): Promise<UserPreferences | null> {
-    const token = localStorage.getItem('jwt_token');
+  async getCurrentUserPreferences(clerkToken?: string): Promise<UserPreferences | null> {
+    const token = clerkToken || localStorage.getItem('jwt_token');
     
     try {
       if (token) {
         // Authenticated user
-        const response = await this.getUserPreferences();
+        const response = await this.getUserPreferences(token);
         return response.preferences;
       } else {
         // Anonymous user
@@ -250,13 +250,13 @@ class ApiClient {
   /**
    * Save preferences for current user (authenticated or session-based)
    */
-  async saveCurrentUserPreferences(preferences: UserPreferences): Promise<boolean> {
+  async saveCurrentUserPreferences(preferences: UserPreferences, clerkToken?: string): Promise<boolean> {
     try {
-      const token = localStorage.getItem('jwt_token');
+      const token = clerkToken || localStorage.getItem('jwt_token');
       
       if (token) {
         // Authenticated user
-        await this.updateUserPreferences(preferences);
+        await this.updateUserPreferences(preferences, token);
       } else {
         // Anonymous user
         const sessionId = this.getSessionId();

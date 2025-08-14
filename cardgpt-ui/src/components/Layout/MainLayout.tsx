@@ -37,7 +37,7 @@ const MainLayout: React.FC = () => {
   } = useStreamingChatStore();
   
   const { isOpen, isMobile } = useSidebar();
-  const { checkAndIncrementQuery } = useQueryLimits();
+  const { checkAndIncrementQuery, openSignIn } = useQueryLimits();
   const { 
     updatePreferences, 
     preferences, 
@@ -304,9 +304,7 @@ const MainLayout: React.FC = () => {
         onClearChat={clearMessages}
         onShowSettings={() => setIsSettingsModalOpen(true)}
         onShowAnalytics={() => {/* TODO: Implement analytics view */}}
-        onShowSignIn={() => {
-          // Auth handled by Clerk UserButton in Header
-        }}
+        onShowSignIn={openSignIn}
       />
       
       {/* Settings Modal */}

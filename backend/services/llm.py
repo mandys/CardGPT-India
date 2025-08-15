@@ -83,17 +83,18 @@ class LLMService:
         if is_calculation:
             max_tokens = min(max_tokens + 400, 1600)  # More tokens for detailed calculations
         
-        # Adjust max_tokens based on query type
+        # Adjust max_tokens based on query type (optimized for conciseness)
         if any(keyword in question.lower() for keyword in ['transfer partners', 'partners', 'airlines', 'hotels', 'list', 'all', 'complete']):
-            max_tokens = min(max_tokens * 2, 2000)  # Double for comprehensive lists
+            max_tokens = min(max_tokens + 600, 1600)  # Moderate increase for lists (reduced from 2x)
         elif any(keyword in question.lower() for keyword in ['benefits', 'features', 'insurance', 'lounge', 'details']):
-            max_tokens = min(max_tokens + 400, 1600)  # Increase for detailed info
+            max_tokens = min(max_tokens + 300, 1400)  # Reduced for focused details
         elif any(keyword in question.lower() for keyword in ['compare', 'comparison', 'split', 'spending', 'distribution']):
-            max_tokens = min(max_tokens + 600, 1800)  # Extra tokens for complex comparisons
+            max_tokens = min(max_tokens + 400, 1400)  # Reduced for concise comparisons
+            logger.info(f"🎯 [TOKEN_MGMT] Comparison query detected, max_tokens set to {max_tokens} for concise response")
         
         # Create prompts with calculation enhancement
         system_prompt = self._create_system_prompt(card_name, is_calculation, user_preferences)
-        user_prompt = self._create_user_prompt(question, context, is_calculation)
+        user_prompt = self._create_user_prompt(question, context, is_calculation, user_preferences)
         
         # Google Gemini only architecture
         if not model_choice.startswith("gemini"):
@@ -252,69 +253,36 @@ class LLMService:
     def _create_system_prompt(self, card_name: str = None, is_calculation: bool = False, user_preferences: Dict = None) -> str:
         """Create an optimized hybrid system prompt for CardGPT"""
         
-        # Use hybrid CardGPT approach
+        # Use hybrid CardGPT approach - BALANCED
         prompt = """You are CardGPT, a knowledgeable assistant about Indian credit cards.
 
-HYBRID INTELLIGENCE INSTRUCTIONS:
-- Your PRIMARY source is the provided context from our trusted internal database
-- If the context fully answers the query, use only that information
-- If the context is incomplete, you may supplement with your own knowledge of Indian credit cards
-- CLEARLY indicate what comes from provided sources vs. your own knowledge
-- Do not hallucinate - only supplement when genuinely helpful
-- For current/latest queries, acknowledge your knowledge cutoff and suggest verification
-
-RESPONSE FORMAT:
-- Start with information from provided context
-- If supplementing, clearly mark: "From my knowledge:" or "Based on general understanding:"
-- End current/promotional queries with verification note"""
+PRIMARY RULES:
+- Use provided context as main source
+- If context incomplete, supplement with your knowledge (mark as "From my knowledge:")
+- For comparisons: Start with recommendation, then brief reasons
+- For calculations: Calculate first, then summarize total
+- Keep responses concise (200-400 words)"""
 
         # Card focus logic
         if card_name:
             prompt += f"\nFOCUS: Answer specifically about {card_name} unless comparison is explicitly requested."
-        else:
+        # Essential calculation logic only for calculation queries
+        if is_calculation:
             prompt += """
-COMPARISON REQUIREMENTS:
-- Equal treatment of all cards in context
-- Comprehensive analysis for travel/benefit queries  
-- Balanced recommendations based on user needs"""
-
-        # Essential calculation logic (streamlined)
-        prompt += """
-EARNING RATES & CALCULATIONS:
-- Base rates: "X points per ₹Y" → (spend ÷ Y) × X
-- REWARD CURRENCIES: Atlas=EDGE Miles, EPM=Reward Points, Premier=Reward points, Infinia=Reward Points
-- Apply milestone bonuses: ₹3L→2500, ₹7.5L→2500, ₹15L→5000 (Atlas)
-- Show step-by-step math with milestone calculations
-
-CRITICAL CATEGORIES:
-- Travel: flight/hotel bookings, includes "Direct Airlines/Hotels"  
-- Insurance: general rate applies WITH caps (not excluded unless stated)
-- Education: 2 EDGE Miles/₹100 (Atlas), specific amounts in context (EPM)"""
+CALCULATION RULES:
+- Atlas travel: 5x rate ONLY up to ₹2L/month, then 2x rate for excess
+- Split calculations when spend exceeds caps
+- ALWAYS check milestones: ₹3L→2500, ₹7.5L→2500, ₹15L→5000 (Atlas)
+- Include welcome bonus: 2500 EDGE Miles (first year Atlas)
+- Show: Base earning + Milestone + Welcome (if applicable)"""
         
-        # User personalization (streamlined)
-        logger.info(f"🔍 [LLM_PREFS] Checking user preferences: {user_preferences}")
+        # User context - BALANCED
         if user_preferences:
-            prompt += "\n\nUSER CONTEXT: Tailor recommendations to user's profile:"
-            
-            travel_type = user_preferences.get('travel_type', None)
-            if travel_type:
-                prompt += f"\n- Travel: {travel_type} focus"
-                
-            fee_willingness = user_preferences.get('fee_willingness', None)
-            if fee_willingness:
-                prompt += f"\n- Fee tolerance: {fee_willingness}"
-                
-            spend_categories = user_preferences.get('spend_categories', None)
-            if spend_categories:
-                prompt += f"\n- Primary spend: {', '.join(spend_categories)}"
-                
             current_cards = user_preferences.get('current_cards', None)
             if current_cards:
-                prompt += f"\n- Current cards: {', '.join(current_cards)} - optimize across portfolio"
-                
-            logger.info("✅ [LLM_PREFS] Streamlined user preferences added")
-        else:
-            logger.info("⚠️ [LLM_PREFS] No user preferences provided - using generic recommendations")
+                prompt += f"\n\nUSER CARDS: User owns {', '.join(current_cards)}."
+                prompt += f"\nPRIORITY: Recommend from user's cards first."
+                prompt += f"\nFALLBACK: If user's cards don't meet need, suggest alternatives."
         
         # Log the complete system prompt for debugging
         logger.info(f"🎯 [LLM_PROMPT] === COMPLETE SYSTEM PROMPT ===")
@@ -324,8 +292,19 @@ CRITICAL CATEGORIES:
         
         return prompt
     
-    def _create_user_prompt(self, question: str, context: str, is_calculation: bool = False) -> str:
-        """Create a hybrid user prompt with clear source attribution"""
+    def _create_user_prompt(self, question: str, context: str, is_calculation: bool = False, user_preferences: Dict = None) -> str:
+        """Create a hybrid user prompt with clear source attribution and formatting guidance"""
+        
+        # Detect query type with priority: calculation > comparison > general
+        is_calculation_query = self._is_calculation_query(question)
+        is_comparison = not is_calculation_query and any(keyword in question.lower() for keyword in ['compare', 'comparison', 'which card', 'best card', 'recommend', 'should i use', 'better'])
+        
+        # Detect portfolio context (user mentioning existing cards)
+        has_portfolio_context = any(phrase in question.lower() for phrase in ['i have', 'my cards', 'my card', 'which of my', 'between my'])
+        
+        # Get user's current cards from preferences if available
+        user_has_cards = user_preferences and user_preferences.get('current_cards')
+        
         base_prompt = f"""Below are documents retrieved from our trusted internal database:
 
 {context}
@@ -336,10 +315,11 @@ Clearly mark which parts are based on source data and which are from your own un
 User Query:
 {question}"""
 
-        if is_calculation:
-            base_prompt += """
+        if is_calculation_query:
+            base_prompt += "\n\n🧮 CALCULATION: Show steps (base + milestone + welcome), then final total."
 
-🧮 CALCULATION REQUIRED: Show step-by-step math with milestone bonuses applied correctly."""
+        elif is_comparison and (user_has_cards or has_portfolio_context):
+            base_prompt += "\n\n📋 COMPARISON: Start with user's existing cards. If none suitable, suggest alternatives."
 
         return base_prompt
     

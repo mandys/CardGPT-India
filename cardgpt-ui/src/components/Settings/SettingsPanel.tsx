@@ -2,6 +2,7 @@ import React from 'react';
 import { Settings, Zap, CreditCard, Search, User } from 'lucide-react';
 import { ModelInfo, QueryMode, CardFilter } from '../../types';
 import { useCardDisplayNames } from '../../hooks/useCardConfig';
+import { usePreferences } from '../../hooks/usePreferences';
 import ModelSelector from './ModelSelector';
 import QueryModeSelector from './QueryModeSelector';
 import { ThemeToggle } from './ThemeToggle';
@@ -18,6 +19,7 @@ interface SettingsPanelProps {
   onTopKChange: (topK: number) => void;
   isLoading?: boolean;
   onShowOnboarding?: () => void;
+  onShowUpdatePreferences?: () => void;
 }
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({
@@ -32,9 +34,13 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onTopKChange,
   isLoading = false,
   onShowOnboarding,
+  onShowUpdatePreferences,
 }) => {
   // Get card filter options from centralized configuration
   const { filterOptions: supportedCards, loading: cardsLoading } = useCardDisplayNames();
+  
+  // Get user preferences to determine which buttons to show
+  const { hasPreferences, isEmpty, completionPercentage } = usePreferences();
 
   return (
     <div className="h-full flex flex-col">
@@ -140,20 +146,36 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <div className="space-y-2">
             {onShowOnboarding ? (
               <>
-                <button
-                  onClick={onShowOnboarding}
-                  className="w-full btn-primary text-sm py-2 px-3 flex items-center justify-between"
-                >
-                  <span>Setup Preferences</span>
-                  <span className="text-xs text-white opacity-90">3 steps</span>
-                </button>
-                <button
-                  onClick={onShowOnboarding}
-                  className="w-full btn-outline text-sm py-2 px-3 flex items-center justify-between"
-                >
-                  <span>Update Preferences</span>
-                  <span className="text-xs text-gray-500">Change settings</span>
-                </button>
+                {/* Show Setup button only if user has no preferences */}
+                {isEmpty && (
+                  <button
+                    onClick={onShowOnboarding}
+                    className="w-full btn-primary text-sm py-2 px-3 flex items-center justify-between"
+                  >
+                    <span>Setup Preferences</span>
+                    <span className="text-xs text-white opacity-90">3 steps</span>
+                  </button>
+                )}
+                
+                {/* Show Update button only if user has some preferences */}
+                {hasPreferences && (
+                  <button
+                    onClick={onShowUpdatePreferences || onShowOnboarding}
+                    className="w-full btn-outline text-sm py-2 px-3 flex items-center justify-between"
+                  >
+                    <span>Update Preferences</span>
+                    <span className="text-xs text-gray-500">{completionPercentage}% complete</span>
+                  </button>
+                )}
+                
+                {/* Show status message when user has partial preferences */}
+                {hasPreferences && completionPercentage < 100 && (
+                  <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <p className="text-xs text-amber-700 dark:text-amber-300 text-center">
+                      💡 Complete your preferences for better recommendations
+                    </p>
+                  </div>
+                )}
               </>
             ) : (
               <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">

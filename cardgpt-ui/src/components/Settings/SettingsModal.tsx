@@ -17,6 +17,7 @@ interface SettingsModalProps {
   onTopKChange: (topK: number) => void;
   isLoading?: boolean;
   onShowOnboarding?: () => void;
+  onShowUpdatePreferences?: () => void;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -33,6 +34,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onTopKChange,
   isLoading = false,
   onShowOnboarding,
+  onShowUpdatePreferences,
 }) => {
   if (!isOpen) return null;
 
@@ -76,6 +78,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 onTopKChange={onTopKChange}
                 isLoading={isLoading}
                 onShowOnboarding={onShowOnboarding}
+                onShowUpdatePreferences={onShowUpdatePreferences}
               />
             </div>
           </div>

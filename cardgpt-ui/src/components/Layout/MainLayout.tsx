@@ -12,7 +12,8 @@ import useQueryLimits from '../../hooks/useQueryLimits';
 import { useStreamingChatStore } from '../../hooks/useStreamingChat';
 import { useSidebar } from '../../hooks/useSidebar';
 import { apiClient } from '../../services/api';
-import { QueryMode, CardFilter } from '../../types';
+import { QueryMode, CardFilter, UserPreferences } from '../../types';
+import { OnboardingData } from '../../types/onboarding';
 
 const MainLayout: React.FC = () => {
   const location = useLocation();
@@ -20,6 +21,7 @@ const MainLayout: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
+  const [isUpdatePreferencesMode, setIsUpdatePreferencesMode] = useState(false);
   const [hasUserDismissedModal, setHasUserDismissedModal] = useState(false);
   
   const {
@@ -207,6 +209,41 @@ const MainLayout: React.FC = () => {
     setSettings({ topK });
   };
 
+  const handleShowUpdatePreferences = () => {
+    setIsUpdatePreferencesMode(true);
+    setIsOnboardingModalOpen(true);
+  };
+
+  // Create initial data for update mode by converting current preferences
+  const getInitialOnboardingData = () => {
+    if (!isUpdatePreferencesMode || !preferences) return undefined;
+    
+    // Simple mapping from UserPreferences to OnboardingData
+    const initialData: Partial<OnboardingData> = {
+      currentCards: preferences.current_cards || [],
+      topCategories: preferences.spend_categories?.map(cat => {
+        // Map category names to onboarding categories
+        const categoryMap: Record<string, any> = {
+          'online': 'online_shopping',
+          'dining': 'dining', 
+          'groceries': 'groceries',
+          'fuel': 'fuel',
+          'travel': 'travel',
+          'utilities': 'utilities'
+        };
+        return categoryMap[cat] || cat;
+      }).filter(Boolean) || [],
+      preferences: {
+        lowFees: preferences.fee_willingness === '0-1000',
+        international: preferences.travel_type === 'international' || preferences.travel_type === 'both',
+        business: false, // Default as we don't have this data
+        digitalFirst: false, // Default as we don't have this data
+      }
+    };
+    
+    return initialData;
+  };
+
   const handlePreferenceRefinement = async (preference: string, value: string) => {
     try {
       // Special case: if preference is 'requery', it means we should requery with updated preferences
@@ -279,7 +316,11 @@ const MainLayout: React.FC = () => {
           topK={settings.topK}
           onTopKChange={handleTopKChange}
           isLoading={isLoading}
-          onShowOnboarding={() => setIsOnboardingModalOpen(true)}
+          onShowOnboarding={() => {
+            setIsUpdatePreferencesMode(false);
+            setIsOnboardingModalOpen(true);
+          }}
+          onShowUpdatePreferences={handleShowUpdatePreferences}
         />
         
         {/* Chat Interface */}
@@ -321,7 +362,11 @@ const MainLayout: React.FC = () => {
         topK={settings.topK}
         onTopKChange={handleTopKChange}
         isLoading={isLoading}
-        onShowOnboarding={() => setIsOnboardingModalOpen(true)}
+        onShowOnboarding={() => {
+          setIsUpdatePreferencesMode(false);
+          setIsOnboardingModalOpen(true);
+        }}
+        onShowUpdatePreferences={handleShowUpdatePreferences}
       />
       
       
@@ -331,13 +376,16 @@ const MainLayout: React.FC = () => {
         isOpen={isOnboardingModalOpen}
         onClose={() => {
           setIsOnboardingModalOpen(false);
+          setIsUpdatePreferencesMode(false);
           setHasUserDismissedModal(true); // Track that user dismissed modal
         }}
         onComplete={(preferences) => {
           updatePreferences(preferences);
           setIsOnboardingModalOpen(false);
+          setIsUpdatePreferencesMode(false);
           setHasUserDismissedModal(true); // Track completion as dismissal too
         }}
+        initialData={getInitialOnboardingData()}
       />
 
     </div>

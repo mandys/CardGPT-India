@@ -16,6 +16,7 @@ interface SidebarProps {
   onTopKChange: (topK: number) => void;
   isLoading?: boolean;
   onShowOnboarding?: () => void;
+  onShowUpdatePreferences?: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = (props) => {
@@ -100,6 +101,7 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
                 onTopKChange={props.onTopKChange}
                 isLoading={props.isLoading}
                 onShowOnboarding={props.onShowOnboarding}
+                onShowUpdatePreferences={props.onShowUpdatePreferences}
               />
             )}
           </div>

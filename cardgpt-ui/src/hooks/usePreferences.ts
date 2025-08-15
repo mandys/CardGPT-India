@@ -1,6 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { usePreferenceStore } from '../stores/usePreferenceStore';
-import { useUser } from '@clerk/clerk-react';
+import { useUser, useAuth } from '@clerk/clerk-react';
 import { UserPreferences } from '../types';
 
 /**
@@ -9,6 +9,7 @@ import { UserPreferences } from '../types';
  */
 export const usePreferences = () => {
   const { isSignedIn } = useUser();
+  const { getToken } = useAuth();
   
   // Zustand store selectors
   const preferences = usePreferenceStore((state) => state.preferences);
@@ -30,9 +31,9 @@ export const usePreferences = () => {
   // Sync preferences when authentication state changes
   useEffect(() => {
     if (hasLoadedInitial) {
-      syncWithAuth(isSignedIn || false);
+      syncWithAuth(isSignedIn || false, getToken);
     }
-  }, [isSignedIn, hasLoadedInitial, syncWithAuth]);
+  }, [isSignedIn, hasLoadedInitial, syncWithAuth, getToken]);
 
   // Helper function to get current user preferences for API calls
   const getPreferencesForAPI = useCallback((): UserPreferences | undefined => {

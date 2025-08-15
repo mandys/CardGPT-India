@@ -25,7 +25,8 @@ export interface PreferenceState {
   hasPreferences: () => boolean;
   isPreferenceComplete: (category: keyof PreferenceCompletion['categories']) => boolean;
   getSessionId: () => string;
-  syncWithAuth: (isAuthenticated: boolean) => Promise<void>;
+  syncWithAuth: (isAuthenticated: boolean, getToken?: () => Promise<string | null>) => Promise<void>;
+  cleanupLegacyData: () => void;
 }
 
 const calculateCompletionFromPreferences = (preferences: UserPreferences | null): PreferenceCompletion => {
@@ -226,14 +227,26 @@ export const usePreferenceStore = create<PreferenceState>()(
     },
 
     // Sync preferences when authentication state changes
-    syncWithAuth: async (isAuthenticated: boolean) => {
+    syncWithAuth: async (isAuthenticated: boolean, getToken?: () => Promise<string | null>) => {
       if (isAuthenticated) {
         // User just logged in - migrate session preferences to user account if any exist
         const currentPrefs = get().preferences;
         if (currentPrefs && Object.keys(currentPrefs).length > 0) {
           try {
-            await apiClient.updateUserPreferences(currentPrefs);
-            console.log('✅ Session preferences migrated to user account');
+            // Get Clerk token for authenticated API call if function provided
+            if (getToken) {
+              const token = await getToken();
+              if (token) {
+                await apiClient.updateUserPreferences(currentPrefs, token);
+                console.log('✅ Session preferences migrated to user account');
+              } else {
+                console.warn('⚠️ No Clerk token available for preference migration');
+              }
+            } else {
+              // Fallback to token-less call (may fail but won't crash)
+              await apiClient.updateUserPreferences(currentPrefs);
+              console.log('✅ Session preferences migrated to user account (fallback)');
+            }
           } catch (error) {
             console.error('Failed to migrate session preferences:', error);
           }
@@ -243,6 +256,40 @@ export const usePreferenceStore = create<PreferenceState>()(
       } else {
         // User logged out - preferences will now be session-based
         await get().loadPreferences();
+      }
+    },
+
+    // Clean up legacy localStorage data that might conflict with new system
+    cleanupLegacyData: () => {
+      try {
+        const legacyKeys = [
+          'preferences',
+          'user_preferences', 
+          'guest_preferences',
+          'cardgpt_preferences',
+          'preference_completion',
+          'onboarding_completed',
+          'preference_version'
+        ];
+        
+        let removedCount = 0;
+        legacyKeys.forEach(key => {
+          if (localStorage.getItem(key)) {
+            localStorage.removeItem(key);
+            removedCount++;
+          }
+        });
+        
+        if (removedCount > 0) {
+          console.log(`🧹 Cleaned up ${removedCount} legacy preference keys`);
+          
+          // Force reload preferences after cleanup
+          setTimeout(() => {
+            get().loadPreferences();
+          }, 100);
+        }
+      } catch (error) {
+        console.warn('Error cleaning up legacy data:', error);
       }
     },
   }))
@@ -265,7 +312,9 @@ if (process.env.NODE_ENV === 'development') {
   );
 }
 
-// Auto-load preferences on store creation
+// Auto-load preferences on store creation and cleanup legacy data
 setTimeout(() => {
-  usePreferenceStore.getState().loadPreferences();
+  const store = usePreferenceStore.getState();
+  store.cleanupLegacyData();
+  store.loadPreferences();
 }, 0);

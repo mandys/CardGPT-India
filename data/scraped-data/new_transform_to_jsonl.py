@@ -21,7 +21,8 @@ def generate_card_aliases(card_name: str) -> list:
         'Atlas Credit Card': ['atlas', 'axis atlas', 'axis bank atlas', 'axis atlas credit card'],
         'Infinia Metal Credit Card': ['infinia', 'hdfc infinia', 'infinia metal', 'hdfc infinia metal'],
         'Premier Metal Credit Card': ['premier', 'hsbc premier', 'premier metal', 'hsbc premier metal'],
-        'Emeralde Private Metal Credit Card': ['epm', 'icici epm', 'emeralde private metal', 'emeralde', 'icici emeralde']
+        'Emeralde Private Metal Credit Card': ['epm', 'icici epm', 'emeralde private metal', 'emeralde', 'icici emeralde'],
+        'Platinum Travel Credit Card': ['amex platinum', 'platinum travel', 'american express platinum', 'amex', 'platinum amex', 'amex plat', 'amex travel']
     }
     
     # Check for matches in card name
@@ -40,6 +41,8 @@ def generate_card_aliases(card_name: str) -> list:
         fallback_aliases.extend(['premier', 'hsbc premier'])
     if 'emeralde' in name_lower or 'epm' in name_lower:
         fallback_aliases.extend(['epm', 'icici epm', 'emeralde'])
+    if 'platinum' in name_lower and ('travel' in name_lower or 'amex' in name_lower or 'american express' in name_lower):
+        fallback_aliases.extend(['amex platinum', 'platinum travel', 'american express platinum', 'amex'])
     
     return fallback_aliases
 
@@ -112,7 +115,8 @@ def normalize_card_name(raw_card_name: str, bank_name: str = "") -> str:
         'Atlas Credit Card': 'Axis Bank Atlas Credit Card',
         'Infinia Metal Credit Card': 'HDFC Infinia Credit Card (Metal Edition)',
         'Premier Metal Credit Card': 'HSBC Premier Credit Card',
-        'Emeralde Private Metal Credit Card': 'ICICI Bank Emeralde Private Metal Credit Card'
+        'Emeralde Private Metal Credit Card': 'ICICI Bank Emeralde Private Metal Credit Card',
+        'Platinum Travel Credit Card': 'American Express Platinum Travel Credit Card'
     }
     
     # Try exact match first

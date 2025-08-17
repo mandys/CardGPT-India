@@ -90,6 +90,22 @@ const LandingPage: React.FC = () => {
       networkBg: 'from-yellow-400 to-yellow-500',
       networkText: 'text-slate-900',
       query: 'Tell me about HDFC Infinia insurance benefits and milestone rewards'
+    },
+    {
+      name: 'Amex Platinum',
+      shortName: 'Amex Plat',
+      bank: 'American Express',
+      image: '/images/amex-platinum-card.jpg',
+      features: ['1 MR Point per ₹50 (2% Base)', '15K+25K MR Milestone Bonuses', '8 Domestic Lounge Visits'],
+      welcomeBonus: '10,000 MR Points',
+      annualFee: '₹5,000 + GST',
+      bgGradient: 'from-gray-900 to-gray-700',
+      badge: 'Travel Premium',
+      badgeColor: 'bg-gray-500/20 text-gray-300 border-gray-500/30',
+      network: 'AMEX',
+      networkBg: 'from-gray-400 to-gray-500',
+      networkText: 'text-white',
+      query: 'Calculate Amex Platinum Travel rewards and milestone benefits'
     }
   ];
 

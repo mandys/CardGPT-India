@@ -272,8 +272,10 @@ PRIMARY RULES:
 CALCULATION RULES:
 - Atlas travel: 5x rate ONLY up to ₹2L/month, then 2x rate for excess
 - Split calculations when spend exceeds caps
-- ALWAYS check milestones: ₹3L→2500, ₹7.5L→2500, ₹15L→5000 (Atlas)
-- Include welcome bonus: 2500 EDGE Miles (first year Atlas)
+- ALWAYS check milestones: 
+  • Atlas: ₹3L→2500, ₹7.5L→2500, ₹15L→5000 EDGE Miles
+  • Amex Platinum: ₹1.9L→15000, ₹4L→25000 MR Points + ₹10K Taj voucher
+- Include welcome bonus: 2500 EDGE Miles (Atlas), 10000 MR Points (Amex)
 - Show: Base earning + Milestone + Welcome (if applicable)"""
         
         # User context - BALANCED

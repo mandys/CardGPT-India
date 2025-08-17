@@ -163,10 +163,71 @@
       },
       "active": true,
       "priority": 4
+    },
+    {
+      "id": "amex_platinum_travel",
+      "display_name": "Amex Platinum",
+      "full_name": "American Express Platinum Travel Credit Card",
+      "jsonl_name": "American Express Platinum Travel Credit Card",
+      "short_name": "Amex Plat",
+      "bank": "American Express",
+      "aliases": ["amex platinum", "platinum travel", "american express platinum", "amex", "platinum amex", "amex plat", "amex travel"],
+      "reward_currency": "MR Points",
+      "reward_format": "X MR Points per ₹50",
+      "color_scheme": {
+        "primary": "from-gray-600 to-gray-700",
+        "secondary": "gray",
+        "gradient": "from-gray-600 to-gray-700"
+      },
+      "category_info": {
+        "insurance": {
+          "status": "excluded",
+          "description": "EXCLUDES insurance completely (0 MR points)"
+        },
+        "education": {
+          "status": "excluded", 
+          "description": "EXCLUDES education spending (0 MR points)"
+        },
+        "fuel": {
+          "status": "excluded",
+          "description": "EXCLUDES fuel spending (0 MR points)"
+        },
+        "utilities": {
+          "status": "excluded",
+          "description": "EXCLUDES utilities spending (0 MR points)"
+        },
+        "cash_transactions": {
+          "status": "excluded",
+          "description": "EXCLUDES cash transactions and EMI conversions (0 MR points)"
+        }
+      },
+      "milestones": {
+        "annual": [
+          {"threshold": 190000, "reward": 15000, "currency": "MR Points"},
+          {"threshold": 400000, "reward": 25000, "currency": "MR Points", "bonus": "₹10,000 Taj E-Gift Voucher"}
+        ]
+      },
+      "travel_benefits": {
+        "lounge_access": "8 free domestic visits/year (2 per quarter), Priority Pass membership for international",
+        "description": "Premium travel benefits with domestic lounge access and Priority Pass membership"
+      },
+      "government_spending": {
+        "rewards": "0 MR points earned",
+        "milestone_eligible": true,
+        "description": "No rewards but counts towards milestone spend"
+      },
+      "accelerated_categories": {
+        "reward_multiplier_portal": {
+          "rate": "6% equivalent via Amex Reward Multiplier portal",
+          "description": "Higher rewards when shopping through Amex portal"
+        }
+      },
+      "active": true,
+      "priority": 5
     }
   ],
   "category_summaries": {
-    "insurance": "HSBC Premier and HDFC Infinia earn rewards on insurance spending, ICICI EPM has caps, Axis Atlas excludes insurance completely.",
-    "education": "HSBC Premier earns 3 points per ₹100, HDFC Infinia excludes education, ICICI EPM earns 6 points per ₹200 with caps, Axis Atlas earns 2 EDGE Miles per ₹100 with 1% surcharge via third-party apps."
+    "insurance": "HSBC Premier and HDFC Infinia earn rewards on insurance spending, ICICI EPM has caps, Axis Atlas and Amex Platinum exclude insurance completely.",
+    "education": "HSBC Premier earns 3 points per ₹100, HDFC Infinia excludes education, ICICI EPM earns 6 points per ₹200 with caps, Axis Atlas earns 2 EDGE Miles per ₹100 with 1% surcharge via third-party apps, Amex Platinum excludes education spending."
   }
 }

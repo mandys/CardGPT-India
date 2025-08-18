@@ -229,19 +229,45 @@ class ApiClient {
    * Get preferences for current user (authenticated or session-based)
    */
   async getCurrentUserPreferences(clerkToken?: string): Promise<UserPreferences | null> {
-    const token = clerkToken || localStorage.getItem('jwt_token');
-    
     try {
-      if (token) {
-        // Authenticated user
-        const response = await this.getUserPreferences(token);
+      if (clerkToken) {
+        // Clerk authenticated user - use the provided token
+        const response = await this.getUserPreferences(clerkToken);
         return response.preferences;
       } else {
-        // Anonymous user
+        // Check if we have legacy JWT token (fallback for transition period)
+        const legacyToken = localStorage.getItem('jwt_token');
+        if (legacyToken) {
+          try {
+            const response = await this.getUserPreferences(legacyToken);
+            return response.preferences;
+          } catch (error) {
+            // Legacy token invalid, fall back to session
+            console.log('Legacy JWT token invalid, falling back to session mode');
+            localStorage.removeItem('jwt_token'); // Clean up invalid token
+          }
+        }
+        
+        // Anonymous/session user
         const sessionId = this.getSessionId();
         return await this.getSessionPreferences(sessionId);
       }
     } catch (error) {
+      // Enhanced error handling with proper fallback
+      if (error instanceof Error) {
+        console.warn('Failed to load preferences:', error.message);
+        if (error.message.includes('401') || error.message.includes('unauthorized')) {
+          // Authentication error - clean up and fall back to session
+          localStorage.removeItem('jwt_token');
+          try {
+            const sessionId = this.getSessionId();
+            return await this.getSessionPreferences(sessionId);
+          } catch (sessionError) {
+            console.log('No session preferences found, starting fresh');
+            return null;
+          }
+        }
+      }
       console.log('No preferences found or error retrieving preferences');
       return null;
     }
@@ -252,19 +278,47 @@ class ApiClient {
    */
   async saveCurrentUserPreferences(preferences: UserPreferences, clerkToken?: string): Promise<boolean> {
     try {
-      const token = clerkToken || localStorage.getItem('jwt_token');
-      
-      if (token) {
-        // Authenticated user
-        await this.updateUserPreferences(preferences, token);
-      } else {
-        // Anonymous user
-        const sessionId = this.getSessionId();
-        await this.saveSessionPreferences(preferences, sessionId);
+      if (clerkToken) {
+        // Clerk authenticated user
+        await this.updateUserPreferences(preferences, clerkToken);
+        return true;
       }
+
+      // Check for legacy JWT token
+      const legacyToken = localStorage.getItem('jwt_token');
+      if (legacyToken) {
+        try {
+          await this.updateUserPreferences(preferences, legacyToken);
+          return true;
+        } catch (error) {
+          // Legacy token invalid, clean up and fall back to session
+          console.log('Legacy JWT token invalid during save, falling back to session mode');
+          localStorage.removeItem('jwt_token');
+        }
+      }
+
+      // Fall back to session-based saving
+      const sessionId = this.getSessionId();
+      await this.saveSessionPreferences(preferences, sessionId);
       return true;
     } catch (error) {
-      console.error('Failed to save preferences:', error);
+      // Enhanced error handling
+      if (error instanceof Error) {
+        console.error('Failed to save preferences:', error.message);
+        if (error.message.includes('401') || error.message.includes('unauthorized')) {
+          // Authentication error - try session fallback
+          try {
+            const sessionId = this.getSessionId();
+            await this.saveSessionPreferences(preferences, sessionId);
+            console.log('Saved to session after authentication error');
+            return true;
+          } catch (sessionError) {
+            console.error('Session fallback also failed:', sessionError);
+          }
+        }
+      } else {
+        console.error('Failed to save preferences:', error);
+      }
       return false;
     }
   }

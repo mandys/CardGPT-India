@@ -149,32 +149,28 @@ export const useOnboarding = (initialData?: Partial<OnboardingData>) => {
 
   // Validation helpers
   const isStep1Complete = useCallback(() => {
-    return !!(data.primaryGoal && data.monthlySpending);
-  }, [data.primaryGoal, data.monthlySpending]);
-
-  const isStep2Complete = useCallback(() => {
-    // Step 2 is optional, always considered complete
+    // Step 1 (Current Cards) is optional, always considered complete
     return true;
   }, []);
 
+  const isStep2Complete = useCallback(() => {
+    // Step 2 (Monthly Spending) requires spending selection
+    return !!data.monthlySpending;
+  }, [data.monthlySpending]);
+
   const hasMinimumData = useCallback(() => {
-    return !!(data.primaryGoal || data.monthlySpending || data.topCategories.length > 0);
-  }, [data.primaryGoal, data.monthlySpending, data.topCategories.length]);
+    return !!(data.monthlySpending || data.currentCards.length > 0);
+  }, [data.monthlySpending, data.currentCards.length]);
 
   const getCompletionPercentage = useCallback(() => {
     let completed = 0;
-    let total = 4; // primaryGoal, monthlySpending, topCategories (2 max), preferences (optional)
+    let total = 2; // currentCards (optional), monthlySpending (required)
 
-    if (data.primaryGoal) completed++;
+    if (data.currentCards.length > 0) completed++;
     if (data.monthlySpending) completed++;
-    if (data.topCategories.length > 0) completed++;
-    
-    // Preferences are optional but count if any are set
-    const hasPreferences = Object.values(data.preferences).some(Boolean);
-    if (hasPreferences) completed++;
 
     return Math.round((completed / total) * 100);
-  }, [data]);
+  }, [data.currentCards.length, data.monthlySpending]);
 
   return {
     // State
@@ -203,7 +199,7 @@ export const useOnboarding = (initialData?: Partial<OnboardingData>) => {
     selectedCategories: data.topCategories,
     selectedCards: data.currentCards,
     selectedPreferences: data.preferences,
-    isComplete: isStep1Complete(), // Minimum completion
+    isComplete: !!data.monthlySpending, // Minimum completion requires spending selection
     completionPercentage: getCompletionPercentage(),
   };
 };

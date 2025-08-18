@@ -14,12 +14,12 @@ export interface PreferenceState {
   completion: PreferenceCompletion;
   
   // Actions
-  loadPreferences: () => Promise<void>;
-  updatePreference: (key: keyof UserPreferences, value: any) => Promise<boolean>;
-  updatePreferences: (preferences: Partial<UserPreferences>) => Promise<boolean>;
+  loadPreferences: (clerkToken?: string) => Promise<void>;
+  updatePreference: (key: keyof UserPreferences, value: any, clerkToken?: string) => Promise<boolean>;
+  updatePreferences: (preferences: Partial<UserPreferences>, clerkToken?: string) => Promise<boolean>;
   clearPreferences: () => Promise<boolean>;
   calculateCompletion: () => PreferenceCompletion;
-  applyRefinementButton: (preference: string, value: string) => Promise<boolean>;
+  applyRefinementButton: (preference: string, value: string, clerkToken?: string) => Promise<boolean>;
   
   // Helper methods
   hasPreferences: () => boolean;
@@ -65,11 +65,11 @@ export const usePreferenceStore = create<PreferenceState>()(
     completion: calculateCompletionFromPreferences(null),
 
     // Load preferences from backend (authenticated) or localStorage (session)
-    loadPreferences: async () => {
+    loadPreferences: async (clerkToken?: string) => {
       set({ isLoading: true, error: null });
       
       try {
-        const preferences = await apiClient.getCurrentUserPreferences();
+        const preferences = await apiClient.getCurrentUserPreferences(clerkToken);
         const completion = calculateCompletionFromPreferences(preferences);
         
         set({ 
@@ -92,14 +92,14 @@ export const usePreferenceStore = create<PreferenceState>()(
     },
 
     // Update a single preference
-    updatePreference: async (key: keyof UserPreferences, value: any) => {
+    updatePreference: async (key: keyof UserPreferences, value: any, clerkToken?: string) => {
       const currentPrefs = get().preferences || {};
       const updatedPrefs = { ...currentPrefs, [key]: value };
       
       set({ isLoading: true });
       
       try {
-        const success = await apiClient.saveCurrentUserPreferences(updatedPrefs);
+        const success = await apiClient.saveCurrentUserPreferences(updatedPrefs, clerkToken);
         if (success) {
           const completion = calculateCompletionFromPreferences(updatedPrefs);
           set({ 
@@ -123,14 +123,14 @@ export const usePreferenceStore = create<PreferenceState>()(
     },
 
     // Update multiple preferences
-    updatePreferences: async (newPreferences: Partial<UserPreferences>) => {
+    updatePreferences: async (newPreferences: Partial<UserPreferences>, clerkToken?: string) => {
       const currentPrefs = get().preferences || {};
       const updatedPrefs = { ...currentPrefs, ...newPreferences };
       
       set({ isLoading: true });
       
       try {
-        const success = await apiClient.saveCurrentUserPreferences(updatedPrefs);
+        const success = await apiClient.saveCurrentUserPreferences(updatedPrefs, clerkToken);
         if (success) {
           const completion = calculateCompletionFromPreferences(updatedPrefs);
           set({ 
@@ -192,8 +192,8 @@ export const usePreferenceStore = create<PreferenceState>()(
 
 
     // Apply a refinement button selection
-    applyRefinementButton: async (preference: string, value: string) => {
-      return get().updatePreference(preference as keyof UserPreferences, value);
+    applyRefinementButton: async (preference: string, value: string, clerkToken?: string) => {
+      return get().updatePreference(preference as keyof UserPreferences, value, clerkToken);
     },
 
     // Helper: Check if user has any preferences set
@@ -251,8 +251,9 @@ export const usePreferenceStore = create<PreferenceState>()(
             console.error('Failed to migrate session preferences:', error);
           }
         }
-        // Reload preferences from authenticated endpoint
-        await get().loadPreferences();
+        // Reload preferences from authenticated endpoint with token
+        const token = getToken ? await getToken() : undefined;
+        await get().loadPreferences(token || undefined);
       } else {
         // User logged out - preferences will now be session-based
         await get().loadPreferences();

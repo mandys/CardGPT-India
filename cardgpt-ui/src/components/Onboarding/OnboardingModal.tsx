@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X, ArrowRight, ArrowLeft, CreditCard, Sparkles } from 'lucide-react';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import { usePreferences } from '../../hooks/usePreferences';
-import StepPrimaryGoal from './StepPrimaryGoal';
 import StepCurrentCards from './StepCurrentCards';
-import StepQuickPrefs from './StepQuickPrefs';
+import StepMonthlySpending from './StepMonthlySpending';
 import { OnboardingData } from '../../types/onboarding';
 
 interface OnboardingModalProps {
@@ -25,13 +24,9 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
   
   const {
     data,
-    setPrimaryGoal,
     setMonthlySpending,
-    toggleSpendingCategory,
     toggleCurrentCard,
-    togglePreference,
     convertToUserPreferences,
-    isStep1Complete,
   } = useOnboarding(initialData);
 
   // Reset to step 0 when modal opens
@@ -43,14 +38,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
 
   const steps = [
     {
-      id: 'primary',
-      title: 'Goals & Spending',
-      subtitle: 'Tell us your primary needs',
-      icon: CreditCard,
-      component: StepPrimaryGoal,
-      required: true,
-    },
-    {
       id: 'cards',
       title: 'Current Cards',
       subtitle: 'Cards you currently have',
@@ -59,12 +46,12 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
       required: false,
     },
     {
-      id: 'preferences', 
-      title: 'Quick Preferences',
-      subtitle: 'Fine-tune your recommendations',
+      id: 'spending',
+      title: 'Monthly Spending',
+      subtitle: 'Your typical spending range',
       icon: Sparkles,
-      component: StepQuickPrefs,
-      required: false,
+      component: StepMonthlySpending,
+      required: true,
     },
   ];
 
@@ -73,12 +60,10 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
 
   const canProceed = () => {
     switch (currentStep) {
-      case 0: // Primary Goal step
-        return isStep1Complete();
-      case 1: // Current Cards step (optional)
+      case 0: // Current Cards step (optional)
         return true;
-      case 2: // Quick Preferences step (optional)
-        return true;
+      case 1: // Monthly Spending step (required)
+        return !!data.monthlySpending;
       default:
         return false;
     }
@@ -175,27 +160,16 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
           {/* Content */}
           <div className="p-4 max-h-[60vh] overflow-y-auto">
             {currentStep === 0 && (
-              <StepPrimaryGoal
-                selectedGoal={data.primaryGoal}
-                selectedSpending={data.monthlySpending}
-                selectedCategories={data.topCategories}
-                onGoalChange={setPrimaryGoal}
-                onSpendingChange={setMonthlySpending}
-                onCategoryToggle={toggleSpendingCategory}
-              />
-            )}
-            
-            {currentStep === 1 && (
               <StepCurrentCards
                 selectedCards={data.currentCards}
                 onCardToggle={toggleCurrentCard}
               />
             )}
             
-            {currentStep === 2 && (
-              <StepQuickPrefs
-                preferences={data.preferences}
-                onTogglePreference={togglePreference}
+            {currentStep === 1 && (
+              <StepMonthlySpending
+                selectedSpending={data.monthlySpending}
+                onSpendingChange={setMonthlySpending}
               />
             )}
           </div>

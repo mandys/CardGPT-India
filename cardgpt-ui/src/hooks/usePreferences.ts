@@ -20,8 +20,8 @@ export const usePreferences = () => {
   
   // Zustand store actions
   const loadPreferences = usePreferenceStore((state) => state.loadPreferences);
-  const updatePreference = usePreferenceStore((state) => state.updatePreference);
-  const updatePreferences = usePreferenceStore((state) => state.updatePreferences);
+  const storeUpdatePreference = usePreferenceStore((state) => state.updatePreference);
+  const storeUpdatePreferences = usePreferenceStore((state) => state.updatePreferences);
   const clearPreferences = usePreferenceStore((state) => state.clearPreferences);
   const applyRefinementButton = usePreferenceStore((state) => state.applyRefinementButton);
   const hasPreferences = usePreferenceStore((state) => state.hasPreferences);
@@ -81,6 +81,17 @@ export const usePreferences = () => {
     
     return missing;
   }, [preferences]);
+
+  // Wrapper functions that include Clerk token
+  const updatePreference = useCallback(async (key: keyof UserPreferences, value: any) => {
+    const token = getToken ? await getToken() : undefined;
+    return storeUpdatePreference(key, value, token || undefined);
+  }, [storeUpdatePreference, getToken]);
+
+  const updatePreferences = useCallback(async (preferences: Partial<UserPreferences>) => {
+    const token = getToken ? await getToken() : undefined;
+    return storeUpdatePreferences(preferences, token || undefined);
+  }, [storeUpdatePreferences, getToken]);
 
   // Quick preference setters for common scenarios
   const quickSetTravelType = useCallback((type: 'domestic' | 'international' | 'both') => {

@@ -28,6 +28,12 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
     toggleCurrentCard,
     convertToUserPreferences,
   } = useOnboarding(initialData);
+  
+  console.log('🎯 [OnboardingModal] Current data and initialData:', { 
+    initialData, 
+    currentData: data,
+    isUpdateMode: isOpen && initialData 
+  });
 
   // Reset to step 0 when modal opens
   useEffect(() => {

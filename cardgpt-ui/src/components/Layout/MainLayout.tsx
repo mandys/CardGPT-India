@@ -218,9 +218,25 @@ const MainLayout: React.FC = () => {
   const getInitialOnboardingData = () => {
     if (!isUpdatePreferencesMode || !preferences) return undefined;
     
+    // Map fee_willingness back to monthly spending bracket
+    let monthlySpending: string | undefined;
+    switch (preferences.fee_willingness) {
+      case '0-1000':
+      case '1000-5000':
+        monthlySpending = '0-25000';
+        break;
+      case '5000-10000':
+        monthlySpending = '25000-75000';
+        break;
+      case '10000+':
+        monthlySpending = '75000+';
+        break;
+    }
+    
     // Simple mapping from UserPreferences to OnboardingData
     const initialData: Partial<OnboardingData> = {
       currentCards: preferences.current_cards || [],
+      monthlySpending: monthlySpending as any, // Cast to match OnboardingData type
       topCategories: preferences.spend_categories?.map(cat => {
         // Map category names to onboarding categories
         const categoryMap: Record<string, any> = {
@@ -240,6 +256,11 @@ const MainLayout: React.FC = () => {
         digitalFirst: false, // Default as we don't have this data
       }
     };
+    
+    console.log('🎯 [INITIAL DATA] Mapping preferences to onboarding data:', {
+      preferences,
+      initialData
+    });
     
     return initialData;
   };

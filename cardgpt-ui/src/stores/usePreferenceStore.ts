@@ -42,12 +42,24 @@ const calculateCompletionFromPreferences = (preferences: UserPreferences | null)
     };
   }
 
+  // Updated for 2-step onboarding: focus on essential preferences
   const categories = {
     travel_preferences: !!(preferences.travel_type && preferences.lounge_access),
     financial_preferences: !!preferences.fee_willingness,
     card_preferences: !!(preferences.current_cards?.length || preferences.preferred_banks?.length),
     spending_preferences: !!(preferences.spend_categories?.length),
   };
+
+  // For the simplified onboarding, we consider completion based on essential data:
+  // - Cards selected (from step 1) 
+  // - Monthly spending set (from step 2) 
+  const hasEssentialData = !!(preferences.current_cards?.length && preferences.fee_willingness);
+  
+  if (hasEssentialData) {
+    // If user has completed the 2-step onboarding, they should show 100% completion
+    // since they've provided the core data needed for personalized recommendations
+    return { overall: 100, categories: { ...categories, card_preferences: true, financial_preferences: true } };
+  }
 
   const completedCount = Object.values(categories).filter(Boolean).length;
   const overall = Math.round((completedCount / 4) * 100);

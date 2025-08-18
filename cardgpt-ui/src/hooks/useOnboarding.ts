@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { 
   OnboardingData, 
   DEFAULT_ONBOARDING_DATA,
@@ -17,6 +17,23 @@ export const useOnboarding = (initialData?: Partial<OnboardingData>) => {
   const [data, setData] = useState<OnboardingData>({
     ...DEFAULT_ONBOARDING_DATA,
     ...initialData,
+  });
+  
+  // Update state when initialData changes (important for Update Preferences mode)
+  useEffect(() => {
+    if (initialData) {
+      console.log('🔄 [useOnboarding] Updating data with new initialData:', initialData);
+      setData(current => ({
+        ...current,
+        ...initialData,
+      }));
+    }
+  }, [initialData]);
+  
+  console.log('🎯 [useOnboarding] Current state:', { 
+    DEFAULT_ONBOARDING_DATA, 
+    initialData, 
+    finalData: data 
   });
 
   const updateData = useCallback((updates: Partial<OnboardingData>) => {

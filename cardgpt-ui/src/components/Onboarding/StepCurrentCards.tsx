@@ -115,6 +115,12 @@ const StepCurrentCards: React.FC<StepCurrentCardsProps> = ({
               filteredCards.map((card) => {
                 const isSelected = selectedCards.includes(card.name);
                 
+                console.log('🎯 [StepCurrentCards] Card selection check:', {
+                  cardName: card.name,
+                  selectedCards,
+                  isSelected
+                });
+                
                 return (
                   <button
                     key={card.name}
